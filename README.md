@@ -3,7 +3,7 @@
 
 ## Overview
 Meeting-operator provides deployment and management of [Jitsi](https://jitsi.org/) 
-and related components (only etherpad right now).
+and related components (only [Etherpad](https://etherpad.org/) right now).
 The Meeting-operator includes the following features:
 
 * **Kubernetes Custom Resources**: Use Kubernetes custom resources to deploy and manage Jitsi, Etherpad,
@@ -11,7 +11,21 @@ The Meeting-operator includes the following features:
 ## Install
 You can use helm for deploy meeting-operator in the cluster.
 ```
-helm install meeting-operator ./deploy/helm/meeting-opetaror
+helm install meeting-operator ./deploy/helm/meeting-operator
+```
+### Manual install
+1. crd
+```
+make install
+```
+or
+```
+kubectl apply -f config/crd/bases/*
+```
+2. custom resources
+```
+kubectl apply -f config/sample/_v1alpha1_etherpad.yaml
+kubectl apply -f config/sample/_v1alpha1_jitsi.yaml
 ```
 
 If you need to change default values, you should check values.yml
@@ -24,8 +38,8 @@ kubectl create secret generic jitsi-config \
 ```
 
 #### Examples
-Folder ``` config/samples``` contain crds, ingress, config examples. They have enough to 
-start with jitsi.
+Folder ``` config/samples``` contain crds, ingress, config examples. It's enough to 
+start up with jitsi.
 ```
  ll config/samples
  _v1alpha1_etherpad.yaml
