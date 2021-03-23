@@ -1,0 +1,42 @@
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: etherpad-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+spec:
+  tls:
+    - hosts:
+        - ""
+      secretName: etherpad-tls
+  rules:
+    - host: ""
+      http:
+        paths:
+          - path: /
+            backend:
+                serviceName: etherpad
+                servicePort: 9001
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: web-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+spec:
+  tls:
+    - hosts:
+        - ""
+      secretName: web-tls
+  rules:
+    - host: ""
+      http:
+        paths:
+          - path: /
+            backend:
+                serviceName: jitsi-web
+                servicePort: 80

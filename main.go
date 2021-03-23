@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"github.com/onmetal/meeting-operator/controllers/etherpad"
+	"github.com/onmetal/meeting-operator/controllers/jitsi"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -78,12 +79,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&etherpad.EtherpadReconciler{
+	if err = (&etherpad.Reconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Etherpad"),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Etherpad")
+		os.Exit(1)
+	}
+	if err = (&jitsi.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("Jitsi"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Jitsi")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

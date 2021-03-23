@@ -1,0 +1,181 @@
+apiVersion: meeting.ko/v1alpha1
+kind: Jitsi
+metadata:
+  name: jitsi-sample
+spec:
+  web:
+    replicas: 1
+    image: jitsi/web:stable-5390-3
+    service:
+      port_spec:
+        "http": 80
+    environments:
+    - name: XMPP_SERVER
+      value: jitsi-prosody
+    - name: JICOFO_AUTH_USER
+      value: focus
+    - name: XMPP_DOMAIN
+      value: jitsi.jitsi
+    - name: XMPP_AUTH_DOMAIN
+      value: auth.jitsi.jitsi
+    - name: XMPP_INTERNAL_MUC_DOMAIN
+      value: internal-muc.jitsi.jitsi
+    - name: XMPP_MUC_DOMAIN
+      value: muc.jitsi.jitsi
+    - name: XMPP_BOSH_URL_BASE
+      value: http://jitsi-prosody:5280
+    - name: TZ
+      value: UTC
+    - name: JVB_TCP_HARVESTER_DISABLED
+      value: "false"
+    - name: DISABLE_HTTPS
+      value: "1"
+    - name: PUBLIC_URL
+      value: https://jitsi.ingress.andrew-cluster.core.shoot.garden.otcdemo.gardener.t-systems.net
+    - name: ETHERPAD_URL_BASE
+      value: http://etherpad:9001/p/
+    - name: ETHERPAD_PUBLIC_URL
+      value: https://etherpad.ingress.andrew-cluster.core.shoot.garden.otcdemo.gardener.t-systems.net/p/
+
+  jicofo:
+    replicas: 1
+    image: jitsi/jicofo:stable-5390-3
+    service:
+      port_spec:
+        "jicofo": 5280
+    environments:
+    - name: XMPP_SERVER
+      value: jitsi-prosody
+    - name: XMPP_DOMAIN
+      value: jitsi.jitsi
+    - name: XMPP_AUTH_DOMAIN
+      value: auth.jitsi.jitsi
+    - name: XMPP_MUC_DOMAIN
+      value: muc.jitsi.jitsi
+    - name: XMPP_INTERNAL_MUC_DOMAIN
+      value: internal-muc.jitsi.jitsi
+    - name: TZ
+      value: UTC
+    - name: JVB_BREWERY_MUC
+      value: jvbbrewery
+    - name: PUBLIC_URL
+      value: https://jitsi.ingress.andrew-cluster.core.shoot.garden.otcdemo.gardener.t-systems.net
+    - name: JICOFO_COMPONENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JICOFO_COMPONENT_SECRET
+    - name: JICOFO_AUTH_USER
+      value: focus
+    - name: JICOFO_AUTH_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JICOFO_AUTH_PASSWORD
+
+  prosody:
+    replicas: 1
+    service:
+      port_spec:
+        "http": 5280
+        "xmpp": 5222
+        "external": 5347
+    image: jitsi/prosody:stable-5390-3
+    environments:
+    - name: XMPP_DOMAIN
+      value: jitsi.jitsi
+    - name: XMPP_AUTH_DOMAIN
+      value: auth.jitsi.jitsi
+    - name: XMPP_MUC_DOMAIN
+      value: muc.jitsi.jitsi
+    - name: XMPP_INTERNAL_MUC_DOMAIN
+      value: internal-muc.jitsi.jitsi
+    - name: JICOFO_COMPONENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JICOFO_COMPONENT_SECRET
+    - name: JVB_AUTH_USER
+      value: jvb
+    - name: JVB_AUTH_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JVB_AUTH_PASSWORD
+    - name: JICOFO_AUTH_USER
+      value: focus
+    - name: JICOFO_AUTH_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JICOFO_AUTH_PASSWORD
+    - name: TZ
+      value: UTC
+    - name: JVB_TCP_HARVESTER_DISABLED
+      value: "false"
+    - name: PUBLIC_URL
+      value: https://jitsi.ingress.andrew-cluster.core.shoot.garden.otcdemo.gardener.t-systems.net
+
+  jvb:
+    replicas: 2
+    image: jitsi/jvb:stable-5390-3
+    proxy:
+      service:
+        type: "LoadBalancer"
+    environments:
+    - name: XMPP_SERVER
+      value: jitsi-prosody
+    - name: XMPP_DOMAIN
+      value: jitsi.jitsi
+    - name: XMPP_AUTH_DOMAIN
+      value: auth.jitsi.jitsi
+    - name: XMPP_INTERNAL_MUC_DOMAIN
+      value: internal-muc.jitsi.jitsi
+    - name: JVB_STUN_SERVERS
+      value: stun.l.google.com:19302,stun1.l.google.com:19302,stun2.l.google.com:19302
+    - name: JVB_ENABLE_APIS
+      value: colibri,rest
+    - name: JICOFO_AUTH_USER
+      value: focus
+    - name: JVB_TCP_HARVESTER_DISABLED
+      value: "false"
+    - name: JVB_AUTH_USER
+      value: jvb
+    - name: JVB_PORT
+      value: "30300"
+#    - name: JVB_TCP_PORT
+#      value: "4443"
+#    - name: JVB_TCP_MAPPED_PORT
+#      value: "4443"
+    - name: JVB_BREWERY_MUC
+      value: jvbbrewery
+    - name: TZ
+      value: UTC
+    - name: JICOFO_ENABLE_HEALTH_CHECKS
+      value: "false"
+    - name: PUBLIC_URL
+      value: https://jitsi.ingress.andrew-cluster.core.shoot.garden.otcdemo.gardener.t-systems.net
+    - name: JVB_AUTH_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JVB_AUTH_PASSWORD
+    - name: JICOFO_AUTH_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JICOFO_AUTH_PASSWORD
+    - name: DOCKER_HOST_ADDRESS
+      value: 80.158.19.61
+#      value: 80.158.43.185
+      # valueFrom:
+      #   fieldRef:
+      #     fieldPath: status.hostIP
+    - name: NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: HOSTNAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
