@@ -146,7 +146,7 @@ func GetDefaultLabels(appName string) map[string]string {
 func NewJitsiTemplate(ctx context.Context, jitsiAppName string,
 	j *jitsiv1alpha1.Jitsi, c client.Client, l logr.Logger) *DeploymentTemplate {
 	switch jitsiAppName {
-	case "web":
+	case WebContainerName:
 		return &DeploymentTemplate{
 			Name:            WebDeploymentName,
 			Namespace:       j.Namespace,
@@ -156,12 +156,11 @@ func NewJitsiTemplate(ctx context.Context, jitsiAppName string,
 			PortSpec:        j.Spec.Web.PortSpec,
 			ImagePullPolicy: j.Spec.Web.ImagePullPolicy,
 			Environments:    j.Spec.Web.Environments,
-			Labels:          j.Spec.Web.Labels,
 			Ctx:             ctx,
 			Client:          c,
 			Log:             l,
 		}
-	case "prosody":
+	case ProsodyContainerName:
 		return &DeploymentTemplate{
 			Name:            ProsodyDeploymentName,
 			Namespace:       j.Namespace,
@@ -171,12 +170,11 @@ func NewJitsiTemplate(ctx context.Context, jitsiAppName string,
 			PortSpec:        j.Spec.Prosody.PortSpec,
 			ImagePullPolicy: j.Spec.Prosody.ImagePullPolicy,
 			Environments:    j.Spec.Prosody.Environments,
-			Labels:          j.Spec.Prosody.Labels,
 			Ctx:             ctx,
 			Client:          c,
 			Log:             l,
 		}
-	case "jicofo":
+	case JicofoContainerName:
 		return &DeploymentTemplate{
 			Name:            JicofoDeploymentName,
 			Namespace:       j.Namespace,
@@ -186,23 +184,7 @@ func NewJitsiTemplate(ctx context.Context, jitsiAppName string,
 			PortSpec:        j.Spec.Jicofo.PortSpec,
 			ImagePullPolicy: j.Spec.Jicofo.ImagePullPolicy,
 			Environments:    j.Spec.Jicofo.Environments,
-			Labels:          j.Spec.Jicofo.Labels,
 			Ctx:             ctx,
-			Client:          c,
-			Log:             l,
-		}
-	case "proxy":
-		return &DeploymentTemplate{
-			Name:            "proxyDeploymentName",
-			Namespace:       j.Namespace,
-			Image:           j.Spec.JVB.Proxy.Image,
-			ContainerName:   "proxyContainerName",
-			Replicas:        j.Spec.JVB.Proxy.Replicas,
-			PortSpec:        nil,
-			ImagePullPolicy: j.Spec.JVB.ImagePullPolicy,
-			Environments:    nil,
-			Ctx:             ctx,
-			Labels:          nil,
 			Client:          c,
 			Log:             l,
 		}
@@ -222,7 +204,6 @@ func NewEtherpadTemplate(ctx context.Context, e *jitsiv1alpha1.Etherpad, c clien
 		ImagePullPolicy: e.Spec.ImagePullPolicy,
 		Environments:    e.Spec.Environments,
 		Ctx:             ctx,
-		Labels:          e.Spec.Labels,
 		Client:          c,
 		Log:             l,
 	}

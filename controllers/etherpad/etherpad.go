@@ -2,6 +2,7 @@ package etherpad
 
 import (
 	"context"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	etherpadv1alpha1 "github.com/onmetal/meeting-operator/api/v1alpha1"
@@ -29,7 +30,7 @@ func (r *Reconciler) cleanUpEtherpadObjects(ctx context.Context, e *etherpadv1al
 		return err
 	}
 	s := manifests.NewEtherpadServiceTemplate(ctx, e, r.Client, r.Log)
-	if err := s.Delete(); err != nil && !errors.IsNotFound(err)  {
+	if err := s.Delete(); err != nil && !errors.IsNotFound(err) {
 		r.Log.Info("failed to delete service", "name", s.Name, "error", err)
 		return err
 	}

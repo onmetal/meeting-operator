@@ -98,14 +98,3 @@ func (r *Reconciler) deleteExternalResources(etherpad *etherpadv1alpha1.Etherpad
 	}
 	return nil
 }
-
-
-func (r *Reconciler) createFinalizer(etherpad *etherpadv1alpha1.Etherpad) error {
-	if !utils.ContainsString(etherpad.ObjectMeta.Finalizers, etherpadFinalizer) {
-		etherpad.ObjectMeta.Finalizers = append(etherpad.ObjectMeta.Finalizers, etherpadFinalizer)
-		if err := r.Update(context.Background(), etherpad); err != nil {
-			return err
-		}
-	}
-	return nil
-}

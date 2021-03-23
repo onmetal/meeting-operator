@@ -36,9 +36,9 @@ func (s *ServiceTemplate) Make() error {
 	return s.Update()
 }
 
-func (t *ServiceTemplate) Create() error {
-	preparedService := t.prepareService()
-	return t.Client.Create(t.Ctx, preparedService)
+func (s *ServiceTemplate) Create() error {
+	preparedService := s.prepareService()
+	return s.Client.Create(s.Ctx, preparedService)
 }
 
 func (s *ServiceTemplate) Update() error {
@@ -55,9 +55,6 @@ func (s *ServiceTemplate) Update() error {
 		preparedService := s.prepareService()
 		return s.Client.Create(s.Ctx, preparedService)
 	default:
-		//updatedSpec := s.prepareServiceSpec()
-		//service.Spec = updatedSpec
-		//return s.Client.Create(s.Ctx, service)
 		if err := s.Client.Delete(s.Ctx, service); err != nil {
 			s.Log.Error(err, "failed to delete ServiceTemplate")
 		}

@@ -34,9 +34,9 @@ type Web struct {
 	//+kubebuilder:default="jitsi/web:stable-5390-3"
 	Image string `json:"image,omitempty"`
 	//+kubebuilder:default="IfNotPresent"
-	ImagePullPolicy v1.PullPolicy     `json:"image_pull_policy,omitempty"`
-	Environments    []v1.EnvVar       `json:"environments,omitempty"`
-	Resources       v1.ResourceList   `json:"resources,omitempty"`
+	ImagePullPolicy v1.PullPolicy   `json:"image_pull_policy,omitempty"`
+	Environments    []v1.EnvVar     `json:"environments,omitempty"`
+	Resources       v1.ResourceList `json:"resources,omitempty"`
 	Service         `json:"service,omitempty"`
 }
 
@@ -46,9 +46,9 @@ type Jicofo struct {
 	//+kubebuilder:default="jitsi/jicofo:stable-5390-3"
 	Image string `json:"image,omitempty"`
 	//+kubebuilder:default="IfNotPresent"
-	ImagePullPolicy v1.PullPolicy     `json:"image_pull_policy,omitempty"`
-	Environments    []v1.EnvVar       `json:"environments,omitempty"`
-	Resources       v1.ResourceList   `json:"resources,omitempty"`
+	ImagePullPolicy v1.PullPolicy   `json:"image_pull_policy,omitempty"`
+	Environments    []v1.EnvVar     `json:"environments,omitempty"`
+	Resources       v1.ResourceList `json:"resources,omitempty"`
 	Service         `json:"service,omitempty"`
 }
 
@@ -58,9 +58,9 @@ type JVB struct {
 	//+kubebuilder:default="jitsi/jvb:stable-5390-3"
 	Image string `json:"image,omitempty"`
 	//+kubebuilder:default="IfNotPresent"
-	ImagePullPolicy v1.PullPolicy     `json:"image_pull_policy,omitempty"`
-	Environments    []v1.EnvVar       `json:"environments,omitempty"`
-	Resources       v1.ResourceList   `json:"resources,omitempty"`
+	ImagePullPolicy v1.PullPolicy   `json:"image_pull_policy,omitempty"`
+	Environments    []v1.EnvVar     `json:"environments,omitempty"`
+	Resources       v1.ResourceList `json:"resources,omitempty"`
 	Proxy           `json:"proxy,omitempty"`
 	Service         `json:"service,omitempty"`
 }
@@ -71,9 +71,9 @@ type Prosody struct {
 	//+kubebuilder:default="jitsi/prosody:stable-5390-3"
 	Image string `json:"image,omitempty"`
 	//+kubebuilder:default="IfNotPresent"
-	ImagePullPolicy v1.PullPolicy     `json:"image_pull_policy,omitempty"`
-	Environments    []v1.EnvVar       `json:"environments,omitempty"`
-	Resources       v1.ResourceList   `json:"resources,omitempty"`
+	ImagePullPolicy v1.PullPolicy   `json:"image_pull_policy,omitempty"`
+	Environments    []v1.EnvVar     `json:"environments,omitempty"`
+	Resources       v1.ResourceList `json:"resources,omitempty"`
 	Service         `json:"service,omitempty"`
 }
 

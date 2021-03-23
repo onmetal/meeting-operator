@@ -29,7 +29,7 @@ func (r *Reconciler) cleanupWebObjects(ctx context.Context, jitsi *jitsiv1alpha1
 		return err
 	}
 	s := manifests.NewJitsiServiceTemplate(ctx, "web", jitsi, r.Client, r.Log)
-	if err := s.Delete(); err != nil && !errors.IsNotFound(err)  {
+	if err := s.Delete(); err != nil && !errors.IsNotFound(err) {
 		r.Log.Info("failed to delete service", "name", s.Name, "error", err)
 		return err
 	}

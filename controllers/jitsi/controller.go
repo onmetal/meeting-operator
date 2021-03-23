@@ -18,6 +18,7 @@ package jitsi
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
 	jitsiv1alpha1 "github.com/onmetal/meeting-operator/api/v1alpha1"
 	"github.com/onmetal/meeting-operator/internal/utils"

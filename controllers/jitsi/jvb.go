@@ -17,6 +17,7 @@ const (
 	JvbPodName       = "jitsi-jvb"
 	JvbContainerName = "jvb"
 	externalPort     = 10000
+	waitForDeletion  = 45
 )
 
 func (r *Reconciler) makeJVB(ctx context.Context, jitsi *jitsiv1alpha1.Jitsi) error {
@@ -26,10 +27,11 @@ func (r *Reconciler) makeJVB(ctx context.Context, jitsi *jitsiv1alpha1.Jitsi) er
 			if err := r.deletePod(ctx, replica, jitsi.Namespace); err != nil {
 				r.Log.Info("failed to delete pod", "error", err, "namespace", jitsi.Namespace)
 			}
-			time.Sleep(45 * time.Second)
+			time.Sleep(waitForDeletion * time.Second)
 			err := r.createPod(ctx, replica, jitsi.Namespace, &jitsi.Spec.JVB)
 			if err != nil {
 				r.Log.Info("failed to create pod", "error", err, "namespace", jitsi.Namespace)
+				return err
 			}
 		}
 		serviceName := fmt.Sprintf("jitsi-jvb-%d", replica)
@@ -39,7 +41,6 @@ func (r *Reconciler) makeJVB(ctx context.Context, jitsi *jitsiv1alpha1.Jitsi) er
 	}
 	return nil
 }
-
 
 func (r *Reconciler) createPod(ctx context.Context, replica int32, namespace string, jvb *jitsiv1alpha1.JVB) error {
 	spec := r.createPopSpec(replica, jvb)
@@ -123,12 +124,12 @@ func (r *Reconciler) createPopSpec(replica int32, jvb *jitsiv1alpha1.JVB) v1.Pod
 				Image: jvb.Image,
 				Ports: []v1.ContainerPort{
 					{
-						Name: "jvb",
-						Protocol: "TCP",
+						Name:          "jvb",
+						Protocol:      "TCP",
 						ContainerPort: port,
 					},
 				},
-				Env:   envs,
+				Env: envs,
 				Resources: v1.ResourceRequirements{
 					Requests: jvb.Resources,
 				},
