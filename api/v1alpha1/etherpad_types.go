@@ -29,7 +29,7 @@ type EtherpadSpec struct {
 	Image string `json:"image,omitempty"`
 	//+kubebuilder:default="IfNotPresent"
 	ImagePullPolicy v1.PullPolicy   `json:"image_pull_policy,omitempty"`
-	Environments    []v1.EnvVar     `json:"env,omitempty"`
+	Environments    []v1.EnvVar     `json:"environments,omitempty"`
 	Resources       v1.ResourceList `json:"resources,omitempty"`
 	Service         `json:"service,omitempty"`
 }
