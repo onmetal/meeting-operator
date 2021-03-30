@@ -48,18 +48,17 @@ func (s *ServiceTemplate) Update() error {
 	}
 	switch {
 	case service.Spec.Type != s.ServiceType:
-		// You can's change spec.type on existing ServiceTemplate
+		// You can't change spec.type on existing ServiceTemplate
 		if err := s.Client.Delete(s.Ctx, service); err != nil {
 			s.Log.Error(err, "failed to delete ServiceTemplate")
 		}
 		preparedService := s.prepareService()
 		return s.Client.Create(s.Ctx, preparedService)
 	default:
-		if err := s.Client.Delete(s.Ctx, service); err != nil {
-			s.Log.Error(err, "failed to delete ServiceTemplate")
-		}
-		preparedService := s.prepareService()
-		return s.Client.Create(s.Ctx, preparedService)
+		preparedServiceSpec := s.prepareServiceSpec()
+		service.Spec.Ports = preparedServiceSpec.Ports
+		service.Spec.Selector = preparedServiceSpec.Selector
+		return s.Client.Update(s.Ctx, service)
 	}
 }
 func (s *ServiceTemplate) Get() (*v1.Service, error) {

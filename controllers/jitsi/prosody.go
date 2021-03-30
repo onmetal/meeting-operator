@@ -3,10 +3,9 @@ package jitsi
 import (
 	"context"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-
 	jitsiv1alpha1 "github.com/onmetal/meeting-operator/api/v1alpha1"
 	"github.com/onmetal/meeting-operator/internal/generator/manifests"
+	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 func (r *Reconciler) makeProsody(ctx context.Context, jitsi *jitsiv1alpha1.Jitsi) error {
