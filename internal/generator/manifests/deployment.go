@@ -143,9 +143,9 @@ func GetDefaultLabels(appName string) map[string]string {
 	return defaultLabels
 }
 
-func NewJitsiTemplate(ctx context.Context, jitsiAppName string,
+func NewJitsiTemplate(ctx context.Context, appName string,
 	j *jitsiv1alpha1.Jitsi, c client.Client, l logr.Logger) *DeploymentTemplate {
-	switch jitsiAppName {
+	switch appName {
 	case WebContainerName:
 		return &DeploymentTemplate{
 			Name:            WebDeploymentName,

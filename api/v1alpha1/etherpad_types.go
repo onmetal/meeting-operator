@@ -36,7 +36,9 @@ type EtherpadSpec struct {
 
 type Service struct {
 	//+kubebuilder:default:="ClusterIP"
-	Type     v1.ServiceType   `json:"type,omitempty"`
+	Type v1.ServiceType `json:"type,omitempty"`
+	//+kubebuilder:default:="TCP"
+	Protocol string           `json:"protocol,omitempty"`
 	PortSpec map[string]int32 `json:"port_spec,omitempty"`
 }
 
