@@ -76,6 +76,7 @@ func (d *DeploymentTemplate) Get() (*appsv1.Deployment, error) {
 	err := d.Client.Get(d.Ctx, types.NamespacedName{Name: d.Name, Namespace: d.Namespace}, deployment)
 	return deployment, err
 }
+
 func (d *DeploymentTemplate) Delete() error {
 	deployment, err := d.Get()
 	if err != nil {

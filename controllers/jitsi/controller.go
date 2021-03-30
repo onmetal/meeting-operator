@@ -19,6 +19,9 @@ package jitsi
 import (
 	"context"
 
+	"github.com/onmetal/meeting-operator/internal/generator/manifests"
+	"k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/go-logr/logr"
 	jitsiv1alpha1 "github.com/onmetal/meeting-operator/api/v1alpha1"
 	"github.com/onmetal/meeting-operator/internal/utils"
@@ -76,13 +79,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		}
 		return ctrl.Result{}, nil
 	}
-	if err := r.makeWeb(ctx, jitsi); err != nil {
+	if err := r.make(ctx, "web", jitsi); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err := r.makeJicofo(ctx, jitsi); err != nil {
+	if err := r.make(ctx, "jicofo", jitsi); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err := r.makeProsody(ctx, jitsi); err != nil {
+	if err := r.make(ctx, "prosody", jitsi); err != nil {
 		return ctrl.Result{}, err
 	}
 	if err := r.makeJVB(ctx, jitsi); err != nil {
@@ -102,17 +105,46 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (r *Reconciler) deleteExternalResources(jitsi *jitsiv1alpha1.Jitsi) error {
 	ctx := context.Background()
-	if err := r.cleanupWebObjects(ctx, jitsi); err != nil {
+	if err := r.cleanupObjects(ctx, "web", jitsi); err != nil {
 		return err
 	}
-	if err := r.cleanupProsodyObjects(ctx, jitsi); err != nil {
+	if err := r.cleanupObjects(ctx, "jicofo", jitsi); err != nil {
 		return err
 	}
-	if err := r.cleanupJicofoObjects(ctx, jitsi); err != nil {
+	if err := r.cleanupObjects(ctx, "prosody", jitsi); err != nil {
 		return err
 	}
 	if err := r.cleanUpJVBObjects(ctx, jitsi); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (r *Reconciler) make(ctx context.Context, appName string, jitsi *jitsiv1alpha1.Jitsi) error {
+	d := manifests.NewJitsiTemplate(ctx, appName, jitsi, r.Client, r.Log)
+	if err := d.Make(); err != nil {
+		r.Log.Info("failed to make deployment", "error", err, "Name", d.Name, "Namespace", d.Namespace)
+		return err
+	}
+	svc := manifests.NewJitsiServiceTemplate(ctx, appName, jitsi, r.Client, r.Log)
+	if err := svc.Make(); err != nil {
+		r.Log.Info("failed to make service", "error", err, "Name", d.Name, "Namespace", d.Namespace)
+		return err
+	}
+	return nil
+}
+
+func (r *Reconciler) cleanupObjects(ctx context.Context, appName string, jitsi *jitsiv1alpha1.Jitsi) error {
+	d := manifests.NewJitsiTemplate(ctx, appName, jitsi, r.Client, r.Log)
+	if err := d.Delete(); err != nil && !errors.IsNotFound(err) {
+		r.Log.Info("failed to delete deployment", "name", d.Name, "error", err)
+		return err
+	}
+	s := manifests.NewJitsiServiceTemplate(ctx, appName, jitsi, r.Client, r.Log)
+	if err := s.Delete(); err != nil && !errors.IsNotFound(err) {
+		r.Log.Info("failed to delete service", "name", s.Name, "error", err)
+		return err
+	}
+	r.Log.Info("resources were deleted", "application", appName)
 	return nil
 }
