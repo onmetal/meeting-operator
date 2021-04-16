@@ -213,6 +213,24 @@ func (r *Reconciler) isPodExist(name, namespace string) bool {
 	return true
 }
 
+func (r *Reconciler) cleanUpJVBObjects(ctx context.Context, jitsi *jitsiv1alpha1.Jitsi) error {
+	for replica := int32(1); replica <= jitsi.Spec.JVB.Replicas; replica++ {
+		podName := fmt.Sprintf("%s-%d", JvbPodName, replica)
+		serviceName := fmt.Sprintf("jitsi-jvb-%d", replica)
+		err := r.deletePod(ctx, podName, jitsi.Namespace)
+		if err != nil && !errors.IsNotFound(err) {
+			r.Log.Info("failed to delete pod", "error", err, "namespace", jitsi.Namespace)
+			return err
+		}
+		err = r.deleteService(ctx, serviceName, jitsi.Namespace)
+		if err != nil && !errors.IsNotFound(err) {
+			r.Log.Info("failed to delete service", "error", err, "namespace", jitsi.Namespace)
+			return err
+		}
+	}
+	return nil
+}
+
 func (r *Reconciler) deletePod(ctx context.Context, podName, namespace string) error {
 	pod := &v1.Pod{}
 	err := r.Get(ctx, types.NamespacedName{
@@ -240,22 +258,4 @@ func (r *Reconciler) deleteService(ctx context.Context, name, namespace string) 
 		return err
 	}
 	return r.Delete(ctx, svc)
-}
-
-func (r *Reconciler) cleanUpJVBObjects(ctx context.Context, jitsi *jitsiv1alpha1.Jitsi) error {
-	for replica := int32(1); replica <= jitsi.Spec.JVB.Replicas; replica++ {
-		podName := fmt.Sprintf("%s-%d", JvbPodName, replica)
-		serviceName := fmt.Sprintf("jitsi-jvb-%d", replica)
-		err := r.deletePod(ctx, podName, jitsi.Namespace)
-		if err != nil && !errors.IsNotFound(err) {
-			r.Log.Info("failed to delete pod", "error", err, "namespace", jitsi.Namespace)
-			return err
-		}
-		err = r.deleteService(ctx, serviceName, jitsi.Namespace)
-		if err != nil && !errors.IsNotFound(err) {
-			r.Log.Info("failed to delete service", "error", err, "namespace", jitsi.Namespace)
-			return err
-		}
-	}
-	return nil
 }

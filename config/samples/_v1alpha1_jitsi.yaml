@@ -123,6 +123,9 @@ spec:
   jvb:
     replicas: 2
     image: jitsi/jvb:stable-5390-3
+    service:
+      type: "LoadBalancer"
+      protocol: "UDP"
     environments:
     - name: XMPP_SERVER
       value: jitsi-prosody
@@ -168,8 +171,8 @@ spec:
         secretKeyRef:
           name: jitsi-config
           key: JICOFO_AUTH_PASSWORD
-    - name: DOCKER_HOST_ADDRESS
-      value: <your public ip here>
+#    - name: DOCKER_HOST_ADDRESS
+#      value: <your public ip here>
 #      value: 80.158.19.61
 #      value: 80.158.43.185
       # valueFrom:
