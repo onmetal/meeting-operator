@@ -31,15 +31,19 @@ type EtherpadSpec struct {
 	ImagePullPolicy v1.PullPolicy   `json:"image_pull_policy,omitempty"`
 	Environments    []v1.EnvVar     `json:"environments,omitempty"`
 	Resources       v1.ResourceList `json:"resources,omitempty"`
-	Service         `json:"service,omitempty"`
+	//+kubebuilder:default="ClusterIP"
+	ServiceType v1.ServiceType `json:"service_type,omitempty"`
+	Services    []Service      `json:"service,omitempty"`
 }
 
 type Service struct {
 	//+kubebuilder:default:="ClusterIP"
-	Type v1.ServiceType `json:"type,omitempty"`
-	//+kubebuilder:default:="TCP"
-	Protocol string           `json:"protocol,omitempty"`
-	PortSpec map[string]int32 `json:"port_spec,omitempty"`
+	Type     v1.ServiceType `json:"type,omitempty"`
+	Protocol v1.Protocol    `json:"protocol,omitempty"`
+	//+kubebuilder:default="http"
+	PortName string `json:"port_name,omitempty"`
+	//+kubebuilder:default=9001
+	Port int32 `json:"port,omitempty"`
 }
 
 // EtherpadStatus defines the observed state of Etherpad

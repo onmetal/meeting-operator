@@ -18,6 +18,7 @@ package jitsi
 
 import (
 	"context"
+
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
 
 	"github.com/onmetal/meeting-operator/internal/generator/manifests"

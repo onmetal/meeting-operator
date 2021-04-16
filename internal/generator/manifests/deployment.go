@@ -2,7 +2,6 @@ package manifests
 
 import (
 	"context"
-	"github.com/onmetal/meeting-operator/apis/etherpad/v1alpha1"
 	v1alpha12 "github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
 
 	"github.com/go-logr/logr"
@@ -15,14 +14,13 @@ import (
 )
 
 const (
-	AppKubernetesPartOf    = "jitsi-meet"
-	EtherpadDeploymentName = "etherpad"
-	JicofoDeploymentName   = "jitsi-jicofo"
-	JicofoContainerName    = "jicofo"
-	ProsodyDeploymentName  = "jitsi-prosody"
-	ProsodyContainerName   = "prosody"
-	WebDeploymentName      = "jitsi-web"
-	WebContainerName       = "web"
+	AppKubernetesPartOf   = "jitsi-meet"
+	JicofoDeploymentName  = "jitsi-jicofo"
+	JicofoContainerName   = "jicofo"
+	ProsodyDeploymentName = "jitsi-prosody"
+	ProsodyContainerName  = "prosody"
+	WebDeploymentName     = "jitsi-web"
+	WebContainerName      = "web"
 )
 
 type Helper interface {
@@ -192,21 +190,5 @@ func NewJitsiTemplate(ctx context.Context, appName string,
 		}
 	default:
 		return &DeploymentTemplate{}
-	}
-}
-
-func NewEtherpadTemplate(ctx context.Context, e *v1alpha1.Etherpad, c client.Client, l logr.Logger) *DeploymentTemplate {
-	return &DeploymentTemplate{
-		Name:            EtherpadDeploymentName,
-		Namespace:       e.Namespace,
-		Image:           e.Spec.Image,
-		ContainerName:   EtherpadDeploymentName,
-		Replicas:        e.Spec.Replicas,
-		PortSpec:        e.Spec.PortSpec,
-		ImagePullPolicy: e.Spec.ImagePullPolicy,
-		Environments:    e.Spec.Environments,
-		Ctx:             ctx,
-		Client:          c,
-		Log:             l,
 	}
 }

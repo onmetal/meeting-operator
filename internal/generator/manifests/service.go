@@ -2,7 +2,7 @@ package manifests
 
 import (
 	"context"
-	"github.com/onmetal/meeting-operator/apis/etherpad/v1alpha1"
+
 	v1alpha12 "github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
 
 	"github.com/go-logr/logr"
@@ -162,19 +162,5 @@ func NewJitsiServiceTemplate(ctx context.Context, appName string, j *v1alpha12.J
 		}
 	default:
 		return &ServiceTemplate{}
-	}
-}
-
-func NewEtherpadServiceTemplate(ctx context.Context, e *v1alpha1.Etherpad,
-	c client.Client, l logr.Logger) *ServiceTemplate {
-	return &ServiceTemplate{
-		Name:         e.Name,
-		SelectorName: EtherpadDeploymentName,
-		Namespace:    e.Namespace,
-		ServiceType:  e.Spec.Type,
-		PortSpec:     e.Spec.PortSpec,
-		Ctx:          ctx,
-		Client:       c,
-		Log:          l,
 	}
 }
