@@ -302,32 +302,6 @@ spec:
                     description: PullPolicy describes a policy for if/when to pull
                       a container image
                     type: string
-                  proxy:
-                    properties:
-                      image:
-                        default: haproxy:2.2.11
-                        type: string
-                      replicas:
-                        default: 1
-                        format: int32
-                        type: integer
-                      service:
-                        properties:
-                          port_spec:
-                            additionalProperties:
-                              format: int32
-                              type: integer
-                            type: object
-                          protocol:
-                            default: TCP
-                            type: string
-                          type:
-                            default: ClusterIP
-                            description: Service Type string describes ingress methods
-                              for a service
-                            type: string
-                        type: object
-                    type: object
                   replicas:
                     default: 1
                     format: int32

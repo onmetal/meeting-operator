@@ -3,12 +3,12 @@ package jitsi
 import (
 	"context"
 	"fmt"
+	"github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
-	jitsiv1alpha1 "github.com/onmetal/meeting-operator/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -22,7 +22,7 @@ const (
 	waitForLB        = 20 * time.Second
 )
 
-func (r *Reconciler) makeJVB(ctx context.Context, jitsi *jitsiv1alpha1.Jitsi) error {
+func (r *Reconciler) makeJVB(ctx context.Context, jitsi *v1alpha1.Jitsi) error {
 	for replica := int32(1); replica <= jitsi.Spec.JVB.Replicas; replica++ {
 		podName := fmt.Sprintf("%s-%d", JvbPodName, replica)
 		serviceName := fmt.Sprintf("jitsi-jvb-%d", replica)
@@ -51,7 +51,7 @@ func (r *Reconciler) makeJVB(ctx context.Context, jitsi *jitsiv1alpha1.Jitsi) er
 }
 
 func (r *Reconciler) createPod(ctx context.Context, replica int32,
-	podName, namespace string, jvb *jitsiv1alpha1.JVB) error {
+	podName, namespace string, jvb *v1alpha1.JVB) error {
 	labelKey := fmt.Sprintf("%s-%d", JvbPodName, replica)
 	labels := map[string]string{"jitsi-jvb": labelKey}
 	spec := r.createPopSpec(replica, namespace, jvb)
@@ -66,7 +66,7 @@ func (r *Reconciler) createPod(ctx context.Context, replica int32,
 	return r.Create(ctx, pod)
 }
 
-func (r *Reconciler) createPopSpec(replica int32, namespace string, jvb *jitsiv1alpha1.JVB) v1.PodSpec {
+func (r *Reconciler) createPopSpec(replica int32, namespace string, jvb *v1alpha1.JVB) v1.PodSpec {
 	port := externalPort + replica
 	envs := r.additionalEnvironments(replica, namespace, jvb.Service.Protocol, jvb.Environments)
 	return v1.PodSpec{
@@ -213,7 +213,7 @@ func (r *Reconciler) isPodExist(name, namespace string) bool {
 	return true
 }
 
-func (r *Reconciler) cleanUpJVBObjects(ctx context.Context, jitsi *jitsiv1alpha1.Jitsi) error {
+func (r *Reconciler) cleanUpJVBObjects(ctx context.Context, jitsi *v1alpha1.Jitsi) error {
 	for replica := int32(1); replica <= jitsi.Spec.JVB.Replicas; replica++ {
 		podName := fmt.Sprintf("%s-%d", JvbPodName, replica)
 		serviceName := fmt.Sprintf("jitsi-jvb-%d", replica)

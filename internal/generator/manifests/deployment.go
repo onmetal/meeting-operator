@@ -2,9 +2,10 @@ package manifests
 
 import (
 	"context"
+	"github.com/onmetal/meeting-operator/apis/etherpad/v1alpha1"
+	v1alpha12 "github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
 
 	"github.com/go-logr/logr"
-	jitsiv1alpha1 "github.com/onmetal/meeting-operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -145,7 +146,7 @@ func GetDefaultLabels(appName string) map[string]string {
 }
 
 func NewJitsiTemplate(ctx context.Context, appName string,
-	j *jitsiv1alpha1.Jitsi, c client.Client, l logr.Logger) *DeploymentTemplate {
+	j *v1alpha12.Jitsi, c client.Client, l logr.Logger) *DeploymentTemplate {
 	switch appName {
 	case WebContainerName:
 		return &DeploymentTemplate{
@@ -194,7 +195,7 @@ func NewJitsiTemplate(ctx context.Context, appName string,
 	}
 }
 
-func NewEtherpadTemplate(ctx context.Context, e *jitsiv1alpha1.Etherpad, c client.Client, l logr.Logger) *DeploymentTemplate {
+func NewEtherpadTemplate(ctx context.Context, e *v1alpha1.Etherpad, c client.Client, l logr.Logger) *DeploymentTemplate {
 	return &DeploymentTemplate{
 		Name:            EtherpadDeploymentName,
 		Namespace:       e.Namespace,

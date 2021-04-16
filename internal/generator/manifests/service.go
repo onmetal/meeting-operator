@@ -2,9 +2,10 @@ package manifests
 
 import (
 	"context"
+	"github.com/onmetal/meeting-operator/apis/etherpad/v1alpha1"
+	v1alpha12 "github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
 
 	"github.com/go-logr/logr"
-	jitsiv1alpha1 "github.com/onmetal/meeting-operator/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -123,7 +124,7 @@ func setLabelsForApp(appName string) map[string]string {
 	return labels
 }
 
-func NewJitsiServiceTemplate(ctx context.Context, appName string, j *jitsiv1alpha1.Jitsi,
+func NewJitsiServiceTemplate(ctx context.Context, appName string, j *v1alpha12.Jitsi,
 	c client.Client, l logr.Logger) *ServiceTemplate {
 	switch appName {
 	case "web":
@@ -164,7 +165,7 @@ func NewJitsiServiceTemplate(ctx context.Context, appName string, j *jitsiv1alph
 	}
 }
 
-func NewEtherpadServiceTemplate(ctx context.Context, e *jitsiv1alpha1.Etherpad,
+func NewEtherpadServiceTemplate(ctx context.Context, e *v1alpha1.Etherpad,
 	c client.Client, l logr.Logger) *ServiceTemplate {
 	return &ServiceTemplate{
 		Name:         e.Name,

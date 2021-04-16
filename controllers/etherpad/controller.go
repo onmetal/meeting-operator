@@ -18,6 +18,7 @@ package etherpad
 
 import (
 	"context"
+	"github.com/onmetal/meeting-operator/apis/etherpad/v1alpha1"
 
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/internal/utils"
@@ -26,8 +27,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	etherpadv1alpha1 "github.com/onmetal/meeting-operator/api/v1alpha1"
 )
 
 type Reconciler struct {
@@ -46,7 +45,7 @@ const (
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("etherpad", req.NamespacedName)
 
-	etherpad := &etherpadv1alpha1.Etherpad{}
+	etherpad := &v1alpha1.Etherpad{}
 	if err := r.Get(ctx, req.NamespacedName, etherpad); err != nil {
 		r.Log.Info("unable to fetch Etherpad", "error", err)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -85,13 +84,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&etherpadv1alpha1.Etherpad{}).
+		For(&v1alpha1.Etherpad{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&v1.Service{}).
 		Complete(r)
 }
 
-func (r *Reconciler) deleteExternalResources(etherpad *etherpadv1alpha1.Etherpad) error {
+func (r *Reconciler) deleteExternalResources(etherpad *v1alpha1.Etherpad) error {
 	ctx := context.Background()
 	if err := r.cleanUpEtherpadObjects(ctx, etherpad); err != nil {
 		return err

@@ -2,14 +2,14 @@ package etherpad
 
 import (
 	"context"
+	"github.com/onmetal/meeting-operator/apis/etherpad/v1alpha1"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
-	etherpadv1alpha1 "github.com/onmetal/meeting-operator/api/v1alpha1"
 	"github.com/onmetal/meeting-operator/internal/generator/manifests"
 )
 
-func (r *Reconciler) make(ctx context.Context, etherpad *etherpadv1alpha1.Etherpad) error {
+func (r *Reconciler) make(ctx context.Context, etherpad *v1alpha1.Etherpad) error {
 	d := manifests.NewEtherpadTemplate(ctx, etherpad, r.Client, r.Log)
 	if err := d.Make(); err != nil {
 		r.Log.Info("failed to make deployment", "error", err, "Name", d.Name, "Namespace", d.Namespace)
@@ -23,7 +23,7 @@ func (r *Reconciler) make(ctx context.Context, etherpad *etherpadv1alpha1.Etherp
 	return nil
 }
 
-func (r *Reconciler) cleanUpEtherpadObjects(ctx context.Context, e *etherpadv1alpha1.Etherpad) error {
+func (r *Reconciler) cleanUpEtherpadObjects(ctx context.Context, e *v1alpha1.Etherpad) error {
 	d := manifests.NewEtherpadTemplate(ctx, e, r.Client, r.Log)
 	if err := d.Delete(); err != nil && !errors.IsNotFound(err) {
 		r.Log.Info("failed to delete deployment", "name", d.Name, "error", err)

@@ -18,12 +18,12 @@ package jitsi
 
 import (
 	"context"
+	"github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
 
 	"github.com/onmetal/meeting-operator/internal/generator/manifests"
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/go-logr/logr"
-	jitsiv1alpha1 "github.com/onmetal/meeting-operator/api/v1alpha1"
 	"github.com/onmetal/meeting-operator/internal/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -49,7 +49,7 @@ const (
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("jitsi", req.NamespacedName)
 
-	jitsi := &jitsiv1alpha1.Jitsi{}
+	jitsi := &v1alpha1.Jitsi{}
 	if err := r.Get(ctx, req.NamespacedName, jitsi); err != nil {
 		r.Log.Info("unable to fetch Jitsi", "error", err)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -97,13 +97,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&jitsiv1alpha1.Jitsi{}).
+		For(&v1alpha1.Jitsi{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&v1.Service{}).
 		Complete(r)
 }
 
-func (r *Reconciler) deleteExternalResources(jitsi *jitsiv1alpha1.Jitsi) error {
+func (r *Reconciler) deleteExternalResources(jitsi *v1alpha1.Jitsi) error {
 	ctx := context.Background()
 	if err := r.cleanupObjects(ctx, "web", jitsi); err != nil {
 		return err
@@ -120,7 +120,7 @@ func (r *Reconciler) deleteExternalResources(jitsi *jitsiv1alpha1.Jitsi) error {
 	return nil
 }
 
-func (r *Reconciler) make(ctx context.Context, appName string, jitsi *jitsiv1alpha1.Jitsi) error {
+func (r *Reconciler) make(ctx context.Context, appName string, jitsi *v1alpha1.Jitsi) error {
 	d := manifests.NewJitsiTemplate(ctx, appName, jitsi, r.Client, r.Log)
 	if err := d.Make(); err != nil {
 		r.Log.Info("failed to make deployment", "error", err, "Name", d.Name, "Namespace", d.Namespace)
@@ -134,7 +134,7 @@ func (r *Reconciler) make(ctx context.Context, appName string, jitsi *jitsiv1alp
 	return nil
 }
 
-func (r *Reconciler) cleanupObjects(ctx context.Context, appName string, jitsi *jitsiv1alpha1.Jitsi) error {
+func (r *Reconciler) cleanupObjects(ctx context.Context, appName string, jitsi *v1alpha1.Jitsi) error {
 	d := manifests.NewJitsiTemplate(ctx, appName, jitsi, r.Client, r.Log)
 	if err := d.Delete(); err != nil && !errors.IsNotFound(err) {
 		r.Log.Info("failed to delete deployment", "name", d.Name, "error", err)

@@ -61,7 +61,6 @@ type JVB struct {
 	ImagePullPolicy v1.PullPolicy   `json:"image_pull_policy,omitempty"`
 	Environments    []v1.EnvVar     `json:"environments,omitempty"`
 	Resources       v1.ResourceList `json:"resources,omitempty"`
-	Proxy           `json:"proxy,omitempty"`
 	Service         `json:"service,omitempty"`
 }
 
@@ -77,18 +76,16 @@ type Prosody struct {
 	Service         `json:"service,omitempty"`
 }
 
-type Proxy struct {
-	//+kubebuilder:default="haproxy:2.2.11"
-	Image string `json:"image,omitempty"`
-	//+kubebuilder:default:=1
-	Replicas int32 `json:"replicas,omitempty"`
-	Service  `json:"service,omitempty"`
+type Service struct {
+	//+kubebuilder:default:="ClusterIP"
+	Type v1.ServiceType `json:"type,omitempty"`
+	//+kubebuilder:default:="TCP"
+	Protocol string           `json:"protocol,omitempty"`
+	PortSpec map[string]int32 `json:"port_spec,omitempty"`
 }
 
 // JitsiStatus defines the observed state of Jitsi
 type JitsiStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 }
 
 //+kubebuilder:object:root=true
