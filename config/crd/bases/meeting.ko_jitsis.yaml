@@ -167,22 +167,30 @@ spec:
                     description: ResourceList is a set of (resource name, quantity)
                       pairs.
                     type: object
-                  service:
-                    properties:
-                      port_spec:
-                        additionalProperties:
+                  service_type:
+                    description: Service Type string describes ingress methods for
+                      a service
+                    type: string
+                  services:
+                    items:
+                      properties:
+                        port:
+                          default: 80
                           format: int32
                           type: integer
-                        type: object
-                      protocol:
-                        default: TCP
-                        type: string
-                      type:
-                        default: ClusterIP
-                        description: Service Type string describes ingress methods
-                          for a service
-                        type: string
-                    type: object
+                        port_name:
+                          default: http
+                          type: string
+                        protocol:
+                          default: TCP
+                          type: string
+                        type:
+                          default: ClusterIP
+                          description: Service Type string describes ingress methods
+                            for a service
+                          type: string
+                      type: object
+                    type: array
                 type: object
               jvb:
                 properties:
@@ -318,11 +326,13 @@ spec:
                     type: object
                   service:
                     properties:
-                      port_spec:
-                        additionalProperties:
-                          format: int32
-                          type: integer
-                        type: object
+                      port:
+                        default: 80
+                        format: int32
+                        type: integer
+                      port_name:
+                        default: http
+                        type: string
                       protocol:
                         default: TCP
                         type: string
@@ -332,6 +342,15 @@ spec:
                           for a service
                         type: string
                     type: object
+                  service_annotations:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  service_type:
+                    default: ClusterIP
+                    description: Service Type string describes ingress methods for
+                      a service
+                    type: string
                 type: object
               prosody:
                 properties:
@@ -465,22 +484,30 @@ spec:
                     description: ResourceList is a set of (resource name, quantity)
                       pairs.
                     type: object
-                  service:
-                    properties:
-                      port_spec:
-                        additionalProperties:
+                  service_type:
+                    description: Service Type string describes ingress methods for
+                      a service
+                    type: string
+                  services:
+                    items:
+                      properties:
+                        port:
+                          default: 80
                           format: int32
                           type: integer
-                        type: object
-                      protocol:
-                        default: TCP
-                        type: string
-                      type:
-                        default: ClusterIP
-                        description: Service Type string describes ingress methods
-                          for a service
-                        type: string
-                    type: object
+                        port_name:
+                          default: http
+                          type: string
+                        protocol:
+                          default: TCP
+                          type: string
+                        type:
+                          default: ClusterIP
+                          description: Service Type string describes ingress methods
+                            for a service
+                          type: string
+                      type: object
+                    type: array
                 type: object
               web:
                 properties:
@@ -614,22 +641,30 @@ spec:
                     description: ResourceList is a set of (resource name, quantity)
                       pairs.
                     type: object
-                  service:
-                    properties:
-                      port_spec:
-                        additionalProperties:
+                  service_type:
+                    description: Service Type string describes ingress methods for
+                      a service
+                    type: string
+                  services:
+                    items:
+                      properties:
+                        port:
+                          default: 80
                           format: int32
                           type: integer
-                        type: object
-                      protocol:
-                        default: TCP
-                        type: string
-                      type:
-                        default: ClusterIP
-                        description: Service Type string describes ingress methods
-                          for a service
-                        type: string
-                    type: object
+                        port_name:
+                          default: http
+                          type: string
+                        protocol:
+                          default: TCP
+                          type: string
+                        type:
+                          default: ClusterIP
+                          description: Service Type string describes ingress methods
+                            for a service
+                          type: string
+                      type: object
+                    type: array
                 type: object
             required:
             - jicofo

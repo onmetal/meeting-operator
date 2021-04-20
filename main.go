@@ -25,8 +25,8 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"os"
 
-	"github.com/onmetal/meeting-operator/controllers/etherpad"
-	"github.com/onmetal/meeting-operator/controllers/jitsi"
+	etherpadcontroller "github.com/onmetal/meeting-operator/controllers/etherpad"
+	jitsicontroller "github.com/onmetal/meeting-operator/controllers/jitsi"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -78,7 +78,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&etherpad.Reconciler{
+	if err = (&etherpadcontroller.Reconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Etherpad"),
 		Scheme: mgr.GetScheme(),
@@ -86,7 +86,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Etherpad")
 		os.Exit(1)
 	}
-	if err = (&jitsi.Reconciler{
+	if err = (&jitsicontroller.Reconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Jitsi"),
 		Scheme: mgr.GetScheme(),

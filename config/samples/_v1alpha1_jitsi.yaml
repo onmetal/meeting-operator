@@ -6,9 +6,11 @@ spec:
   web:
     replicas: 1
     image: jitsi/web:stable-5390-3
-    service:
-      port_spec:
-        "http": 80
+    service_type: "ClusterIP"
+    services:
+      - port_name: "http"
+        protocol: "TCP"
+        port: 80
     environments:
     - name: ENABLE_LETSENCRYPT
       value: "0"
@@ -42,9 +44,11 @@ spec:
   jicofo:
     replicas: 1
     image: jitsi/jicofo:stable-5390-3
-    service:
-      port_spec:
-        "jicofo": 5280
+    service_type: "ClusterIP"
+    services:
+      - port_name: "jicofo"
+        protocol: "TCP"
+        port: 5280
     environments:
     - name: XMPP_SERVER
       value: jitsi-prosody
@@ -77,11 +81,17 @@ spec:
 
   prosody:
     replicas: 1
-    service:
-      port_spec:
-        "http": 5280
-        "xmpp": 5222
-        "external": 5347
+    service_type: "ClusterIP"
+    services:
+      - port_name: "http"
+        protocol: "TCP"
+        port: 5282
+      - port_name: "xmpp"
+        protocol: "TCP"
+        port: 5222
+      - port_name: "external"
+        protocol: "TCP"
+        port: 5347
     image: jitsi/prosody:stable-5390-3
     environments:
     - name: XMPP_DOMAIN
@@ -123,8 +133,9 @@ spec:
   jvb:
     replicas: 2
     image: jitsi/jvb:stable-5390-3
+    service_type: "LoadBalancer"
     service:
-      type: "LoadBalancer"
+      port_name: "jvb"
       protocol: "UDP"
     environments:
     - name: XMPP_SERVER

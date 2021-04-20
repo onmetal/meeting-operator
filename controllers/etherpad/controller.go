@@ -14,13 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package etherpad
+package controller
 
 import (
 	"context"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -34,7 +33,6 @@ import (
 
 const (
 	etherpadFinalizer = "etherpad.finalizers.meeting.ko"
-	contextTimeOut    = 30 * time.Second
 )
 
 type Reconciler struct {
@@ -72,7 +70,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	newEtherpad := etherpad.NewDeployment(ctx, r.Client, r.Log, eth)
 	if err := newEtherpad.Update(); err != nil {
 		if apierrors.IsNotFound(err) {
-			if err := newEtherpad.Create(); err != nil {
+			if err = newEtherpad.Create(); err != nil {
 				return ctrl.Result{}, err
 			}
 		} else {
@@ -84,7 +82,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	newEtherpadSvc := etherpad.NewService(ctx, r.Client, r.Log, eth)
 	if err := newEtherpadSvc.Update(); err != nil {
 		if apierrors.IsNotFound(err) {
-			if err := newEtherpadSvc.Create(); err != nil {
+			if err = newEtherpadSvc.Create(); err != nil {
 				return ctrl.Result{}, err
 			}
 		} else {
@@ -96,11 +94,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 }
 
 func (r *Reconciler) onDelete(e event.DeleteEvent) bool {
-	deletedEtherpadObj := e.Object.(*v1alpha1.Etherpad)
-
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(contextTimeOut))
-	defer cancel()
-
+	deletedEtherpadObj, ok := e.Object.(*v1alpha1.Etherpad)
+	if !ok {
+		return false
+	}
+	ctx := context.Background()
 	eth := etherpad.NewDeployment(ctx, r.Client, r.Log, deletedEtherpadObj)
 	if err := eth.Delete(); err != nil {
 		r.Log.Error(err, "failed to delete etherpad deployment")
@@ -109,9 +107,5 @@ func (r *Reconciler) onDelete(e event.DeleteEvent) bool {
 	if err := svc.Delete(); err != nil {
 		r.Log.Error(err, "failed to delete etherpad deployment")
 	}
-	select {
-	case <-ctx.Done():
-		r.Log.Info("etherpad was deleted")
-		return false
-	}
+	return false
 }
