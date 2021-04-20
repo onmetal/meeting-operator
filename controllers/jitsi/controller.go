@@ -31,10 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	jitsiFinalizer = "jitsi.finalizers.meeting.ko"
-)
-
 type Reconciler struct {
 	client.Client
 
@@ -67,31 +63,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		r.Log.Info("unable to fetch Jitsi", "error", err)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-
-	//// examine DeletionTimestamp to determine if object is under deletion
-	//if jitsi.ObjectMeta.DeletionTimestamp.IsZero() {
-	//	if !utils.ContainsString(jitsi.ObjectMeta.Finalizers, jitsiFinalizer) {
-	//		jitsi.ObjectMeta.Finalizers = append(jitsi.ObjectMeta.Finalizers, jitsiFinalizer)
-	//		if err := r.Update(context.Background(), jitsi); err != nil {
-	//			return ctrl.Result{}, err
-	//		}
-	//	}
-	//} else {
-	//	// The object is being deleted
-	//	if utils.ContainsString(jitsi.ObjectMeta.Finalizers, jitsiFinalizer) {
-	//		// our finalizer is present, so lets handle any external dependency
-	//		if err := r.deleteExternalResources(jitsi); err != nil {
-	//			return ctrl.Result{}, err
-	//		}
-	//		// remove our finalizer from the list and update it.
-	//		jitsi.ObjectMeta.Finalizers = utils.RemoveString(jitsi.ObjectMeta.Finalizers, jitsiFinalizer)
-	//		if err := r.Update(context.Background(), jitsi); err != nil {
-	//			return ctrl.Result{}, err
-	//		}
-	//		r.Log.Info("external resources were deleted")
-	//	}
-	//	return ctrl.Result{}, nil
-	//}
 	if err := r.make(ctx, "web", j); err != nil {
 		return ctrl.Result{}, err
 	}

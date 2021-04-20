@@ -56,10 +56,10 @@ type JVB struct {
 	client.Client
 	*v1alpha1.JVB
 
-	ctx             context.Context
-	log             logr.Logger
-	podName, serviceName, namespace  string
-	replica         int32
+	ctx                             context.Context
+	log                             logr.Logger
+	podName, serviceName, namespace string
+	replica                         int32
 }
 
 func NewJitsi(ctx context.Context, appName string,

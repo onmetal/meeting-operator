@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
@@ -29,10 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-)
-
-const (
-	etherpadFinalizer = "etherpad.finalizers.meeting.ko"
 )
 
 type Reconciler struct {
@@ -70,8 +67,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	newEtherpad := etherpad.NewDeployment(ctx, r.Client, r.Log, eth)
 	if err := newEtherpad.Update(); err != nil {
 		if apierrors.IsNotFound(err) {
-			if err = newEtherpad.Create(); err != nil {
-				return ctrl.Result{}, err
+			if createErr := newEtherpad.Create(); createErr != nil {
+				return ctrl.Result{}, createErr
 			}
 		} else {
 			r.Log.Info("failed to update etherpad deployment", "error", err)
@@ -82,8 +79,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	newEtherpadSvc := etherpad.NewService(ctx, r.Client, r.Log, eth)
 	if err := newEtherpadSvc.Update(); err != nil {
 		if apierrors.IsNotFound(err) {
-			if err = newEtherpadSvc.Create(); err != nil {
-				return ctrl.Result{}, err
+			if createErr := newEtherpadSvc.Create(); createErr != nil {
+				return ctrl.Result{}, createErr
 			}
 		} else {
 			r.Log.Info("failed to update etherpad service", "error", err)
