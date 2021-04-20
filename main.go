@@ -18,23 +18,24 @@ package main
 
 import (
 	"flag"
+	etherpadv1alpha "github.com/onmetal/meeting-operator/apis/etherpad/v1alpha1"
+	jitsiv1alpha "github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
+
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"os"
 
-	"github.com/onmetal/meeting-operator/controllers/etherpad"
-	"github.com/onmetal/meeting-operator/controllers/jitsi"
+	etherpadcontroller "github.com/onmetal/meeting-operator/controllers/etherpad"
+	jitsicontroller "github.com/onmetal/meeting-operator/controllers/jitsi"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	meetingkov1alpha1 "github.com/onmetal/meeting-operator/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -43,14 +44,11 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
-func init() {
-	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
-	utilruntime.Must(meetingkov1alpha1.AddToScheme(scheme))
-	//+kubebuilder:scaffold:scheme
-}
-
 func main() {
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(jitsiv1alpha.AddToScheme(scheme))
+	utilruntime.Must(etherpadv1alpha.AddToScheme(scheme))
+	//+kubebuilder:scaffold:scheme
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
@@ -80,7 +78,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&etherpad.Reconciler{
+	if err = (&etherpadcontroller.Reconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Etherpad"),
 		Scheme: mgr.GetScheme(),
@@ -88,7 +86,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Etherpad")
 		os.Exit(1)
 	}
-	if err = (&jitsi.Reconciler{
+	if err = (&jitsicontroller.Reconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Jitsi"),
 		Scheme: mgr.GetScheme(),

@@ -1,5 +1,6 @@
 domain: meeting.ko
 layout: go.kubebuilder.io/v3
+multigroup: true
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
@@ -12,13 +13,13 @@ resources:
   controller: true
   domain: meeting.ko
   kind: Etherpad
-  path: github.com/onmetal/meeting-operator/api/v1alpha1
+  path: github.com/onmetal/meeting-operator/apis/ehterpad/v1alpha1
   version: v1alpha1
 - api:
     crdVersion: v1
     namespaced: true
   domain: meeting.ko
   kind: Jitsi
-  path: github.com/onmetal/meeting-operator/api/v1alpha1
+  path: github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1
   version: v1alpha1
 version: "3"

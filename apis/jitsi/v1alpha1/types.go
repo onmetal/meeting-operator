@@ -23,9 +23,9 @@ import (
 
 type JitsiSpec struct {
 	Web     `json:"web"`
+	Prosody `json:"prosody"`
 	Jicofo  `json:"jicofo"`
 	JVB     `json:"jvb"`
-	Prosody `json:"prosody"`
 }
 
 type Web struct {
@@ -37,32 +37,8 @@ type Web struct {
 	ImagePullPolicy v1.PullPolicy   `json:"image_pull_policy,omitempty"`
 	Environments    []v1.EnvVar     `json:"environments,omitempty"`
 	Resources       v1.ResourceList `json:"resources,omitempty"`
-	Service         `json:"service,omitempty"`
-}
-
-type Jicofo struct {
-	//+kubebuilder:default:=1
-	Replicas int32 `json:"replicas,omitempty"`
-	//+kubebuilder:default="jitsi/jicofo:stable-5390-3"
-	Image string `json:"image,omitempty"`
-	//+kubebuilder:default="IfNotPresent"
-	ImagePullPolicy v1.PullPolicy   `json:"image_pull_policy,omitempty"`
-	Environments    []v1.EnvVar     `json:"environments,omitempty"`
-	Resources       v1.ResourceList `json:"resources,omitempty"`
-	Service         `json:"service,omitempty"`
-}
-
-type JVB struct {
-	//+kubebuilder:default:=1
-	Replicas int32 `json:"replicas,omitempty"`
-	//+kubebuilder:default="jitsi/jvb:stable-5390-3"
-	Image string `json:"image,omitempty"`
-	//+kubebuilder:default="IfNotPresent"
-	ImagePullPolicy v1.PullPolicy   `json:"image_pull_policy,omitempty"`
-	Environments    []v1.EnvVar     `json:"environments,omitempty"`
-	Resources       v1.ResourceList `json:"resources,omitempty"`
-	Proxy           `json:"proxy,omitempty"`
-	Service         `json:"service,omitempty"`
+	ServiceType     v1.ServiceType  `json:"service_type,omitempty"`
+	Services        []Service       `json:"services,omitempty"`
 }
 
 type Prosody struct {
@@ -74,21 +50,50 @@ type Prosody struct {
 	ImagePullPolicy v1.PullPolicy   `json:"image_pull_policy,omitempty"`
 	Environments    []v1.EnvVar     `json:"environments,omitempty"`
 	Resources       v1.ResourceList `json:"resources,omitempty"`
-	Service         `json:"service,omitempty"`
+	ServiceType     v1.ServiceType  `json:"service_type,omitempty"`
+	Services        []Service       `json:"services,omitempty"`
 }
 
-type Proxy struct {
-	//+kubebuilder:default="haproxy:2.2.11"
-	Image string `json:"image,omitempty"`
+type Jicofo struct {
 	//+kubebuilder:default:=1
 	Replicas int32 `json:"replicas,omitempty"`
-	Service  `json:"service,omitempty"`
+	//+kubebuilder:default="jitsi/jicofo:stable-5390-3"
+	Image string `json:"image,omitempty"`
+	//+kubebuilder:default="IfNotPresent"
+	ImagePullPolicy v1.PullPolicy   `json:"image_pull_policy,omitempty"`
+	Environments    []v1.EnvVar     `json:"environments,omitempty"`
+	Resources       v1.ResourceList `json:"resources,omitempty"`
+	ServiceType     v1.ServiceType  `json:"service_type,omitempty"`
+	Services        []Service       `json:"services,omitempty"`
+}
+
+type JVB struct {
+	//+kubebuilder:default:=1
+	Replicas int32 `json:"replicas,omitempty"`
+	//+kubebuilder:default="jitsi/jvb:stable-5390-3"
+	Image string `json:"image,omitempty"`
+	//+kubebuilder:default="IfNotPresent"
+	ImagePullPolicy v1.PullPolicy   `json:"image_pull_policy,omitempty"`
+	Environments    []v1.EnvVar     `json:"environments,omitempty"`
+	Resources       v1.ResourceList `json:"resources,omitempty"`
+	//+kubebuilder:default:="ClusterIP"
+	ServiceType        v1.ServiceType    `json:"service_type,omitempty"`
+	ServiceAnnotations map[string]string `json:"service_annotations,omitempty"`
+	Service            Service           `json:"service,omitempty"`
+}
+
+type Service struct {
+	//+kubebuilder:default:="ClusterIP"
+	Type     v1.ServiceType `json:"type,omitempty"`
+	Protocol v1.Protocol    `json:"protocol,omitempty"`
+	//+kubebuilder:default="http"
+	PortName string `json:"port_name,omitempty"`
+	//+kubebuilder:default=80
+	Port int32 `json:"port,omitempty"`
 }
 
 // JitsiStatus defines the observed state of Jitsi
 type JitsiStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 }
 
 //+kubebuilder:object:root=true
