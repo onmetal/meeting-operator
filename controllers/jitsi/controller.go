@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+
 	"github.com/onmetal/meeting-operator/internal/jitsi"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -30,6 +31,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+var jitsiServices = []string{"web", "jicofo", "prosody"}
 
 type Reconciler struct {
 	client.Client
@@ -51,10 +54,10 @@ func (r *Reconciler) predicateFuncs() predicate.Predicate {
 	}
 }
 
-//+kubebuilder:rbac:groups=jitsi.meeting.ko,resources=jitsi,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=meeting.ko,resources=jitsis,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=configmaps,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=jitsi.meeting.ko,resources=jitsi/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=jitsi.meeting.ko,resources=jitsi/finalizers,verbs=update
+//+kubebuilder:rbac:groups=meeting.ko,resources=jitssi/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=meeting.ko,resources=jitsis/finalizers,verbs=update
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("jitsi", req.NamespacedName)
 
@@ -63,14 +66,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		r.Log.Info("unable to fetch Jitsi", "error", err)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	if err := r.make(ctx, "web", j); err != nil {
-		return ctrl.Result{}, err
-	}
-	if err := r.make(ctx, "jicofo", j); err != nil {
-		return ctrl.Result{}, err
-	}
-	if err := r.make(ctx, "prosody", j); err != nil {
-		return ctrl.Result{}, err
+	for _, appName := range jitsiServices {
+		if err := r.make(ctx, appName, j); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 	if err := r.makeJVB(ctx, j); err != nil {
 		return ctrl.Result{}, err
@@ -120,15 +119,10 @@ func (r *Reconciler) onDelete(e event.DeleteEvent) bool {
 		return false
 	}
 	ctx := context.Background()
-	if err := r.deleteComponents(ctx, "web", jitsiObj); err != nil {
-		r.Log.Info("failed to delete web component", "error", err)
-	}
-	if err := r.deleteComponents(ctx, "jicofo", jitsiObj); err != nil {
-		r.Log.Info("failed to delete jicofo component", "error", err)
-
-	}
-	if err := r.deleteComponents(ctx, "prosody", jitsiObj); err != nil {
-		r.Log.Info("failed to delete prosody component", "error", err)
+	for _, appName := range jitsiServices {
+		if err := r.deleteComponents(ctx, appName, jitsiObj); err != nil {
+			r.Log.Info("failed to delete component", "error", err)
+		}
 	}
 	if err := r.deleteJVB(ctx, jitsiObj); err != nil {
 		r.Log.Info("failed to delete jvb component", "error", err)

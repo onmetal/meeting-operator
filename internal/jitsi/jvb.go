@@ -32,8 +32,8 @@ func (j *JVB) Create() error {
 }
 
 func (j *JVB) createServicePerPod() error {
-	svc := j.prepareServiceForPod()
-	err := j.Client.Create(j.ctx, svc)
+	prepareService := j.prepareServiceForPod()
+	err := j.Client.Create(j.ctx, prepareService)
 	if errors.IsAlreadyExists(err) {
 		j.log.Info("service already exist", "name", j.serviceName)
 		return nil
@@ -49,6 +49,7 @@ func (j *JVB) prepareServiceForPod() *v1.Service {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      j.serviceName,
 			Namespace: j.namespace,
+			Annotations: j.ServiceAnnotations,
 		},
 		Spec: v1.ServiceSpec{
 			Type: j.ServiceType,

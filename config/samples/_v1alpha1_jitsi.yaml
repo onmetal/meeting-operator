@@ -133,6 +133,8 @@ spec:
   jvb:
     replicas: 2
     image: jitsi/jvb:stable-5390-3
+    service_annotations:
+      kubernetes.io/elb.class: union
     service_type: "LoadBalancer"
     service:
       port_name: "jvb"

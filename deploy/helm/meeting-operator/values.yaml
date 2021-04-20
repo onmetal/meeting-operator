@@ -1,9 +1,9 @@
 replicaCount: 1
 
 image:
-  repository: "local"
+  repository: "yotsyni/meeting-operator"
   pullPolicy: IfNotPresent
-  tag: "v0.0.1"
+  tag: "v0.1.0"
 
 imagePullSecrets: []
 nameOverride: ""

@@ -1,14 +1,35 @@
-
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  creationTimestamp: null
   name: manager-role
 rules:
 - apiGroups:
-  - etherpad.meeting.ko
-  - jitsi.meeting.ko
+    - ""
+  resources:
+    - services
+    - endpoints
+    - pods
+  verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+- apiGroups: ["apps"]
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - meeting.ko
   resources:
   - etherpads
   - jitsis
@@ -21,16 +42,14 @@ rules:
   - update
   - watch
 - apiGroups:
-  - etherpad.meeting.ko
-  - jitsi.meeting.ko
+  - meeting.ko
   resources:
   - etherpads/finalizers
   - jitsis/finalizers
   verbs:
   - update
 - apiGroups:
-  - etherpad.meeting.ko
-  - jitsi.meeting.ko
+  - meeting.ko
   resources:
   - etherpads/status
   - jitsis/status

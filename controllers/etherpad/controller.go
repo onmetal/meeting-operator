@@ -52,9 +52,9 @@ func (r *Reconciler) constructPredicates() predicate.Predicate {
 	}
 }
 
-//+kubebuilder:rbac:groups=etherpad.meeting.ko,resources=etherpads,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=etherpad.meeting.ko,resources=etherpads/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=etherpad.meeting.ko,resources=etherpads/finalizers,verbs=update
+//+kubebuilder:rbac:groups=meeting.ko,resources=etherpads,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=meeting.ko,resources=etherpads/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=meeting.ko,resources=etherpads/finalizers,verbs=update
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("etherpad", req.NamespacedName)
 

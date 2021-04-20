@@ -24,7 +24,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "meeting-operator.serviceAccountName" . }}
+      serviceAccountName: {{  .Values.serviceAccount.name }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -37,14 +37,17 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
+            - name: probes
+              containerPort: 8081
+              protocol: TCP
           livenessProbe:
             httpGet:
-              path: /
-              port: http
+              path: /healthz
+              port: probes
           readinessProbe:
             httpGet:
-              path: /
-              port: http
+              path: /readyz
+              port: probes
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
