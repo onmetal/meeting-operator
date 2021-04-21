@@ -19,8 +19,9 @@ type Service struct {
 	ctx             context.Context
 	log             logr.Logger
 	name, namespace string
-	services        []v1alpha1.Service
 	serviceType     v1.ServiceType
+	services        []v1alpha1.Service
+	annotations     map[string]string
 	labels          map[string]string
 }
 
@@ -37,6 +38,7 @@ func NewService(ctx context.Context, appName string,
 			namespace:   j.Namespace,
 			ctx:         ctx,
 			log:         l,
+			annotations: j.Spec.Web.ServiceAnnotations,
 			labels:      labels,
 		}
 	case ProsodyName:
@@ -49,6 +51,7 @@ func NewService(ctx context.Context, appName string,
 			namespace:   j.Namespace,
 			ctx:         ctx,
 			log:         l,
+			annotations: j.Spec.Prosody.ServiceAnnotations,
 			labels:      labels,
 		}
 	case JicofoName:
@@ -61,6 +64,7 @@ func NewService(ctx context.Context, appName string,
 			namespace:   j.Namespace,
 			ctx:         ctx,
 			log:         l,
+			annotations: j.Spec.Jicofo.ServiceAnnotations,
 			labels:      labels,
 		}
 	default:
@@ -75,8 +79,9 @@ func (s *Service) Create() error {
 func (s *Service) prepareService() *v1.Service {
 	return &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      s.name,
-			Namespace: s.namespace,
+			Name:        s.name,
+			Namespace:   s.namespace,
+			Annotations: s.annotations,
 		},
 		Spec: s.prepareServiceSpec(),
 	}
@@ -105,6 +110,7 @@ func (s *Service) Update() error {
 		return s.Client.Create(s.ctx, preparedService)
 	default:
 		updatedServiceSpec := s.prepareServiceSpec()
+		service.Annotations = s.annotations
 		service.Spec.Ports = updatedServiceSpec.Ports
 		service.Spec.Selector = updatedServiceSpec.Selector
 		return s.Client.Update(s.ctx, service)

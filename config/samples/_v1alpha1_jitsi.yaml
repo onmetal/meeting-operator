@@ -6,6 +6,11 @@ spec:
   web:
     replicas: 1
     image: jitsi/web:stable-5390-3
+    service_annotations:
+      kubernetes.io/elb.class: union
+      kubernetes.io/session-affinity-mode: SOURCE_IP
+      kubernetes.io/elb.subnet-id: cbc023b4-d9cf-4705-bf97-0e8ef9a170e8
+      kubernetes.io/elb.autocreate: '{"type":"public","bandwidth_name":"cce-bandwidth-1551163379627","bandwidth_chargemode":"traffic","bandwidth_size":10,"bandwidth_sharetype":"PER","eip_type":"5_bgp","name":"indicarus-public-ip"}'
     service_type: "ClusterIP"
     services:
       - port_name: "http"
@@ -135,6 +140,9 @@ spec:
     image: jitsi/jvb:stable-5390-3
     service_annotations:
       kubernetes.io/elb.class: union
+      kubernetes.io/session-affinity-mode: SOURCE_IP
+      kubernetes.io/elb.subnet-id: cbc023b4-d9cf-4705-bf97-0e8ef9a170e8
+      kubernetes.io/elb.autocreate: '{"type":"public","bandwidth_name":"cce-bandwidth-1551163379627","bandwidth_chargemode":"traffic","bandwidth_size":10,"bandwidth_sharetype":"PER","eip_type":"5_bgp","name":"indicarus-public-ip"}'
     service_type: "LoadBalancer"
     service:
       port_name: "jvb"

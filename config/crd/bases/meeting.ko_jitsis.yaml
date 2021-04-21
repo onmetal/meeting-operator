@@ -167,6 +167,10 @@ spec:
                     description: ResourceList is a set of (resource name, quantity)
                       pairs.
                     type: object
+                  service_annotations:
+                    additionalProperties:
+                      type: string
+                    type: object
                   service_type:
                     description: Service Type string describes ingress methods for
                       a service
@@ -484,6 +488,10 @@ spec:
                     description: ResourceList is a set of (resource name, quantity)
                       pairs.
                     type: object
+                  service_annotations:
+                    additionalProperties:
+                      type: string
+                    type: object
                   service_type:
                     description: Service Type string describes ingress methods for
                       a service
@@ -640,6 +648,10 @@ spec:
                       x-kubernetes-int-or-string: true
                     description: ResourceList is a set of (resource name, quantity)
                       pairs.
+                    type: object
+                  service_annotations:
+                    additionalProperties:
+                      type: string
                     type: object
                   service_type:
                     description: Service Type string describes ingress methods for

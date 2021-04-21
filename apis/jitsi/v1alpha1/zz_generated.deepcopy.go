@@ -79,6 +79,13 @@ func (in *Jicofo) DeepCopyInto(out *Jicofo) {
 			(*out)[key] = val.DeepCopy()
 		}
 	}
+	if in.ServiceAnnotations != nil {
+		in, out := &in.ServiceAnnotations, &out.ServiceAnnotations
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.Services != nil {
 		in, out := &in.Services, &out.Services
 		*out = make([]Service, len(*in))
@@ -206,6 +213,13 @@ func (in *Prosody) DeepCopyInto(out *Prosody) {
 			(*out)[key] = val.DeepCopy()
 		}
 	}
+	if in.ServiceAnnotations != nil {
+		in, out := &in.ServiceAnnotations, &out.ServiceAnnotations
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.Services != nil {
 		in, out := &in.Services, &out.Services
 		*out = make([]Service, len(*in))
@@ -253,6 +267,13 @@ func (in *Web) DeepCopyInto(out *Web) {
 		*out = make(v1.ResourceList, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val.DeepCopy()
+		}
+	}
+	if in.ServiceAnnotations != nil {
+		in, out := &in.ServiceAnnotations, &out.ServiceAnnotations
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
 		}
 	}
 	if in.Services != nil {

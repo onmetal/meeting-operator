@@ -164,10 +164,14 @@ func (j *JVB) getExternalIP() string {
 	serviceName := fmt.Sprintf("%s-%d", JvbPodName, j.replica)
 	time.Sleep(waitForLB)
 	svc := j.getService(serviceName)
-	if len(svc.Status.LoadBalancer.Ingress) != 0 {
+	switch {
+	case len(svc.Status.LoadBalancer.Ingress) != 0:
 		return svc.Status.LoadBalancer.Ingress[0].IP
+	case svc.Spec.LoadBalancerIP != "":
+		return svc.Spec.LoadBalancerIP
+	default:
+		return ""
 	}
-	return ""
 }
 
 func (j *JVB) getService(serviceName string) v1.Service {

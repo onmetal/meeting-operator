@@ -34,11 +34,12 @@ type Web struct {
 	//+kubebuilder:default="jitsi/web:stable-5390-3"
 	Image string `json:"image,omitempty"`
 	//+kubebuilder:default="IfNotPresent"
-	ImagePullPolicy v1.PullPolicy   `json:"image_pull_policy,omitempty"`
-	Environments    []v1.EnvVar     `json:"environments,omitempty"`
-	Resources       v1.ResourceList `json:"resources,omitempty"`
-	ServiceType     v1.ServiceType  `json:"service_type,omitempty"`
-	Services        []Service       `json:"services,omitempty"`
+	ImagePullPolicy    v1.PullPolicy     `json:"image_pull_policy,omitempty"`
+	Environments       []v1.EnvVar       `json:"environments,omitempty"`
+	Resources          v1.ResourceList   `json:"resources,omitempty"`
+	ServiceAnnotations map[string]string `json:"service_annotations,omitempty"`
+	ServiceType        v1.ServiceType    `json:"service_type,omitempty"`
+	Services           []Service         `json:"services,omitempty"`
 }
 
 type Prosody struct {
@@ -47,11 +48,12 @@ type Prosody struct {
 	//+kubebuilder:default="jitsi/prosody:stable-5390-3"
 	Image string `json:"image,omitempty"`
 	//+kubebuilder:default="IfNotPresent"
-	ImagePullPolicy v1.PullPolicy   `json:"image_pull_policy,omitempty"`
-	Environments    []v1.EnvVar     `json:"environments,omitempty"`
-	Resources       v1.ResourceList `json:"resources,omitempty"`
-	ServiceType     v1.ServiceType  `json:"service_type,omitempty"`
-	Services        []Service       `json:"services,omitempty"`
+	ImagePullPolicy    v1.PullPolicy     `json:"image_pull_policy,omitempty"`
+	Environments       []v1.EnvVar       `json:"environments,omitempty"`
+	Resources          v1.ResourceList   `json:"resources,omitempty"`
+	ServiceAnnotations map[string]string `json:"service_annotations,omitempty"`
+	ServiceType        v1.ServiceType    `json:"service_type,omitempty"`
+	Services           []Service         `json:"services,omitempty"`
 }
 
 type Jicofo struct {
@@ -60,11 +62,12 @@ type Jicofo struct {
 	//+kubebuilder:default="jitsi/jicofo:stable-5390-3"
 	Image string `json:"image,omitempty"`
 	//+kubebuilder:default="IfNotPresent"
-	ImagePullPolicy v1.PullPolicy   `json:"image_pull_policy,omitempty"`
-	Environments    []v1.EnvVar     `json:"environments,omitempty"`
-	Resources       v1.ResourceList `json:"resources,omitempty"`
-	ServiceType     v1.ServiceType  `json:"service_type,omitempty"`
-	Services        []Service       `json:"services,omitempty"`
+	ImagePullPolicy    v1.PullPolicy     `json:"image_pull_policy,omitempty"`
+	Environments       []v1.EnvVar       `json:"environments,omitempty"`
+	Resources          v1.ResourceList   `json:"resources,omitempty"`
+	ServiceAnnotations map[string]string `json:"service_annotations,omitempty"`
+	ServiceType        v1.ServiceType    `json:"service_type,omitempty"`
+	Services           []Service         `json:"services,omitempty"`
 }
 
 type JVB struct {
@@ -73,13 +76,13 @@ type JVB struct {
 	//+kubebuilder:default="jitsi/jvb:stable-5390-3"
 	Image string `json:"image,omitempty"`
 	//+kubebuilder:default="IfNotPresent"
-	ImagePullPolicy v1.PullPolicy   `json:"image_pull_policy,omitempty"`
-	Environments    []v1.EnvVar     `json:"environments,omitempty"`
-	Resources       v1.ResourceList `json:"resources,omitempty"`
-	//+kubebuilder:default:="ClusterIP"
-	ServiceType        v1.ServiceType    `json:"service_type,omitempty"`
+	ImagePullPolicy    v1.PullPolicy     `json:"image_pull_policy,omitempty"`
+	Environments       []v1.EnvVar       `json:"environments,omitempty"`
+	Resources          v1.ResourceList   `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string `json:"service_annotations,omitempty"`
-	Service            Service           `json:"service,omitempty"`
+	//+kubebuilder:default:="ClusterIP"
+	ServiceType v1.ServiceType `json:"service_type,omitempty"`
+	Service     Service        `json:"service,omitempty"`
 }
 
 type Service struct {
