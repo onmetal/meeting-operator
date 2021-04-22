@@ -1,11 +1,11 @@
-package jitsi
+package whiteboard
 
 import (
 	"context"
 	"github.com/onmetal/meeting-operator/internal/utils"
 
 	"github.com/go-logr/logr"
-	"github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
+	"github.com/onmetal/meeting-operator/apis/whiteboard/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,50 +26,18 @@ type Service struct {
 	labels          map[string]string
 }
 
-func NewService(ctx context.Context, appName string,
-	j *v1alpha1.Jitsi, c client.Client, l logr.Logger) Jitsi {
-	switch appName {
-	case WebName:
-		labels := utils.GetDefaultLabels(WebName)
-		return &Service{
-			Client:      c,
-			services:    j.Spec.Web.Services,
-			serviceType: j.Spec.Web.ServiceType,
-			name:        WebName,
-			namespace:   j.Namespace,
-			ctx:         ctx,
-			log:         l,
-			annotations: j.Spec.Web.ServiceAnnotations,
-			labels:      labels,
-		}
-	case ProsodyName:
-		labels := utils.GetDefaultLabels(ProsodyName)
-		return &Service{
-			Client:      c,
-			services:    j.Spec.Prosody.Services,
-			serviceType: j.Spec.Prosody.ServiceType,
-			name:        ProsodyName,
-			namespace:   j.Namespace,
-			ctx:         ctx,
-			log:         l,
-			annotations: j.Spec.Prosody.ServiceAnnotations,
-			labels:      labels,
-		}
-	case JicofoName:
-		labels := utils.GetDefaultLabels(JicofoName)
-		return &Service{
-			Client:      c,
-			services:    j.Spec.Jicofo.Services,
-			serviceType: j.Spec.Jicofo.ServiceType,
-			name:        JicofoName,
-			namespace:   j.Namespace,
-			ctx:         ctx,
-			log:         l,
-			annotations: j.Spec.Jicofo.ServiceAnnotations,
-			labels:      labels,
-		}
-	default:
-		return nil
+func NewService(ctx context.Context, w *v1alpha1.WhiteBoard, c client.Client, l logr.Logger) WhiteBoard {
+	labels := utils.GetDefaultLabels(w.Name)
+	return &Service{
+		Client:      c,
+		services:    w.Spec.Services,
+		serviceType: w.Spec.ServiceType,
+		name:        w.Name,
+		namespace:   w.Namespace,
+		ctx:         ctx,
+		log:         l,
+		annotations: w.Spec.ServiceAnnotations,
+		labels:      labels,
 	}
 }
 func (s *Service) Create() error {

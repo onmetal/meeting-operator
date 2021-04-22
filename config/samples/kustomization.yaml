@@ -2,4 +2,5 @@
 resources:
 - _v1alpha1_etherpad.yaml
 - _v1alpha1_jitsi.yaml
+- _v1alpha1_whiteboard.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

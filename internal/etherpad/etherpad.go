@@ -29,7 +29,7 @@ type Service struct {
 	e   *v1alpha1.Etherpad
 }
 
-func NewDeployment(ctx context.Context, c client.Client, l logr.Logger, e *v1alpha1.Etherpad) Etherpad {
+func NewEtherpad(ctx context.Context, c client.Client, l logr.Logger, e *v1alpha1.Etherpad) Etherpad {
 	return &Deployment{
 		Client: c,
 		ctx:    ctx,

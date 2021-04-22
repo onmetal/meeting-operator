@@ -47,8 +47,8 @@ func (j *JVB) prepareServiceForPod() *v1.Service {
 	port := externalPort + j.replica
 	return &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      j.serviceName,
-			Namespace: j.namespace,
+			Name:        j.serviceName,
+			Namespace:   j.namespace,
 			Annotations: j.ServiceAnnotations,
 		},
 		Spec: v1.ServiceSpec{

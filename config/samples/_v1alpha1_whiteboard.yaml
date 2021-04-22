@@ -1,0 +1,12 @@
+apiVersion: meeting.ko/v1alpha1
+kind: WhiteBoard
+metadata:
+  name: whiteboard-sample
+spec:
+  replicas: 1
+  image: excalidraw/excalidraw:sha-5c73c58
+  environments: []
+  services:
+    - port_name: "http"
+      protocol: "TCP"
+      port: 80

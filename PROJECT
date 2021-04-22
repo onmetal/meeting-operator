@@ -22,4 +22,11 @@ resources:
   kind: Jitsi
   path: github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: meeting.ko
+  kind: WhiteBoadrd
+  path: github.com/onmetal/meeting-operator/apis/whiteboard/v1alpha1
+  version: v1alpha1
 version: "3"
