@@ -2,6 +2,7 @@ package jitsi
 
 import (
 	"context"
+	"github.com/onmetal/meeting-operator/internal/utils"
 
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
@@ -9,11 +10,9 @@ import (
 )
 
 const (
-	AppKubernetesPartOf = "jitsi-meet"
-	JicofoName          = "jicofo"
-	ProsodyName         = "prosody"
-	WebName             = "web"
-	JVBName             = "jvb"
+	JicofoName  = "jicofo"
+	ProsodyName = "prosody"
+	WebName     = "web"
 )
 
 type Jitsi interface {
@@ -66,7 +65,7 @@ func NewJitsi(ctx context.Context, appName string,
 	j *v1alpha1.Jitsi, c client.Client, l logr.Logger) Jitsi {
 	switch appName {
 	case WebName:
-		labels := getDefaultLabels(WebName)
+		labels := utils.GetDefaultLabels(WebName)
 		return &Web{
 			Client:    c,
 			Web:       &j.Spec.Web,
@@ -77,7 +76,7 @@ func NewJitsi(ctx context.Context, appName string,
 			labels:    labels,
 		}
 	case ProsodyName:
-		labels := getDefaultLabels(ProsodyName)
+		labels := utils.GetDefaultLabels(ProsodyName)
 		return &Prosody{
 			Client:    c,
 			Prosody:   &j.Spec.Prosody,
@@ -88,7 +87,7 @@ func NewJitsi(ctx context.Context, appName string,
 			labels:    labels,
 		}
 	case JicofoName:
-		labels := getDefaultLabels(JicofoName)
+		labels := utils.GetDefaultLabels(JicofoName)
 		return &Jicofo{
 			Client:    c,
 			Jicofo:    &j.Spec.Jicofo,
@@ -109,11 +108,4 @@ func NewJitsi(ctx context.Context, appName string,
 	default:
 		return nil
 	}
-}
-
-func getDefaultLabels(appName string) map[string]string {
-	var defaultLabels = make(map[string]string)
-	defaultLabels["app.kubernetes.io/appName"] = appName
-	defaultLabels["app.kubernetes.io/part-of"] = AppKubernetesPartOf
-	return defaultLabels
 }

@@ -20,14 +20,14 @@ import (
 	"flag"
 	etherpadv1alpha "github.com/onmetal/meeting-operator/apis/etherpad/v1alpha1"
 	jitsiv1alpha "github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
-
+	boardv1alpha1 "github.com/onmetal/meeting-operator/apis/whiteboard/v1alpha1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"os"
 
 	etherpadcontroller "github.com/onmetal/meeting-operator/controllers/etherpad"
 	jitsicontroller "github.com/onmetal/meeting-operator/controllers/jitsi"
-
+	boardcontroller "github.com/onmetal/meeting-operator/controllers/whiteboard"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -48,6 +48,7 @@ func main() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(jitsiv1alpha.AddToScheme(scheme))
 	utilruntime.Must(etherpadv1alpha.AddToScheme(scheme))
+	utilruntime.Must(boardv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 	var metricsAddr string
 	var enableLeaderElection bool
@@ -92,6 +93,14 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Jitsi")
+		os.Exit(1)
+	}
+	if err = (&boardcontroller.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("WhiteBoard"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "WhiteBoard")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

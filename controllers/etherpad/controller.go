@@ -64,7 +64,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, err
 	}
 
-	newEtherpad := etherpad.NewDeployment(ctx, r.Client, r.Log, eth)
+	newEtherpad := etherpad.NewEtherpad(ctx, r.Client, r.Log, eth)
 	if err := newEtherpad.Update(); err != nil {
 		if apierrors.IsNotFound(err) {
 			if createErr := newEtherpad.Create(); createErr != nil {
@@ -96,7 +96,7 @@ func (r *Reconciler) onDelete(e event.DeleteEvent) bool {
 		return false
 	}
 	ctx := context.Background()
-	eth := etherpad.NewDeployment(ctx, r.Client, r.Log, deletedEtherpadObj)
+	eth := etherpad.NewEtherpad(ctx, r.Client, r.Log, deletedEtherpadObj)
 	if err := eth.Delete(); err != nil {
 		r.Log.Error(err, "failed to delete etherpad deployment")
 	}
