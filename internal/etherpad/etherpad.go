@@ -2,6 +2,7 @@ package etherpad
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/etherpad/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"

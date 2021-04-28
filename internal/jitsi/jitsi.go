@@ -2,6 +2,7 @@ package jitsi
 
 import (
 	"context"
+
 	"github.com/onmetal/meeting-operator/internal/utils"
 
 	"github.com/go-logr/logr"
@@ -10,9 +11,10 @@ import (
 )
 
 const (
-	JicofoName  = "jicofo"
-	ProsodyName = "prosody"
 	WebName     = "web"
+	ProsodyName = "prosody"
+	JicofoName  = "jicofo"
+	JibriName   = "jibri"
 )
 
 type Jitsi interface {
@@ -44,6 +46,16 @@ type Prosody struct {
 type Jicofo struct {
 	client.Client
 	*v1alpha1.Jicofo
+
+	ctx             context.Context
+	log             logr.Logger
+	name, namespace string
+	labels          map[string]string
+}
+
+type Jibri struct {
+	client.Client
+	*v1alpha1.Jibri
 
 	ctx             context.Context
 	log             logr.Logger
@@ -92,6 +104,17 @@ func NewJitsi(ctx context.Context, appName string,
 			Client:    c,
 			Jicofo:    &j.Spec.Jicofo,
 			name:      JicofoName,
+			namespace: j.Namespace,
+			ctx:       ctx,
+			log:       l,
+			labels:    labels,
+		}
+	case JibriName:
+		labels := utils.GetDefaultLabels(JicofoName)
+		return &Jibri{
+			Client:    c,
+			Jibri:     &j.Spec.Jibri,
+			name:      JibriName,
 			namespace: j.Namespace,
 			ctx:       ctx,
 			log:       l,

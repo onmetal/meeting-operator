@@ -78,6 +78,14 @@ test: manifests generate fmt vet ## Run tests.
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.7.2/hack/setup-envtest.sh
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
 
+kind_deploy: kind_start generate manifests install
+
+kind_start:
+	kind create cluster
+
+kind_delete:
+	kind delete cluster
+
 ##@ Build
 
 build: generate fmt vet ## Build manager binary.

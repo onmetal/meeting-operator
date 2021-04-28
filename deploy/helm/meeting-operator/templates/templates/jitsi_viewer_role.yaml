@@ -1,0 +1,20 @@
+# permissions for end users to view jitsis.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: jitsi-viewer-role
+rules:
+- apiGroups:
+  - meeting.ko
+  resources:
+  - jitsis
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - meeting.ko
+  resources:
+  - jitsis/status
+  verbs:
+  - get

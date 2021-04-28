@@ -33,7 +33,7 @@ spec:
         - ""
       secretName: web-tls
   rules:
-    - host: ""
+    - host: "jitsi."
       http:
         paths:
           - path: /

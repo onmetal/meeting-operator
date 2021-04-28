@@ -50,3 +50,5 @@ start up with jitsi.
  kustomization.yaml
 
 ```
+
+TODO: docs for folders

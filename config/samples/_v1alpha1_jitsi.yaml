@@ -20,11 +20,11 @@ spec:
     - name: ENABLE_LETSENCRYPT
       value: "0"
     - name: XMPP_SERVER
-      value: jitsi-prosody
+      value: prosody
     - name: JICOFO_AUTH_USER
       value: focus
     - name: XMPP_DOMAIN
-      value: jitsi-prosody
+      value: prosody
     - name: XMPP_AUTH_DOMAIN
       value: auth.jitsi.jitsi
     - name: XMPP_INTERNAL_MUC_DOMAIN
@@ -32,7 +32,7 @@ spec:
     - name: XMPP_MUC_DOMAIN
       value: muc.jitsi.jitsi
     - name: XMPP_BOSH_URL_BASE
-      value: http://jitsi-prosody:5280
+      value: http://prosody:5280
     - name: TZ
       value: UTC
     - name: JVB_TCP_HARVESTER_DISABLED
@@ -56,9 +56,9 @@ spec:
         port: 5280
     environments:
     - name: XMPP_SERVER
-      value: jitsi-prosody
+      value: prosody
     - name: XMPP_DOMAIN
-      value: jitsi-prosody
+      value: prosody
     - name: XMPP_AUTH_DOMAIN
       value: auth.jitsi.jitsi
     - name: XMPP_MUC_DOMAIN
@@ -100,7 +100,7 @@ spec:
     image: jitsi/prosody:stable-5390-3
     environments:
     - name: XMPP_DOMAIN
-      value: jitsi-prosody
+      value: prosody
     - name: XMPP_AUTH_DOMAIN
       value: auth.jitsi.jitsi
     - name: XMPP_MUC_DOMAIN
@@ -126,6 +126,14 @@ spec:
         secretKeyRef:
           name: jitsi-config
           key: JICOFO_AUTH_PASSWORD
+    - name: JIBRI_XMPP_USER
+      value: jibri
+    - name: JIBRI_XMPP_PASSWORD
+      value: jibri
+    - name: JIBRI_RECORDER_USER
+      value: jibri
+    - name: JIBRI_RECORDER_PASSWORD
+      value: jibri
     - name: TZ
       value: UTC
     - name: JVB_TCP_HARVESTER_DISABLED
@@ -135,8 +143,28 @@ spec:
     - name: PUBLIC_URL
       value: https://jitsi.ingress.andrew-cluster.core.shoot.garden.otcdemo.gardener.t-systems.net
 
+  jibri:
+    replicas: 1
+    storage:
+      empty_dir:
+        sizeLimit:
+          "1Gi"
+      pvc: {}
+#        apiVersion: v1
+#        kind: PersistentVolumeClaim
+#        spec:
+#          accessModes: ["ReadWriteOnce"]
+#          resources:
+#            requests:
+#              storage: "1Gi"
+    service_type: "ClusterIP"
+    services:
+      - port_name: "http"
+        protocol: "TCP"
+        port: 5282
+
   jvb:
-    replicas: 2
+    replicas: 1
     image: jitsi/jvb:stable-5390-3
     service_annotations:
       kubernetes.io/elb.class: union
@@ -149,9 +177,9 @@ spec:
       protocol: "UDP"
     environments:
     - name: XMPP_SERVER
-      value: jitsi-prosody
+      value: prosody
     - name: XMPP_DOMAIN
-      value: jitsi-prosody
+      value: prosody
     - name: XMPP_AUTH_DOMAIN
       value: auth.jitsi.jitsi
     - name: XMPP_INTERNAL_MUC_DOMAIN
