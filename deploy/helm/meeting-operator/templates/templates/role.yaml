@@ -1,0 +1,60 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: manager-role
+rules:
+- apiGroups:
+    - ""
+  resources:
+    - services
+    - endpoints
+    - pods
+  verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+- apiGroups: ["apps"]
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - meeting.ko
+  resources:
+  - etherpads
+  - jitsis
+  - whiteboards
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - meeting.ko
+  resources:
+  - etherpads/finalizers
+  - jitsis/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - meeting.ko
+  resources:
+  - etherpads/status
+  - jitsis/status
+  verbs:
+  - get
+  - patch
+  - update

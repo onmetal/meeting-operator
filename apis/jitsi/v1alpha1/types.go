@@ -25,6 +25,7 @@ type JitsiSpec struct {
 	Web     `json:"web"`
 	Prosody `json:"prosody"`
 	Jicofo  `json:"jicofo"`
+	Jibri   `json:"jibri,omitempty"`
 	JVB     `json:"jvb"`
 }
 
@@ -70,6 +71,21 @@ type Jicofo struct {
 	Services           []Service         `json:"services,omitempty"`
 }
 
+type Jibri struct {
+	//+kubebuilder:default:=1
+	Replicas int32 `json:"replicas,omitempty"`
+	//+kubebuilder:default="jitsi/jibri:stable-5390-3"
+	Image string `json:"image,omitempty"`
+	//+kubebuilder:default="IfNotPresent"
+	ImagePullPolicy    v1.PullPolicy     `json:"image_pull_policy,omitempty"`
+	Environments       []v1.EnvVar       `json:"environments,omitempty"`
+	Storage            *StorageSpec      `json:"storage,omitempty"`
+	Resources          v1.ResourceList   `json:"resources,omitempty"`
+	ServiceAnnotations map[string]string `json:"service_annotations,omitempty"`
+	ServiceType        v1.ServiceType    `json:"service_type,omitempty"`
+	Services           []Service         `json:"services,omitempty"`
+}
+
 type JVB struct {
 	//+kubebuilder:default:=1
 	Replicas int32 `json:"replicas,omitempty"`
@@ -83,6 +99,11 @@ type JVB struct {
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
 	Service     Service        `json:"service,omitempty"`
+}
+
+type StorageSpec struct {
+	EmptyDir *v1.EmptyDirVolumeSource `json:"empty_dir,omitempty"`
+	PVC      v1.PersistentVolumeClaim `json:"pvc,omitempty"`
 }
 
 type Service struct {

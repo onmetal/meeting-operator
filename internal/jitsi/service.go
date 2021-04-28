@@ -2,6 +2,7 @@ package jitsi
 
 import (
 	"context"
+
 	"github.com/onmetal/meeting-operator/internal/utils"
 
 	"github.com/go-logr/logr"
@@ -68,8 +69,21 @@ func NewService(ctx context.Context, appName string,
 			annotations: j.Spec.Jicofo.ServiceAnnotations,
 			labels:      labels,
 		}
+	case JibriName:
+		labels := utils.GetDefaultLabels(JibriName)
+		return &Service{
+			Client:      c,
+			services:    j.Spec.Jibri.Services,
+			serviceType: j.Spec.Jibri.ServiceType,
+			name:        JibriName,
+			namespace:   j.Namespace,
+			ctx:         ctx,
+			log:         l,
+			annotations: j.Spec.Jibri.ServiceAnnotations,
+			labels:      labels,
+		}
 	default:
-		return nil
+		return &Service{}
 	}
 }
 func (s *Service) Create() error {

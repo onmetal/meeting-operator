@@ -20,6 +20,7 @@ rules:
 - apiGroups: ["apps"]
   resources:
   - deployments
+  - statefulsets
   verbs:
   - create
   - delete
@@ -33,6 +34,7 @@ rules:
   resources:
   - etherpads
   - jitsis
+  - whiteboards
   verbs:
   - create
   - delete
@@ -46,6 +48,7 @@ rules:
   resources:
   - etherpads/finalizers
   - jitsis/finalizers
+  - whiteboards/finalizers
   verbs:
   - update
 - apiGroups:
@@ -53,6 +56,7 @@ rules:
   resources:
   - etherpads/status
   - jitsis/status
+  - whiteboards/status
   verbs:
   - get
   - patch

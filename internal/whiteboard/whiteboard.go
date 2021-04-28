@@ -2,6 +2,7 @@ package whiteboard
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/whiteboard/v1alpha1"
 	"github.com/onmetal/meeting-operator/internal/utils"
@@ -30,7 +31,6 @@ type Board struct {
 
 func NewWhiteboard(ctx context.Context, w *v1alpha1.WhiteBoard,
 	c client.Client, l logr.Logger) (WhiteBoard, error) {
-
 	labels := utils.GetDefaultLabels(w.Name)
 	return &Board{
 		Client:         c,
@@ -118,4 +118,3 @@ func (w *Board) Get() (*appsv1.Deployment, error) {
 	}, deployment)
 	return deployment, err
 }
-

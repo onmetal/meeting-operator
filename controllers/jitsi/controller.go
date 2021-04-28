@@ -32,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var jitsiServices = []string{"web", "jicofo", "prosody"}
+var jitsiServices = []string{"web", "prosody", "jicofo", "jibri"}
 
 type Reconciler struct {
 	client.Client
@@ -54,6 +54,12 @@ func (r *Reconciler) predicateFuncs() predicate.Predicate {
 	}
 }
 
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;delete
+// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;delete
+// +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;delete
+// +kubebuilder:rbac:groups="",resources=endpoints,verbs=get;list;watch;create;update;delete
+// +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch;create;update;delete
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 //+kubebuilder:rbac:groups=meeting.ko,resources=jitsis,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=configmaps,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=meeting.ko,resources=jitssi/status,verbs=get;update;patch

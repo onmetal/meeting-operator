@@ -2,6 +2,7 @@ package whiteboard
 
 import (
 	"context"
+
 	"github.com/onmetal/meeting-operator/internal/utils"
 
 	"github.com/go-logr/logr"
