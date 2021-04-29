@@ -110,7 +110,7 @@ func NewJitsi(ctx context.Context, appName string,
 			labels:    labels,
 		}
 	case JibriName:
-		labels := utils.GetDefaultLabels(JicofoName)
+		labels := utils.GetDefaultLabels(JibriName)
 		return &Jibri{
 			Client:    c,
 			Jibri:     &j.Spec.Jibri,

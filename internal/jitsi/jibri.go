@@ -29,15 +29,11 @@ func (j *Jibri) prepareSTS() *appsv1.StatefulSet {
 }
 
 func (j *Jibri) prepareSTSSpec() appsv1.StatefulSetSpec {
-	pvc := j.preparePVC()
 	sts := appsv1.StatefulSetSpec{
 		Selector: &metav1.LabelSelector{
 			MatchLabels: j.labels,
 		},
 		Replicas: &j.Replicas,
-		VolumeClaimTemplates: []v1.PersistentVolumeClaim{
-			pvc,
-		},
 		Template: v1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: j.labels,
@@ -56,15 +52,70 @@ func (j *Jibri) prepareSTSSpec() appsv1.StatefulSetSpec {
 			},
 		},
 	}
-	if j.Storage.EmptyDir != nil {
-		sts.Template.Spec.Volumes = append(sts.Template.Spec.Volumes, v1.Volume{
-			Name: volumeName(j.name),
-			VolumeSource: v1.VolumeSource{
-				EmptyDir: j.Storage.EmptyDir,
-			},
+	j.setPV(&sts)
+	return sts
+}
+
+func (j *Jibri) getContainerPorts() []v1.ContainerPort {
+	var ports []v1.ContainerPort
+	for svc := range j.Services {
+		ports = append(ports, v1.ContainerPort{
+			Name:          j.Services[svc].PortName,
+			ContainerPort: j.Services[svc].Port,
+			Protocol:      j.Services[svc].Protocol,
 		})
 	}
-	return sts
+	return ports
+}
+
+func (j *Jibri) setPV(sts *appsv1.StatefulSetSpec) {
+	switch {
+	case j.Storage.PVC.Spec.Resources.Requests != nil:
+		pvc := j.preparePVC()
+		sts.VolumeClaimTemplates = []v1.PersistentVolumeClaim{pvc}
+		sts.Template.Spec.Volumes = append(sts.Template.Spec.Volumes, v1.Volume{
+			Name: "snd",
+			VolumeSource: v1.VolumeSource{
+				HostPath: &v1.HostPathVolumeSource{
+					Path: "/dev/snd",
+				},
+			},
+		})
+		sts.Template.Spec.Containers[0].VolumeMounts = j.setVolumeMounts()
+	case j.Storage.EmptyDir.SizeLimit != nil:
+		sts.Template.Spec.Volumes = append(sts.Template.Spec.Volumes,
+			v1.Volume{
+				Name: volumeName(j.name),
+				VolumeSource: v1.VolumeSource{
+					EmptyDir: j.Storage.EmptyDir,
+				},
+			},
+			v1.Volume{
+				Name: "snd",
+				VolumeSource: v1.VolumeSource{
+					HostPath: &v1.HostPathVolumeSource{
+						Path: "/dev/snd",
+					},
+				},
+			})
+		sts.Template.Spec.Containers[0].VolumeMounts = j.setVolumeMounts()
+	default:
+		sts.VolumeClaimTemplates = nil
+		sts.Template.Spec.Volumes = append(sts.Template.Spec.Volumes, v1.Volume{
+			Name: "snd",
+			VolumeSource: v1.VolumeSource{
+				HostPath: &v1.HostPathVolumeSource{
+					Path: "/dev/snd",
+				},
+			},
+		})
+		sts.Template.Spec.Containers[0].VolumeMounts = []v1.VolumeMount{
+			{
+				Name:      "snd",
+				MountPath: "/dev/snd",
+			},
+		}
+	}
 }
 
 func (j *Jibri) preparePVC() v1.PersistentVolumeClaim {
@@ -80,37 +131,43 @@ func (j *Jibri) preparePVC() v1.PersistentVolumeClaim {
 	if j.Storage.PVC.Spec.AccessModes == nil {
 		j.Storage.PVC.Spec.AccessModes = []v1.PersistentVolumeAccessMode{v1.ReadWriteOnce}
 	}
-	if (j.Storage.PVC).Size() > 1 {
-		return v1.PersistentVolumeClaim{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       j.Storage.PVC.Kind,
-				APIVersion: j.Storage.PVC.APIVersion,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      j.Storage.PVC.Name,
-				Namespace: j.namespace,
-			},
-			Spec: v1.PersistentVolumeClaimSpec{
-				AccessModes:      j.Storage.PVC.Spec.AccessModes,
-				Resources:        j.Storage.PVC.Spec.Resources,
-				VolumeName:       j.Storage.PVC.Name,
-				StorageClassName: j.Storage.PVC.Spec.StorageClassName,
-			},
-		}
+	return v1.PersistentVolumeClaim{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       j.Storage.PVC.Kind,
+			APIVersion: j.Storage.PVC.APIVersion,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      j.Storage.PVC.Name,
+			Namespace: j.namespace,
+		},
+		Spec: v1.PersistentVolumeClaimSpec{
+			AccessModes:      j.Storage.PVC.Spec.AccessModes,
+			Resources:        j.Storage.PVC.Spec.Resources,
+			VolumeName:       j.Storage.PVC.Name,
+			StorageClassName: j.Storage.PVC.Spec.StorageClassName,
+		},
 	}
-	return v1.PersistentVolumeClaim{}
 }
 
-func (j *Jibri) getContainerPorts() []v1.ContainerPort {
-	var ports []v1.ContainerPort
-	for svc := range j.Services {
-		ports = append(ports, v1.ContainerPort{
-			Name:          j.Services[svc].PortName,
-			ContainerPort: j.Services[svc].Port,
-			Protocol:      j.Services[svc].Protocol,
-		})
+func (j *Jibri) setVolumeMounts() []v1.VolumeMount {
+	var mountPath = "/config/recordings/"
+	for env := range j.Environments {
+		if j.Environments[env].Name != "JIBRI_RECORDING_DIR" {
+			continue
+		}
+		mountPath = j.Environments[env].Value
 	}
-	return ports
+	return []v1.VolumeMount{
+		{
+			Name:      volumeName(j.name),
+			ReadOnly:  false,
+			MountPath: mountPath,
+		},
+		{
+			Name:      "snd",
+			MountPath: "/dev/snd",
+		},
+	}
 }
 
 func (j *Jibri) Update() error {

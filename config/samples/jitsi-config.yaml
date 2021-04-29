@@ -3,6 +3,8 @@ data:
   JICOFO_AUTH_PASSWORD: dG90bw==
   JICOFO_COMPONENT_SECRET: dG90bw==
   JVB_AUTH_PASSWORD: dG90bw==
+  JIBRI_XMPP_PASSWORD: dG90bw==
+  JIBRI_RECORDER_PASSWORD: dG90bw==
 kind: Secret
 metadata:
   name: jitsi-config

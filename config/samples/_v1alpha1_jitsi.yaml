@@ -127,11 +127,17 @@ spec:
     - name: JIBRI_XMPP_USER
       value: jibri
     - name: JIBRI_XMPP_PASSWORD
-      value: jibri
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JIBRI_XMPP_PASSWORD
     - name: JIBRI_RECORDER_USER
       value: jibri
     - name: JIBRI_RECORDER_PASSWORD
-      value: jibri
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JIBRI_RECORDER_PASSWORD
     - name: TZ
       value: UTC
     - name: JVB_TCP_HARVESTER_DISABLED
@@ -144,9 +150,9 @@ spec:
   jibri:
     replicas: 1
     storage:
-      empty_dir:
-        sizeLimit:
-          "1Gi"
+      empty_dir: {}
+#        sizeLimit:
+#          "1Gi"
       pvc: {}
 #        apiVersion: v1
 #        kind: PersistentVolumeClaim
@@ -161,8 +167,40 @@ spec:
         protocol: "TCP"
         port: 5282
     environments:
+      - name: JIBRI_RECORDING_DIR
+        value: /config/recordings
+      - name: DISPLAY
+        value: ":0"
       - name: XMPP_SERVER
         value: prosody
+      - name: XMPP_DOMAIN
+        value: prosody
+      - name: XMPP_AUTH_DOMAIN
+        value: auth.jitsi.jitsi
+      - name: XMPP_INTERNAL_MUC_DOMAIN
+        value: internal-muc.jitsi.jitsi
+      - name: XMPP_RECORDER_DOMAIN
+        value: recorder.meet.jitsi
+      - name: JIBRI_BREWERY_MUC
+        value: jibribrewery
+      - name: JIBRI_RECORDER_USER
+        value: recorder
+      - name: JIBRI_RECORDER_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: jitsi-config
+            key: JIBRI_RECORDER_PASSWORD
+      - name: JIBRI_XMPP_USER
+        value: jibri
+      - name: JIBRI_XMPP_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: jitsi-config
+            key: JIBRI_XMPP_PASSWORD
+      - name: JIBRI_STRIP_DOMAIN_JID
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
 
   jvb:
     replicas: 1
