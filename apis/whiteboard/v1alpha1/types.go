@@ -28,10 +28,11 @@ type WhiteBoardSpec struct {
 	//+kubebuilder:default="excalidraw/excalidraw:sha-5c73c58"
 	Image string `json:"image,omitempty"`
 	//+kubebuilder:default="IfNotPresent"
-	ImagePullPolicy    v1.PullPolicy     `json:"image_pull_policy,omitempty"`
-	Environments       []v1.EnvVar       `json:"environments,omitempty"`
-	Resources          v1.ResourceList   `json:"resources,omitempty"`
-	ServiceAnnotations map[string]string `json:"service_annotations,omitempty"`
+	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
+	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
+	Environments       []v1.EnvVar               `json:"environments,omitempty"`
+	Resources          v1.ResourceList           `json:"resources,omitempty"`
+	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
 	Services    []Service      `json:"services,omitempty"`

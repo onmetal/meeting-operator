@@ -85,6 +85,7 @@ func (j *JVB) createPopSpec() v1.PodSpec {
 	port := externalPort + j.replica
 	envs := j.additionalEnvironments()
 	return v1.PodSpec{
+		ImagePullSecrets: j.ImagePullSecrets,
 		Containers: []v1.Container{
 			{
 				Name:  JvbContainerName,

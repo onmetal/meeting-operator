@@ -17,9 +17,10 @@ limitations under the License.
 package controller
 
 import (
-	"github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
 	"path/filepath"
 	"testing"
+
+	"github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

@@ -71,6 +71,7 @@ func (w *Board) prepareDeploymentSpec() appsv1.DeploymentSpec {
 				Labels: w.labels,
 			},
 			Spec: v1.PodSpec{
+				ImagePullSecrets: w.WhiteBoardSpec.ImagePullSecrets,
 				Containers: []v1.Container{
 					{
 						Name:            w.name,

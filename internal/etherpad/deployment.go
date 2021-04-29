@@ -42,6 +42,7 @@ func (d *Deployment) prepareDeploymentSpec(defaultLabels map[string]string) apps
 				Labels: defaultLabels,
 			},
 			Spec: v1.PodSpec{
+				ImagePullSecrets: d.e.Spec.ImagePullSecrets,
 				Containers: []v1.Container{
 					{
 						Name:            applicationName,

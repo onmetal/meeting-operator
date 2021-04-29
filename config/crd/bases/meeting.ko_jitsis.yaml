@@ -153,6 +153,17 @@ spec:
                     description: PullPolicy describes a policy for if/when to pull
                       a container image
                     type: string
+                  image_pull_secrets:
+                    items:
+                      description: LocalObjectReference contains enough information
+                        to let you locate the referenced object inside the same namespace.
+                      properties:
+                        name:
+                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            TODO: Add other useful fields. apiVersion, kind, uid?'
+                          type: string
+                      type: object
+                    type: array
                   replicas:
                     default: 1
                     format: int32
@@ -566,6 +577,17 @@ spec:
                     description: PullPolicy describes a policy for if/when to pull
                       a container image
                     type: string
+                  image_pull_secrets:
+                    items:
+                      description: LocalObjectReference contains enough information
+                        to let you locate the referenced object inside the same namespace.
+                      properties:
+                        name:
+                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            TODO: Add other useful fields. apiVersion, kind, uid?'
+                          type: string
+                      type: object
+                    type: array
                   replicas:
                     default: 1
                     format: int32
@@ -727,6 +749,17 @@ spec:
                     description: PullPolicy describes a policy for if/when to pull
                       a container image
                     type: string
+                  image_pull_secrets:
+                    items:
+                      description: LocalObjectReference contains enough information
+                        to let you locate the referenced object inside the same namespace.
+                      properties:
+                        name:
+                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            TODO: Add other useful fields. apiVersion, kind, uid?'
+                          type: string
+                      type: object
+                    type: array
                   replicas:
                     default: 1
                     format: int32
@@ -887,6 +920,17 @@ spec:
                     description: PullPolicy describes a policy for if/when to pull
                       a container image
                     type: string
+                  image_pull_secrets:
+                    items:
+                      description: LocalObjectReference contains enough information
+                        to let you locate the referenced object inside the same namespace.
+                      properties:
+                        name:
+                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            TODO: Add other useful fields. apiVersion, kind, uid?'
+                          type: string
+                      type: object
+                    type: array
                   replicas:
                     default: 1
                     format: int32
@@ -1048,6 +1092,17 @@ spec:
                     description: PullPolicy describes a policy for if/when to pull
                       a container image
                     type: string
+                  image_pull_secrets:
+                    items:
+                      description: LocalObjectReference contains enough information
+                        to let you locate the referenced object inside the same namespace.
+                      properties:
+                        name:
+                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            TODO: Add other useful fields. apiVersion, kind, uid?'
+                          type: string
+                      type: object
+                    type: array
                   replicas:
                     default: 1
                     format: int32

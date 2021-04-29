@@ -88,8 +88,8 @@ func (r *Reconciler) make(ctx context.Context, appName string, j *v1alpha1.Jitsi
 	jts := jitsi.NewJitsi(ctx, appName, j, r.Client, r.Log)
 	if err := jts.Update(); err != nil {
 		if apierrors.IsNotFound(err) {
-			if err := jts.Create(); err != nil {
-				return err
+			if createErr := jts.Create(); createErr != nil {
+				return createErr
 			}
 		} else {
 			r.Log.Info("failed to update jitsi deployment", "error", err)
@@ -99,8 +99,8 @@ func (r *Reconciler) make(ctx context.Context, appName string, j *v1alpha1.Jitsi
 	svc := jitsi.NewService(ctx, appName, j, r.Client, r.Log)
 	if err := svc.Update(); err != nil {
 		if apierrors.IsNotFound(err) {
-			if err := svc.Create(); err != nil {
-				return err
+			if createErr := svc.Create(); createErr != nil {
+				return createErr
 			}
 		} else {
 			r.Log.Info("failed to update jitsi service", "error", err)
