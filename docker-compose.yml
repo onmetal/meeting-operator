@@ -1,0 +1,16 @@
+# Use for Debugging Helm Test and Releas tasks
+version: '3'
+services:
+  ct:
+    image: 'quay.io/helmpack/chart-testing:latest'
+    volumes:
+      - ./:/root
+    stdin_open: true
+    tty: true
+
+  cr:
+    image: 'quay.io/helmpack/chart-releaser:latest'
+    volumes:
+      - ./:/root
+    stdin_open: true
+    tty: true
