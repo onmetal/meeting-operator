@@ -14,8 +14,8 @@ jobs:
       uses: azure/setup-helm@v1
       with:
         version: v3.4.0
-    - run: helm lint ./meeting-operator
-      working-directory: ./deploy
+    - run: helm lint
+      working-directory: ./deploy/meeting-operator
     - run: helm package ./meeting-operator --dependeny-update
       working-directory: ./deploy
     
