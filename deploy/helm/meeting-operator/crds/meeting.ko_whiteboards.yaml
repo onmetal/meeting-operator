@@ -19,7 +19,6 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: WhiteBoard is the Schema for the whiteboadrds API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -139,13 +138,24 @@ spec:
                   type: object
                 type: array
               image:
-                default: lovasoa/wbo:1.9.1
+                default: excalidraw/excalidraw:sha-5c73c58
                 type: string
               image_pull_policy:
                 default: IfNotPresent
                 description: PullPolicy describes a policy for if/when to pull a container
                   image
                 type: string
+              image_pull_secrets:
+                items:
+                  description: LocalObjectReference contains enough information to
+                    let you locate the referenced object inside the same namespace.
+                  properties:
+                    name:
+                      description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        TODO: Add other useful fields. apiVersion, kind, uid?'
+                      type: string
+                  type: object
+                type: array
               replicas:
                 default: 1
                 format: int32
@@ -159,19 +169,34 @@ spec:
                   x-kubernetes-int-or-string: true
                 description: ResourceList is a set of (resource name, quantity) pairs.
                 type: object
-              service:
-                properties:
-                  port_spec:
-                    additionalProperties:
+              service_annotations:
+                additionalProperties:
+                  type: string
+                type: object
+              service_type:
+                default: ClusterIP
+                description: Service Type string describes ingress methods for a service
+                type: string
+              services:
+                items:
+                  properties:
+                    port:
+                      default: 80
                       format: int32
                       type: integer
-                    type: object
-                  type:
-                    default: ClusterIP
-                    description: Service Type string describes ingress methods for
-                      a service
-                    type: string
-                type: object
+                    port_name:
+                      default: http
+                      type: string
+                    protocol:
+                      default: TCP
+                      type: string
+                    type:
+                      default: ClusterIP
+                      description: Service Type string describes ingress methods for
+                        a service
+                      type: string
+                  type: object
+                type: array
             type: object
           status:
             description: WhiteBoardStatus defines the observed state of WhiteBoard
