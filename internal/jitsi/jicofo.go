@@ -35,6 +35,7 @@ func (j *Jicofo) prepareDeploymentSpec() appsv1.DeploymentSpec {
 				Labels: j.labels,
 			},
 			Spec: v1.PodSpec{
+				ImagePullSecrets: j.ImagePullSecrets,
 				Containers: []v1.Container{
 					{
 						Name:            JicofoName,

@@ -35,6 +35,7 @@ func (w *Web) prepareDeploymentSpec() appsv1.DeploymentSpec {
 				Labels: w.labels,
 			},
 			Spec: v1.PodSpec{
+				ImagePullSecrets: w.ImagePullSecrets,
 				Containers: []v1.Container{
 					{
 						Name:            WebName,

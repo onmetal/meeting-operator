@@ -18,6 +18,7 @@ package whiteboard
 
 import (
 	"context"
+
 	"github.com/onmetal/meeting-operator/apis/whiteboard/v1alpha1"
 	"github.com/onmetal/meeting-operator/internal/whiteboard"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

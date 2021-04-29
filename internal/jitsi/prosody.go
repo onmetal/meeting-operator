@@ -35,6 +35,7 @@ func (p *Prosody) prepareDeploymentSpec() appsv1.DeploymentSpec {
 				Labels: p.labels,
 			},
 			Spec: v1.PodSpec{
+				ImagePullSecrets: p.ImagePullSecrets,
 				Containers: []v1.Container{
 					{
 						Name:            JicofoName,

@@ -5,7 +5,8 @@ image:
   pullPolicy: IfNotPresent
   tag: "v0.1.0"
 
-imagePullSecrets: []
+imagePullSecrets:
+  - name: docker
 nameOverride: ""
 fullnameOverride: ""
 

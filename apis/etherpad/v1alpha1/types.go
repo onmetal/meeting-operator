@@ -17,14 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"errors"
-
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
-
-var (
-	ErrTypeAssertion = errors.New("type assertion failure")
 )
 
 // EtherpadSpec defines the desired state of Etherpad
@@ -34,9 +28,10 @@ type EtherpadSpec struct {
 	//+kubebuilder:default="etherpad/etherpad:1.8.12"
 	Image string `json:"image,omitempty"`
 	//+kubebuilder:default="IfNotPresent"
-	ImagePullPolicy v1.PullPolicy   `json:"image_pull_policy,omitempty"`
-	Environments    []v1.EnvVar     `json:"environments,omitempty"`
-	Resources       v1.ResourceList `json:"resources,omitempty"`
+	ImagePullPolicy  v1.PullPolicy             `json:"image_pull_policy,omitempty"`
+	ImagePullSecrets []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
+	Environments     []v1.EnvVar               `json:"environments,omitempty"`
+	Resources        v1.ResourceList           `json:"resources,omitempty"`
 	//+kubebuilder:default="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
 	Services    []Service      `json:"service,omitempty"`

@@ -6,11 +6,9 @@ spec:
   web:
     replicas: 1
     image: jitsi/web:stable-5390-3
-    service_annotations:
-      kubernetes.io/elb.class: union
-      kubernetes.io/session-affinity-mode: SOURCE_IP
-      kubernetes.io/elb.subnet-id: cbc023b4-d9cf-4705-bf97-0e8ef9a170e8
-      kubernetes.io/elb.autocreate: '{"type":"public","bandwidth_name":"cce-bandwidth-1551163379627","bandwidth_chargemode":"traffic","bandwidth_size":10,"bandwidth_sharetype":"PER","eip_type":"5_bgp","name":"indicarus-public-ip"}'
+    image_pull_secrets:
+    - name: docker
+    service_annotations: {}
     service_type: "ClusterIP"
     services:
       - port_name: "http"
@@ -40,11 +38,11 @@ spec:
     - name: DISABLE_HTTPS
       value: "1"
     - name: PUBLIC_URL
-      value: https://jitsi.ingress.andrew-cluster.core.shoot.garden.otcdemo.gardener.t-systems.net
+      value: https://<<your public url here>>
     - name: ETHERPAD_URL_BASE
       value: http://etherpad:9001/p/
     - name: ETHERPAD_PUBLIC_URL
-      value: https://etherpad.ingress.andrew-cluster.core.shoot.garden.otcdemo.gardener.t-systems.net/p/
+      value: https://<<your ehterpad public url here>>/p/
 
   jicofo:
     replicas: 1
@@ -70,7 +68,7 @@ spec:
     - name: JVB_BREWERY_MUC
       value: jvbbrewery
     - name: PUBLIC_URL
-      value: https://jitsi.ingress.andrew-cluster.core.shoot.garden.otcdemo.gardener.t-systems.net
+      value: https://<<your public url here>>
     - name: JICOFO_COMPONENT_SECRET
       valueFrom:
         secretKeyRef:
@@ -141,7 +139,7 @@ spec:
     - name: DISABLE_HTTPS
       value: "1"
     - name: PUBLIC_URL
-      value: https://jitsi.ingress.andrew-cluster.core.shoot.garden.otcdemo.gardener.t-systems.net
+      value: https://<<your public url here>>
 
   jibri:
     replicas: 1
@@ -162,15 +160,14 @@ spec:
       - port_name: "http"
         protocol: "TCP"
         port: 5282
+    environments:
+      - name: XMPP_SERVER
+        value: prosody
 
   jvb:
     replicas: 1
     image: jitsi/jvb:stable-5390-3
-    service_annotations:
-      kubernetes.io/elb.class: union
-      kubernetes.io/session-affinity-mode: SOURCE_IP
-      kubernetes.io/elb.subnet-id: cbc023b4-d9cf-4705-bf97-0e8ef9a170e8
-      kubernetes.io/elb.autocreate: '{"type":"public","bandwidth_name":"cce-bandwidth-1551163379627","bandwidth_chargemode":"traffic","bandwidth_size":10,"bandwidth_sharetype":"PER","eip_type":"5_bgp","name":"indicarus-public-ip"}'
+    service_annotations: {}
     service_type: "LoadBalancer"
     service:
       port_name: "jvb"
@@ -207,7 +204,7 @@ spec:
     - name: JICOFO_ENABLE_HEALTH_CHECKS
       value: "false"
     - name: PUBLIC_URL
-      value: https://jitsi.ingress.andrew-cluster.core.shoot.garden.otcdemo.gardener.t-systems.net
+      value: https://<<your public url here>>
     - name: DISABLE_AWS_HARVESTER
       value: "true"
     - name: JVB_AUTH_PASSWORD
@@ -222,8 +219,6 @@ spec:
           key: JICOFO_AUTH_PASSWORD
 #    - name: DOCKER_HOST_ADDRESS
 #      value: <your public ip here>
-#      value: 80.158.19.61
-#      value: 80.158.43.185
       # valueFrom:
       #   fieldRef:
       #     fieldPath: status.hostIP
