@@ -17,6 +17,6 @@ jobs:
     # provide icon in chart.yaml first
     # - run: helm lint
     #   working-directory: ./deploy/helm/meeting-operator
-    - run: helm package ./meeting-operator --dependeny-update
+    - run: helm package ./meeting-operator --dependency-update
       working-directory: ./deploy/helm
     
