@@ -3,10 +3,9 @@ replicaCount: 1
 image:
   repository: "yotsyni/meeting-operator"
   pullPolicy: IfNotPresent
-  tag: "v0.1.0"
+  tag: "v0.3.0"
 
-imagePullSecrets:
-  - name: docker
+imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
