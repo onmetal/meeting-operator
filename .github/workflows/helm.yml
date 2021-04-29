@@ -1,0 +1,23 @@
+name: Go
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Helm
+      uses: azure/setup-helm@v1
+      with:
+        version: v3.4.0
+    - run: helm lint ./meeting-operator
+      working-directory: ./deploy
+    - run: helm package ./meeting-operator --dependeny-update
+      working-directory: ./deploy
+    
