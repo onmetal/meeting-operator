@@ -70,6 +70,22 @@ func (j *Jibri) getContainerPorts() []v1.ContainerPort {
 
 func (j *Jibri) setPV(sts *appsv1.StatefulSetSpec) {
 	switch {
+	case j.Storage == nil:
+		sts.VolumeClaimTemplates = nil
+		sts.Template.Spec.Volumes = append(sts.Template.Spec.Volumes, v1.Volume{
+			Name: "snd",
+			VolumeSource: v1.VolumeSource{
+				HostPath: &v1.HostPathVolumeSource{
+					Path: "/dev/snd",
+				},
+			},
+		})
+		sts.Template.Spec.Containers[0].VolumeMounts = []v1.VolumeMount{
+			{
+				Name:      "snd",
+				MountPath: "/dev/snd",
+			},
+		}
 	case j.Storage.PVC.Spec.Resources.Requests != nil:
 		pvc := j.preparePVC()
 		sts.VolumeClaimTemplates = []v1.PersistentVolumeClaim{pvc}
@@ -82,7 +98,7 @@ func (j *Jibri) setPV(sts *appsv1.StatefulSetSpec) {
 			},
 		})
 		sts.Template.Spec.Containers[0].VolumeMounts = j.setVolumeMounts()
-	case j.Storage.EmptyDir.SizeLimit != nil:
+	case j.Storage.EmptyDir.SizeLimit != nil && j.Storage != nil:
 		sts.Template.Spec.Volumes = append(sts.Template.Spec.Volumes,
 			v1.Volume{
 				Name: volumeName(j.name),

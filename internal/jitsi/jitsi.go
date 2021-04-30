@@ -2,6 +2,8 @@ package jitsi
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/onmetal/meeting-operator/internal/utils"
 
@@ -74,7 +76,7 @@ type JVB struct {
 }
 
 func NewJitsi(ctx context.Context, appName string,
-	j *v1alpha1.Jitsi, c client.Client, l logr.Logger) Jitsi {
+	j *v1alpha1.Jitsi, c client.Client, l logr.Logger) (Jitsi, error) {
 	switch appName {
 	case WebName:
 		labels := utils.GetDefaultLabels(WebName)
@@ -86,7 +88,7 @@ func NewJitsi(ctx context.Context, appName string,
 			ctx:       ctx,
 			log:       l,
 			labels:    labels,
-		}
+		}, nil
 	case ProsodyName:
 		labels := utils.GetDefaultLabels(ProsodyName)
 		return &Prosody{
@@ -97,7 +99,7 @@ func NewJitsi(ctx context.Context, appName string,
 			ctx:       ctx,
 			log:       l,
 			labels:    labels,
-		}
+		}, nil
 	case JicofoName:
 		labels := utils.GetDefaultLabels(JicofoName)
 		return &Jicofo{
@@ -108,7 +110,7 @@ func NewJitsi(ctx context.Context, appName string,
 			ctx:       ctx,
 			log:       l,
 			labels:    labels,
-		}
+		}, nil
 	case JibriName:
 		labels := utils.GetDefaultLabels(JibriName)
 		return &Jibri{
@@ -119,7 +121,7 @@ func NewJitsi(ctx context.Context, appName string,
 			ctx:       ctx,
 			log:       l,
 			labels:    labels,
-		}
+		}, nil
 	case JvbContainerName:
 		return &JVB{
 			Client:    c,
@@ -127,8 +129,8 @@ func NewJitsi(ctx context.Context, appName string,
 			namespace: j.Namespace,
 			ctx:       ctx,
 			log:       l,
-		}
+		}, nil
 	default:
-		return nil
+		return nil, errors.New(fmt.Sprintf("component: %s not exist", appName))
 	}
 }

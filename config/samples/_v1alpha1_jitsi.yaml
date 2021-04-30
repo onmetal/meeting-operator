@@ -153,15 +153,15 @@ spec:
       empty_dir: {}
 #        sizeLimit:
 #          "1Gi"
-      pvc: {}
-#        apiVersion: v1
-#        kind: PersistentVolumeClaim
-#        spec:
-#          accessModes: ["ReadWriteOnce"]
-#          resources:
-#            requests:
-#              storage: "1Gi"
-    service_type: "ClusterIP"
+#      pvc: {}
+##        apiVersion: v1
+##        kind: PersistentVolumeClaim
+##        spec:
+##          accessModes: ["ReadWriteOnce"]
+##          resources:
+##            requests:
+##              storage: "1Gi"
+#    service_type: "ClusterIP"
     services:
       - port_name: "http"
         protocol: "TCP"

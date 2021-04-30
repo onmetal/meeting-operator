@@ -85,7 +85,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 }
 
 func (r *Reconciler) make(ctx context.Context, appName string, j *v1alpha1.Jitsi) error {
-	jts := jitsi.NewJitsi(ctx, appName, j, r.Client, r.Log)
+	jts, err := jitsi.NewJitsi(ctx, appName, j, r.Client, r.Log)
+	if err != nil {
+		return err
+	}
 	if err := jts.Update(); err != nil {
 		if apierrors.IsNotFound(err) {
 			if createErr := jts.Create(); createErr != nil {
@@ -111,7 +114,10 @@ func (r *Reconciler) make(ctx context.Context, appName string, j *v1alpha1.Jitsi
 }
 
 func (r *Reconciler) makeJVB(ctx context.Context, j *v1alpha1.Jitsi) error {
-	jts := jitsi.NewJitsi(ctx, "jvb", j, r.Client, r.Log)
+	jts, err := jitsi.NewJitsi(ctx, "jvb", j, r.Client, r.Log)
+	if err != nil {
+		return err
+	}
 	if err := jts.Update(); err != nil {
 		r.Log.Info("failed to update jitsi deployment", "error", err)
 		return err
@@ -137,7 +143,10 @@ func (r *Reconciler) onDelete(e event.DeleteEvent) bool {
 }
 
 func (r *Reconciler) deleteComponents(ctx context.Context, appName string, j *v1alpha1.Jitsi) error {
-	jts := jitsi.NewJitsi(ctx, appName, j, r.Client, r.Log)
+	jts, err := jitsi.NewJitsi(ctx, appName, j, r.Client, r.Log)
+	if err != nil {
+		return err
+	}
 	if err := jts.Delete(); err != nil {
 		return err
 	}
@@ -149,7 +158,10 @@ func (r *Reconciler) deleteComponents(ctx context.Context, appName string, j *v1
 }
 
 func (r *Reconciler) deleteJVB(ctx context.Context, j *v1alpha1.Jitsi) error {
-	jts := jitsi.NewJitsi(ctx, "jvb", j, r.Client, r.Log)
+	jts, err := jitsi.NewJitsi(ctx, "jvb", j, r.Client, r.Log)
+	if err != nil {
+		return err
+	}
 	if err := jts.Delete(); err != nil {
 		return err
 	}
