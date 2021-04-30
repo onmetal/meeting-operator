@@ -9,7 +9,7 @@ spec:
     image_pull_secrets:
     - name: docker
     service_annotations: {}
-    service_type: "ClusterIP"
+    service_type: "LoadBalancer"
     services:
       - port_name: "http"
         protocol: "TCP"
