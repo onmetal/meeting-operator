@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+
 	"github.com/onmetal/meeting-operator/internal/jitsi"
 	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -142,17 +143,6 @@ func (r *Reconciler) onDelete(e event.DeleteEvent) bool {
 		r.Log.Info("failed to delete jvb component", "error", err)
 	}
 	return false
-}
-
-func (r *Reconciler) getJitsiCR(ctx context.Context, namespace string) *v1alpha1.Jitsi {
-	j := &v1alpha1.JitsiList{}
-	if err := r.List(ctx, j, &client.ListOptions{Namespace: namespace}); err != nil {
-		return nil
-	}
-	if len(j.Items) < 1 {
-		return nil
-	}
-	return &j.Items[0]
 }
 
 func (r *Reconciler) deleteComponents(ctx context.Context, appName string, j *v1alpha1.Jitsi) error {

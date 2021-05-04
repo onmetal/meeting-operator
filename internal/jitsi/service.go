@@ -185,12 +185,12 @@ func (s *Service) Delete() error {
 	return s.Client.Delete(s.ctx, service)
 }
 
-func compareServiceAnnotations(old, new map[string]string) bool {
-	if len(new) < 1 {
+func compareServiceAnnotations(oldAnnotations, newAnnotations map[string]string) bool {
+	if len(newAnnotations) < 1 {
 		return true
 	}
-	for name := range old {
-		if _,ok := new[name]; !ok {
+	for name := range oldAnnotations {
+		if _, ok := newAnnotations[name]; !ok {
 			return true
 		}
 	}

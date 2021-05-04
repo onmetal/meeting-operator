@@ -18,7 +18,6 @@ package jitsi
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/onmetal/meeting-operator/internal/utils"
@@ -147,6 +146,6 @@ func NewJitsi(ctx context.Context, appName string,
 			log:       l,
 		}, nil
 	default:
-		return nil, errors.New(fmt.Sprintf("component: %s not exist", appName))
+		return nil, fmt.Errorf(fmt.Sprintf("component: %s not exist", appName))
 	}
 }

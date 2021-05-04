@@ -41,8 +41,8 @@ type Web struct {
 	Resources          v1.ResourceList           `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
-	ServiceType        v1.ServiceType            `json:"service_type,omitempty"`
-	Services           []Service                 `json:"services,omitempty"`
+	ServiceType v1.ServiceType `json:"service_type,omitempty"`
+	Services    []Service      `json:"services,omitempty"`
 }
 
 type Prosody struct {
@@ -57,8 +57,8 @@ type Prosody struct {
 	Resources          v1.ResourceList           `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
-	ServiceType        v1.ServiceType            `json:"service_type,omitempty"`
-	Services           []Service                 `json:"services,omitempty"`
+	ServiceType v1.ServiceType `json:"service_type,omitempty"`
+	Services    []Service      `json:"services,omitempty"`
 }
 
 type Jicofo struct {
@@ -73,8 +73,8 @@ type Jicofo struct {
 	Resources          v1.ResourceList           `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
-	ServiceType        v1.ServiceType            `json:"service_type,omitempty"`
-	Services           []Service                 `json:"services,omitempty"`
+	ServiceType v1.ServiceType `json:"service_type,omitempty"`
+	Services    []Service      `json:"services,omitempty"`
 }
 
 type Jibri struct {
@@ -90,8 +90,8 @@ type Jibri struct {
 	Resources          v1.ResourceList           `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
-	ServiceType        v1.ServiceType            `json:"service_type,omitempty"`
-	Services           []Service                 `json:"services"`
+	ServiceType v1.ServiceType `json:"service_type,omitempty"`
+	Services    []Service      `json:"services"`
 }
 
 type JVB struct {
