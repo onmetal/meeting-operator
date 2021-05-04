@@ -4,7 +4,7 @@ metadata:
   name: jitsi-sample
 spec:
   web:
-    replicas: 1
+    replicas: 0
     image: jitsi/web:stable-5390-3
     image_pull_secrets:
     - name: docker
@@ -45,7 +45,7 @@ spec:
       value: https://<<your ehterpad public url here>>/p/
 
   jicofo:
-    replicas: 1
+    replicas: 0
     image: jitsi/jicofo:stable-5390-3
     service_type: "ClusterIP"
     services:
@@ -83,7 +83,7 @@ spec:
           key: JICOFO_AUTH_PASSWORD
 
   prosody:
-    replicas: 1
+    replicas: 0
     service_type: "ClusterIP"
     services:
       - port_name: "http"
@@ -148,7 +148,7 @@ spec:
       value: https://<<your public url here>>
 
   jibri:
-    replicas: 1
+    replicas: 0
     storage:
       empty_dir: {}
 #        sizeLimit:
@@ -255,11 +255,12 @@ spec:
         secretKeyRef:
           name: jitsi-config
           key: JICOFO_AUTH_PASSWORD
+# overwrite getting ip from type: LoadBalancer service
 #    - name: DOCKER_HOST_ADDRESS
 #      value: <your public ip here>
-      # valueFrom:
-      #   fieldRef:
-      #     fieldPath: status.hostIP
+#      valueFrom:
+#        fieldRef:
+#          fieldPath: status.hostIP
     - name: NODE_NAME
       valueFrom:
         fieldRef:

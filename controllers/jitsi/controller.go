@@ -18,8 +18,8 @@ package controller
 
 import (
 	"context"
-
 	"github.com/onmetal/meeting-operator/internal/jitsi"
+	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -44,6 +44,8 @@ type Reconciler struct {
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.Jitsi{}).
+		Owns(&appsv1.StatefulSet{}).
+		Owns(&appsv1.Deployment{}).
 		WithEventFilter(r.predicateFuncs()).
 		Complete(r)
 }
@@ -60,10 +62,10 @@ func (r *Reconciler) predicateFuncs() predicate.Predicate {
 // +kubebuilder:rbac:groups="",resources=endpoints,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
-//+kubebuilder:rbac:groups=meeting.ko,resources=jitsis,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=configmaps,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=meeting.ko,resources=jitssi/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=meeting.ko,resources=jitsis/finalizers,verbs=update
+// +kubebuilder:rbac:groups=meeting.ko,resources=jitsis,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=configmaps,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=meeting.ko,resources=jitssi/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=meeting.ko,resources=jitsis/finalizers,verbs=update
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("jitsi", req.NamespacedName)
 
@@ -126,11 +128,11 @@ func (r *Reconciler) makeJVB(ctx context.Context, j *v1alpha1.Jitsi) error {
 }
 
 func (r *Reconciler) onDelete(e event.DeleteEvent) bool {
+	ctx := context.Background()
 	jitsiObj, ok := e.Object.(*v1alpha1.Jitsi)
 	if !ok {
 		return false
 	}
-	ctx := context.Background()
 	for _, appName := range jitsiServices {
 		if err := r.deleteComponents(ctx, appName, jitsiObj); err != nil {
 			r.Log.Info("failed to delete component", "error", err)
@@ -140,6 +142,17 @@ func (r *Reconciler) onDelete(e event.DeleteEvent) bool {
 		r.Log.Info("failed to delete jvb component", "error", err)
 	}
 	return false
+}
+
+func (r *Reconciler) getJitsiCR(ctx context.Context, namespace string) *v1alpha1.Jitsi {
+	j := &v1alpha1.JitsiList{}
+	if err := r.List(ctx, j, &client.ListOptions{Namespace: namespace}); err != nil {
+		return nil
+	}
+	if len(j.Items) < 1 {
+		return nil
+	}
+	return &j.Items[0]
 }
 
 func (r *Reconciler) deleteComponents(ctx context.Context, appName string, j *v1alpha1.Jitsi) error {
