@@ -169,7 +169,7 @@ func (r *Reconciler) deleteJVB(ctx context.Context, j *v1alpha1.Jitsi) error {
 		return err
 	}
 	if err := jts.Delete(); err != nil {
-		return err
+		return client.IgnoreNotFound(err)
 	}
 	return nil
 }

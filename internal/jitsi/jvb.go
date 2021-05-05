@@ -31,10 +31,11 @@ import (
 )
 
 const (
-	JvbPodName   = "jitsi-jvb"
-	JvbName      = "jvb"
-	externalPort = 10000
-	waitForLB    = 20 * time.Second
+	JvbPodName      = "jitsi-jvb"
+	JvbName         = "jvb"
+	externalPort    = 10000
+	timeOutSecond   = 600 * time.Second
+	tickTimerSecond = 10 * time.Second
 )
 
 func (j *JVB) Create() error {
@@ -209,15 +210,21 @@ func (j *JVB) getDockerHostAddr() v1.EnvVar {
 
 func (j *JVB) getExternalIP() string {
 	serviceName := fmt.Sprintf("%s-%d", JvbPodName, j.replica)
-	time.Sleep(waitForLB)
-	svc := j.getService(serviceName)
-	switch {
-	case len(svc.Status.LoadBalancer.Ingress) != 0:
-		return svc.Status.LoadBalancer.Ingress[0].IP
-	case svc.Spec.LoadBalancerIP != "":
-		return svc.Spec.LoadBalancerIP
-	default:
-		return ""
+	timeout := time.After(timeOutSecond)
+	tick := time.NewTicker(tickTimerSecond)
+	for {
+		select {
+		case <-timeout:
+			return ""
+		case <-tick.C:
+			svc := j.getService(serviceName)
+			if len(svc.Status.LoadBalancer.Ingress) != 0 {
+				return svc.Status.LoadBalancer.Ingress[0].IP
+			}
+			if svc.Spec.LoadBalancerIP != "" {
+				return svc.Spec.LoadBalancerIP
+			}
+		}
 	}
 }
 
@@ -243,8 +250,8 @@ func (j *JVB) Update() error {
 			}
 		} else {
 			// We can't update pod.spec and deletion is required
-			if err := j.Delete(); err != nil {
-				j.log.Info("failed to update jvb", "error", err, "namespace", j.namespace)
+			if err := j.deleteSTS(j.podName); err != nil {
+				j.log.Info("failed to delete pod", "error", err, "namespace", j.namespace)
 			}
 			if err := j.Create(); err != nil {
 				j.log.Info("failed to update jvb", "error", err, "namespace", j.namespace)

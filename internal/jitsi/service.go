@@ -18,14 +18,16 @@ package jitsi
 
 import (
 	"context"
+	"time"
 
 	"github.com/onmetal/meeting-operator/internal/utils"
 
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -132,8 +134,25 @@ func (s *Service) Update() error {
 		return err
 	}
 	switch {
+	case service.Spec.Type != s.serviceType:
+		// You can't change spec.type on existing service
+		if err := s.Client.Delete(s.ctx, service); err != nil {
+			s.log.Error(err, "failed to delete service")
+		}
+		timeout := time.After(timeOutSecond)
+		tick := time.NewTicker(tickTimerSecond)
+		preparedService := s.prepareService()
+		for {
+			select {
+			case <-timeout:
+				return s.Client.Create(s.ctx, preparedService)
+			case <-tick.C:
+				if _, getErr := s.Get(); apierrors.IsNotFound(getErr) {
+					return s.Client.Create(s.ctx, preparedService)
+				}
+			}
+		}
 	case service.Spec.Type == "LoadBalancer":
-
 		// can't delete annotations when service type is LoadBalancer
 		if compareServiceAnnotations(service.Annotations, s.annotations) {
 			if err := s.Client.Delete(s.ctx, service); err != nil {
@@ -147,13 +166,6 @@ func (s *Service) Update() error {
 		service.Spec.Ports = updatedServiceSpec.Ports
 		service.Spec.Selector = updatedServiceSpec.Selector
 		return s.Client.Update(s.ctx, service)
-	case service.Spec.Type != s.serviceType:
-		// You can't change spec.type on existing service
-		if err := s.Client.Delete(s.ctx, service); err != nil {
-			s.log.Error(err, "failed to delete service")
-		}
-		preparedService := s.prepareService()
-		return s.Client.Create(s.ctx, preparedService)
 	default:
 		updatedServiceSpec := s.prepareServiceSpec()
 		service.Annotations = s.annotations
@@ -175,7 +187,7 @@ func (s *Service) Get() (*v1.Service, error) {
 func (s *Service) Delete() error {
 	service, err := s.Get()
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			s.log.Info("service not found", "Name", s.name)
 			return nil
 		}
