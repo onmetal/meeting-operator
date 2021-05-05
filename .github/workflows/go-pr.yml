@@ -1,4 +1,4 @@
-name: PR - Helm
+name: PR - Go
 
 on:
   pull_request:
