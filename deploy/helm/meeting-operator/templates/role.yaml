@@ -3,62 +3,62 @@ kind: ClusterRole
 metadata:
   name: manager-role
 rules:
-- apiGroups:
-    - ""
-  resources:
-    - services
-    - endpoints
-    - pods
-  verbs:
-    - create
-    - delete
-    - get
-    - list
-    - patch
-    - update
-    - watch
-- apiGroups:
-    - "apps"
-  resources:
-    - deployments
-    - statefulsets
-  verbs:
-    - create
-    - delete
-    - get
-    - list
-    - patch
-    - update
-    - watch
-- apiGroups:
-    - meeting.ko
-  resources:
-    - etherpads
-    - jitsis
-    - whiteboards
-  verbs:
-    - create
-    - delete
-    - get
-    - list
-    - patch
-    - update
-    - watch
-- apiGroups:
-    - meeting.ko
-  resources:
-    - etherpads/finalizers
-    - jitsis/finalizers
-    - whiteboards/finalizers
-  verbs:
-    - update
-- apiGroups:
-    - meeting.ko
-  resources:
-    - etherpads/status
-    - jitsis/status
-    - whiteboards/status
-  verbs:
-    - get
-    - patch
-    - update
+  - apiGroups:
+      - ""
+    resources:
+      - services
+      - endpoints
+      - pods
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - "apps"
+    resources:
+      - deployments
+      - statefulsets
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - meeting.ko
+    resources:
+      - etherpads
+      - jitsis
+      - whiteboards
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - meeting.ko
+    resources:
+      - etherpads/finalizers
+      - jitsis/finalizers
+      - whiteboards/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - meeting.ko
+    resources:
+      - etherpads/status
+      - jitsis/status
+      - whiteboards/status
+    verbs:
+      - get
+      - patch
+      - update

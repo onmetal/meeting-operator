@@ -1,3 +1,19 @@
+/*
+Copyright 2021.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package jitsi
 
 import (
@@ -70,6 +86,22 @@ func (j *Jibri) getContainerPorts() []v1.ContainerPort {
 
 func (j *Jibri) setPV(sts *appsv1.StatefulSetSpec) {
 	switch {
+	case j.Storage == nil:
+		sts.VolumeClaimTemplates = nil
+		sts.Template.Spec.Volumes = append(sts.Template.Spec.Volumes, v1.Volume{
+			Name: "snd",
+			VolumeSource: v1.VolumeSource{
+				HostPath: &v1.HostPathVolumeSource{
+					Path: "/dev/snd",
+				},
+			},
+		})
+		sts.Template.Spec.Containers[0].VolumeMounts = []v1.VolumeMount{
+			{
+				Name:      "snd",
+				MountPath: "/dev/snd",
+			},
+		}
 	case j.Storage.PVC.Spec.Resources.Requests != nil:
 		pvc := j.preparePVC()
 		sts.VolumeClaimTemplates = []v1.PersistentVolumeClaim{pvc}
@@ -82,7 +114,7 @@ func (j *Jibri) setPV(sts *appsv1.StatefulSetSpec) {
 			},
 		})
 		sts.Template.Spec.Containers[0].VolumeMounts = j.setVolumeMounts()
-	case j.Storage.EmptyDir.SizeLimit != nil:
+	case j.Storage.EmptyDir.SizeLimit != nil && j.Storage != nil:
 		sts.Template.Spec.Volumes = append(sts.Template.Spec.Volumes,
 			v1.Volume{
 				Name: volumeName(j.name),

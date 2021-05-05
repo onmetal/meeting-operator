@@ -1,15 +1,31 @@
+# /*
+# Copyright 2021.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# */
+
 apiVersion: meeting.ko/v1alpha1
 kind: Jitsi
 metadata:
   name: jitsi-sample
 spec:
   web:
-    replicas: 1
+    replicas: 0
     image: jitsi/web:stable-5390-3
     image_pull_secrets:
     - name: docker
     service_annotations: {}
-    service_type: "ClusterIP"
+    service_type: "LoadBalancer"
     services:
       - port_name: "http"
         protocol: "TCP"
@@ -45,7 +61,7 @@ spec:
       value: https://<<your ehterpad public url here>>/p/
 
   jicofo:
-    replicas: 1
+    replicas: 0
     image: jitsi/jicofo:stable-5390-3
     service_type: "ClusterIP"
     services:
@@ -83,7 +99,7 @@ spec:
           key: JICOFO_AUTH_PASSWORD
 
   prosody:
-    replicas: 1
+    replicas: 0
     service_type: "ClusterIP"
     services:
       - port_name: "http"
@@ -148,20 +164,20 @@ spec:
       value: https://<<your public url here>>
 
   jibri:
-    replicas: 1
+    replicas: 0
     storage:
       empty_dir: {}
 #        sizeLimit:
 #          "1Gi"
-      pvc: {}
-#        apiVersion: v1
-#        kind: PersistentVolumeClaim
-#        spec:
-#          accessModes: ["ReadWriteOnce"]
-#          resources:
-#            requests:
-#              storage: "1Gi"
-    service_type: "ClusterIP"
+#      pvc: {}
+##        apiVersion: v1
+##        kind: PersistentVolumeClaim
+##        spec:
+##          accessModes: ["ReadWriteOnce"]
+##          resources:
+##            requests:
+##              storage: "1Gi"
+#    service_type: "ClusterIP"
     services:
       - port_name: "http"
         protocol: "TCP"
@@ -255,11 +271,12 @@ spec:
         secretKeyRef:
           name: jitsi-config
           key: JICOFO_AUTH_PASSWORD
+# overwrite getting ip from type: LoadBalancer service
 #    - name: DOCKER_HOST_ADDRESS
 #      value: <your public ip here>
-      # valueFrom:
-      #   fieldRef:
-      #     fieldPath: status.hostIP
+#      valueFrom:
+#        fieldRef:
+#          fieldPath: status.hostIP
     - name: NODE_NAME
       valueFrom:
         fieldRef:

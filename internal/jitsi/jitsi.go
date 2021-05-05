@@ -1,7 +1,24 @@
+/*
+Copyright 2021.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package jitsi
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/onmetal/meeting-operator/internal/utils"
 
@@ -74,7 +91,7 @@ type JVB struct {
 }
 
 func NewJitsi(ctx context.Context, appName string,
-	j *v1alpha1.Jitsi, c client.Client, l logr.Logger) Jitsi {
+	j *v1alpha1.Jitsi, c client.Client, l logr.Logger) (Jitsi, error) {
 	switch appName {
 	case WebName:
 		labels := utils.GetDefaultLabels(WebName)
@@ -86,7 +103,7 @@ func NewJitsi(ctx context.Context, appName string,
 			ctx:       ctx,
 			log:       l,
 			labels:    labels,
-		}
+		}, nil
 	case ProsodyName:
 		labels := utils.GetDefaultLabels(ProsodyName)
 		return &Prosody{
@@ -97,7 +114,7 @@ func NewJitsi(ctx context.Context, appName string,
 			ctx:       ctx,
 			log:       l,
 			labels:    labels,
-		}
+		}, nil
 	case JicofoName:
 		labels := utils.GetDefaultLabels(JicofoName)
 		return &Jicofo{
@@ -108,7 +125,7 @@ func NewJitsi(ctx context.Context, appName string,
 			ctx:       ctx,
 			log:       l,
 			labels:    labels,
-		}
+		}, nil
 	case JibriName:
 		labels := utils.GetDefaultLabels(JibriName)
 		return &Jibri{
@@ -119,7 +136,7 @@ func NewJitsi(ctx context.Context, appName string,
 			ctx:       ctx,
 			log:       l,
 			labels:    labels,
-		}
+		}, nil
 	case JvbContainerName:
 		return &JVB{
 			Client:    c,
@@ -127,8 +144,8 @@ func NewJitsi(ctx context.Context, appName string,
 			namespace: j.Namespace,
 			ctx:       ctx,
 			log:       l,
-		}
+		}, nil
 	default:
-		return nil
+		return nil, fmt.Errorf(fmt.Sprintf("component: %s not exist", appName))
 	}
 }
