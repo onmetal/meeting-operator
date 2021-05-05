@@ -1,0 +1,6 @@
+# Configuration for https://github.com/helm/chart-testing
+chart-dirs:
+  - deploy/helm
+charts:
+  - deploy/helm/meeting-operator
+helm-extra-args: --timeout 600s
