@@ -3,7 +3,7 @@ name: Release - Helm
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   release:
