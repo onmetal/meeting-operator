@@ -8,7 +8,7 @@ on:
       - v*
 
 env:
-  IMAGE_NAME: change-me/meeting-operator
+  IMAGE_NAME: meeting-operator
 
 jobs:
   push:
