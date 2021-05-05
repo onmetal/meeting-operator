@@ -20,7 +20,7 @@ metadata:
   name: jitsi-sample
 spec:
   web:
-    replicas: 0
+    replicas: 1
     image: jitsi/web:stable-5390-3
     image_pull_secrets:
     - name: docker
@@ -61,7 +61,7 @@ spec:
       value: https://<<your ehterpad public url here>>/p/
 
   jicofo:
-    replicas: 0
+    replicas: 1
     image: jitsi/jicofo:stable-5390-3
     service_type: "ClusterIP"
     services:
@@ -99,7 +99,7 @@ spec:
           key: JICOFO_AUTH_PASSWORD
 
   prosody:
-    replicas: 0
+    replicas: 1
     service_type: "ClusterIP"
     services:
       - port_name: "http"

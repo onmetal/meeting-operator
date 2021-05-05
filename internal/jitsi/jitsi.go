@@ -137,7 +137,7 @@ func NewJitsi(ctx context.Context, appName string,
 			log:       l,
 			labels:    labels,
 		}, nil
-	case JvbContainerName:
+	case JvbName:
 		return &JVB{
 			Client:    c,
 			JVB:       &j.Spec.JVB,

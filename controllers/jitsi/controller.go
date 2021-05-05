@@ -20,7 +20,6 @@ import (
 	"context"
 
 	"github.com/onmetal/meeting-operator/internal/jitsi"
-	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -33,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var jitsiServices = []string{"web", "prosody", "jicofo", "jibri"}
+var jitsiServices = []string{jitsi.WebName, jitsi.ProsodyName, jitsi.JicofoName, jitsi.JibriName}
 
 type Reconciler struct {
 	client.Client
@@ -45,8 +44,6 @@ type Reconciler struct {
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.Jitsi{}).
-		Owns(&appsv1.StatefulSet{}).
-		Owns(&appsv1.Deployment{}).
 		WithEventFilter(r.predicateFuncs()).
 		Complete(r)
 }
@@ -88,6 +85,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 }
 
 func (r *Reconciler) make(ctx context.Context, appName string, j *v1alpha1.Jitsi) error {
+	if !shouldContinue(appName, j) {
+		return nil
+	}
 	jts, err := jitsi.NewJitsi(ctx, appName, j, r.Client, r.Log)
 	if err != nil {
 		return err
@@ -117,7 +117,10 @@ func (r *Reconciler) make(ctx context.Context, appName string, j *v1alpha1.Jitsi
 }
 
 func (r *Reconciler) makeJVB(ctx context.Context, j *v1alpha1.Jitsi) error {
-	jts, err := jitsi.NewJitsi(ctx, "jvb", j, r.Client, r.Log)
+	if !shouldContinue(jitsi.JvbName, j) {
+		return nil
+	}
+	jts, err := jitsi.NewJitsi(ctx, jitsi.JvbName, j, r.Client, r.Log)
 	if err != nil {
 		return err
 	}
@@ -169,4 +172,21 @@ func (r *Reconciler) deleteJVB(ctx context.Context, j *v1alpha1.Jitsi) error {
 		return err
 	}
 	return nil
+}
+
+func shouldContinue(appName string, j *v1alpha1.Jitsi) bool {
+	switch appName {
+	case jitsi.WebName:
+		return j.Spec.Web.Replicas > 0
+	case jitsi.ProsodyName:
+		return j.Spec.Prosody.Replicas > 0
+	case jitsi.JicofoName:
+		return j.Spec.Jicofo.Replicas > 0
+	case jitsi.JibriName:
+		return j.Spec.Jibri.Replicas > 0
+	case jitsi.JvbName:
+		return j.Spec.JVB.Replicas > 0
+	default:
+		return false
+	}
 }

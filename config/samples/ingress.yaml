@@ -56,17 +56,3 @@ spec:
             backend:
                 serviceName: jitsi-web
                 servicePort: 80
-    - host: ""
-      http:
-        paths:
-          - path: /xmpp-websocket
-            backend:
-              serviceName: jitsi-prosody
-              servicePort: 5280
-    - host: ""
-      http:
-        paths:
-          - path: /http-bind
-            backend:
-              serviceName: jitsi-prosody
-              servicePort: 5280

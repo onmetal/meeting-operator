@@ -31,10 +31,10 @@ import (
 )
 
 const (
-	JvbPodName       = "jitsi-jvb"
-	JvbContainerName = "jvb"
-	externalPort     = 10000
-	waitForLB        = 20 * time.Second
+	JvbPodName   = "jitsi-jvb"
+	JvbName      = "jvb"
+	externalPort = 10000
+	waitForLB    = 20 * time.Second
 )
 
 func (j *JVB) Create() error {
@@ -118,7 +118,7 @@ func (j *JVB) prepareSTSSpec(labels map[string]string) appsv1.StatefulSetSpec {
 				ImagePullSecrets: j.ImagePullSecrets,
 				Containers: []v1.Container{
 					{
-						Name:            JvbContainerName,
+						Name:            JvbName,
 						Image:           j.Image,
 						ImagePullPolicy: j.ImagePullPolicy,
 						Env:             envs,
@@ -186,32 +186,27 @@ func (j *JVB) additionalEnvironments() []v1.EnvVar {
 	}
 }
 func (j *JVB) getDockerHostAddr() v1.EnvVar {
-	var dockerHostAddr v1.EnvVar
 	for env := range j.Environments {
 		if j.Environments[env].Name != "DOCKER_HOST_ADDRESS" {
 			continue
 		}
 		if j.Environments[env].ValueFrom != nil {
-			dockerHostAddr = v1.EnvVar{
+			return v1.EnvVar{
 				Name:      j.Environments[env].Name,
 				ValueFrom: j.Environments[env].ValueFrom,
 			}
-			return dockerHostAddr
 		}
-		dockerHostAddr = v1.EnvVar{
+		return v1.EnvVar{
 			Name:  j.Environments[env].Name,
 			Value: j.Environments[env].Value,
 		}
-		return dockerHostAddr
 	}
-	if dockerHostAddr.Value == "" || dockerHostAddr.ValueFrom == nil {
-		dockerHostAddr = v1.EnvVar{
-			Name:  "DOCKER_HOST_ADDRESS",
-			Value: j.getExternalIP(),
-		}
+	return v1.EnvVar{
+		Name:  "DOCKER_HOST_ADDRESS",
+		Value: j.getExternalIP(),
 	}
-	return dockerHostAddr
 }
+
 func (j *JVB) getExternalIP() string {
 	serviceName := fmt.Sprintf("%s-%d", JvbPodName, j.replica)
 	time.Sleep(waitForLB)

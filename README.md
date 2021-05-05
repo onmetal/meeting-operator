@@ -3,18 +3,18 @@
 
 ## Overview
 Meeting-operator provides deployment and management of [Jitsi](https://jitsi.org/) 
-and related components (only [Etherpad](https://etherpad.org/) right now).
+and related components: 
+* [Etherpad](https://etherpad.org/) - Etherpad is a real-time collaborative editor scalable to thousands of simultaneous real time users. It provides full data export capabilities, and runs on your server, under your control.
+* [Excalidraw](https://excalidraw.com/) - Virtual whiteboard for sketching hand-drawn like diagrams.
+
 The Meeting-operator includes the following features:
 
-* **Kubernetes Custom Resources**: Use Kubernetes custom resources to deploy and manage Jitsi, Etherpad,
+* **Kubernetes Custom Resources**: Use Kubernetes custom resources to deploy and manage Jitsi,
   and related components.
 
 ## Prerequisites
 ```
-kubectl create secret generic jitsi-config \
---from-literal=JICOFO_COMPONENT_SECRET=2 \
---from-literal=JICOFO_AUTH_PASSWORD=1 \
---from-literal=JVB_AUTH_PASSWORD=1
+kubectl create -f config/samples/jitsi-config.yaml
 ```
 ## Install
 You can use helm for deploy meeting-operator in the cluster.
@@ -32,8 +32,9 @@ kubectl apply -f config/crd/bases/*
 ```
 2. custom resources
 ```
-kubectl apply -f config/sample/_v1alpha1_etherpad.yaml
-kubectl apply -f config/sample/_v1alpha1_jitsi.yaml
+kubectl apply -f config/samples/_v1alpha1_etherpad.yaml
+kubectl apply -f config/samples/_v1alpha1_whiteboard.yaml 
+kubectl apply -f config/samples/_v1alpha1_jitsi.yaml
 ```
 
 If you need to change default values, you should check values.yml
@@ -45,6 +46,7 @@ start up with jitsi.
  ll config/samples
  _v1alpha1_etherpad.yaml
  _v1alpha1_jitsi.yaml
+ _v1alpha_whiteboard.yaml
  ingress.yaml
  jitsi-config.yaml
  kustomization.yaml

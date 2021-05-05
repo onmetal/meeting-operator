@@ -20,7 +20,7 @@ metadata:
   name: etherpad
 spec:
   replicas: 1
-  image: artifactory.devops.telekom.de/hub.docker.com/etherpad/etherpad:1.8.12
+  image: etherpad/etherpad:1.8.12
   image_pull_secrets:
     - name: docker
   service:
