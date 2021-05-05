@@ -1,0 +1,17 @@
+apiVersion: v1
+entries:
+  meeting-operator:
+  - apiVersion: v2
+    appVersion: 0.3.6
+    created: "2021-05-05T16:52:07.807752131Z"
+    description: A Helm chart for Kubernetes
+    digest: a3eca6a928260e6e736ef30214de39f52bae4bf3d34f44510d3b05067c1c2ee5
+    icon: https://make-linter-happy.com
+    maintainers:
+    - name: Andrew Vasilev
+    name: meeting-operator
+    type: application
+    urls:
+    - https://github.com/onmetal/meeting-operator/releases/download/meeting-operator-0.3.7/meeting-operator-0.3.7.tgz
+    version: 0.3.7
+generated: "2021-05-05T16:52:07.807759531Z"
