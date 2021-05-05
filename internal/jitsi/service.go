@@ -105,6 +105,9 @@ func NewService(ctx context.Context, appName string,
 	}
 }
 func (s *Service) Create() error {
+	if len(s.services) < 1 {
+		return nil
+	}
 	preparedService := s.prepareService()
 	return s.Client.Create(s.ctx, preparedService)
 }

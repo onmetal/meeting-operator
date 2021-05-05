@@ -58,7 +58,7 @@ func (j *Jicofo) prepareDeploymentSpec() appsv1.DeploymentSpec {
 						Image:           j.Image,
 						ImagePullPolicy: j.ImagePullPolicy,
 						Env:             j.Environments,
-						Ports:           j.getContainerPorts(),
+						Ports:           getContainerPorts(j.Services),
 					},
 				},
 			},
@@ -66,17 +66,20 @@ func (j *Jicofo) prepareDeploymentSpec() appsv1.DeploymentSpec {
 	}
 }
 
-func (j *Jicofo) getContainerPorts() []v1.ContainerPort {
-	var ports []v1.ContainerPort
-	for svc := range j.Services {
-		ports = append(ports, v1.ContainerPort{
-			Name:          j.Services[svc].PortName,
-			ContainerPort: j.Services[svc].Port,
-			Protocol:      j.Services[svc].Protocol,
-		})
-	}
-	return ports
-}
+//func (j *Jicofo) getContainerPorts() []v1.ContainerPort {
+//	var ports []v1.ContainerPort
+//	if len(j.Services) < 1 {
+//		return ports
+//	}
+//	for svc := range j.Services {
+//		ports = append(ports, v1.ContainerPort{
+//			Name:          j.Services[svc].PortName,
+//			ContainerPort: j.Services[svc].Port,
+//			Protocol:      j.Services[svc].Protocol,
+//		})
+//	}
+//	return ports
+//}
 
 func (j *Jicofo) Update() error {
 	updatedDeployment := j.prepareDeployment()

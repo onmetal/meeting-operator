@@ -19,6 +19,7 @@ package jitsi
 import (
 	"context"
 	"fmt"
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/onmetal/meeting-operator/internal/utils"
 
@@ -148,4 +149,19 @@ func NewJitsi(ctx context.Context, appName string,
 	default:
 		return nil, fmt.Errorf(fmt.Sprintf("component: %s not exist", appName))
 	}
+}
+
+func getContainerPorts(services []v1alpha1.Service) []v1.ContainerPort {
+	var ports []v1.ContainerPort
+	if len(services) < 1 {
+		return nil
+	}
+	for svc := range services {
+		ports = append(ports, v1.ContainerPort{
+			Name:          services[svc].PortName,
+			ContainerPort: services[svc].Port,
+			Protocol:      services[svc].Protocol,
+		})
+	}
+	return ports
 }

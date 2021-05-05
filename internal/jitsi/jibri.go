@@ -62,7 +62,7 @@ func (j *Jibri) prepareSTSSpec() appsv1.StatefulSetSpec {
 						Image:           j.Image,
 						ImagePullPolicy: j.ImagePullPolicy,
 						Env:             j.Environments,
-						Ports:           j.getContainerPorts(),
+						Ports:           getContainerPorts(j.Services),
 					},
 				},
 			},
@@ -72,17 +72,20 @@ func (j *Jibri) prepareSTSSpec() appsv1.StatefulSetSpec {
 	return sts
 }
 
-func (j *Jibri) getContainerPorts() []v1.ContainerPort {
-	var ports []v1.ContainerPort
-	for svc := range j.Services {
-		ports = append(ports, v1.ContainerPort{
-			Name:          j.Services[svc].PortName,
-			ContainerPort: j.Services[svc].Port,
-			Protocol:      j.Services[svc].Protocol,
-		})
-	}
-	return ports
-}
+//func (j *Jibri) getContainerPorts() []v1.ContainerPort {
+//	var ports []v1.ContainerPort
+//	if len(j.Services) < 1 {
+//		return ports
+//	}
+//	for svc := range j.Services {
+//		ports = append(ports, v1.ContainerPort{
+//			Name:          j.Services[svc].PortName,
+//			ContainerPort: j.Services[svc].Port,
+//			Protocol:      j.Services[svc].Protocol,
+//		})
+//	}
+//	return ports
+//}
 
 func (j *Jibri) setPV(sts *appsv1.StatefulSetSpec) {
 	switch {
