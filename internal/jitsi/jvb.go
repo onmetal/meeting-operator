@@ -294,8 +294,8 @@ func (j *JVB) Update() error {
 			j.log.Info("failed to get sts", "error", err)
 			continue
 		}
-		if err := j.servicePerPod(); err != nil {
-			j.log.Info("failed to create service", "error", err, "namespace", j.namespace)
+		if svcCreationErr := j.servicePerPod(); svcCreationErr != nil {
+			j.log.Info("failed to create service", "error", svcCreationErr, "namespace", j.namespace)
 		}
 		preparedSTS := j.prepareSTS()
 		sts.Spec.Template.Spec = preparedSTS.Spec.Template.Spec

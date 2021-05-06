@@ -201,11 +201,8 @@ func (s *Service) Delete() error {
 }
 
 func isAnnotationsChanged(oldAnnotations, newAnnotations map[string]string) bool {
-	if len(oldAnnotations) != len(newAnnotations) {
-		return true
-	}
-	for name := range oldAnnotations {
-		if _, ok := newAnnotations[name]; !ok {
+	for name, newValue := range newAnnotations {
+		if oldValue, ok := oldAnnotations[name]; !ok || oldValue != newValue {
 			return true
 		}
 	}
