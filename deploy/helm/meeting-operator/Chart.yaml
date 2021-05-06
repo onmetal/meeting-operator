@@ -31,7 +31,7 @@ version: 0.3.7
 appVersion: '0.3.7'
 
 maintainers:
-  - name: Andrew Vasilev
+  - name: LanDeleih
     url: https://onmetal.github.io/meeting-operator/
     email: none@none.com
 icon: https://make-linter-happy.com
