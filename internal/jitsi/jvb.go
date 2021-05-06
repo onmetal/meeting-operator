@@ -24,44 +24,78 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
-	JvbPodName      = "jitsi-jvb"
 	JvbName         = "jvb"
 	externalPort    = 10000
-	timeOutSecond   = 600 * time.Second
-	tickTimerSecond = 10 * time.Second
+	timeOutSecond   = 300 * time.Second
+	tickTimerSecond = 15 * time.Second
 )
 
 func (j *JVB) Create() error {
-	if err := j.createServicePerPod(); err != nil {
-		j.log.Info("failed to create service", "error", err, "namespace", j.namespace)
-	}
-	err := j.createSTS()
-	if err != nil {
-		j.log.Info("failed to create sts", "error", err, "namespace", j.namespace)
+	for replica := int32(1); replica <= j.Replicas; replica++ {
+		j.replica = replica
+		j.stsName = fmt.Sprintf("%s-%d", JvbName, replica)
+		j.serviceName = fmt.Sprintf("%s-%d", JvbName, replica)
+		if j.isSTSExist() {
+			return apierrors.NewAlreadyExists(appsv1.Resource("statefulsets"), j.stsName)
+		}
+		if err := j.servicePerPod(); err != nil {
+			j.log.Info("failed to create service", "error", err, "namespace", j.namespace)
+		}
+		err := j.createSTS()
+		if err != nil {
+			j.log.Info("failed to create sts", "error", err, "namespace", j.namespace)
+		}
 	}
 	return nil
 }
 
-func (j *JVB) createServicePerPod() error {
-	prepareService := j.prepareServiceForPod()
-	err := j.Client.Create(j.ctx, prepareService)
-	if errors.IsAlreadyExists(err) {
-		j.log.Info("service already exist", "name", j.serviceName)
-		return nil
+func (j *JVB) servicePerPod() error {
+	service, err := j.getService()
+	preparedService := j.prepareServiceForSTS()
+	switch {
+	case apierrors.IsNotFound(err):
+		return j.Client.Create(j.ctx, preparedService)
+	case service.Spec.Type != j.ServiceType:
+		// You can't change spec.type on existing service
+		if delErr := j.Client.Delete(j.ctx, service); delErr != nil {
+			j.log.Error(delErr, "failed to update service type", "error", delErr)
+		}
+		timeout := time.After(timeOutSecond)
+		tick := time.NewTicker(tickTimerSecond)
+		for {
+			select {
+			case <-timeout:
+				return j.Client.Create(j.ctx, preparedService)
+			case <-tick.C:
+				if _, getErr := j.getService(); apierrors.IsNotFound(getErr) {
+					return j.Client.Create(j.ctx, preparedService)
+				}
+			}
+		}
+	case service.Spec.Type == v1.ServiceTypeLoadBalancer:
+		// can't change annotations when service type is LoadBalancer
+		if isAnnotationsChanged(service.Annotations, j.ServiceAnnotations) {
+			if delErr := j.Client.Delete(j.ctx, service); delErr != nil {
+				j.log.Error(delErr, "failed to delete service", "error", delErr)
+			}
+			return j.Client.Create(j.ctx, preparedService)
+		}
+		service.Spec.Ports = preparedService.Spec.Ports
+		return j.Client.Update(j.ctx, service)
+	default:
+		service.Spec.Ports = preparedService.Spec.Ports
+		return j.Client.Update(j.ctx, service)
 	}
-	return err
 }
 
-func (j *JVB) prepareServiceForPod() *v1.Service {
-	labelKey := fmt.Sprintf("%s-%d", JvbPodName, j.replica)
-	labels := map[string]string{"jitsi-jvb": labelKey}
+func (j *JVB) prepareServiceForSTS() *v1.Service {
 	port := externalPort + j.replica
 	return &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -73,13 +107,13 @@ func (j *JVB) prepareServiceForPod() *v1.Service {
 			Type: j.ServiceType,
 			Ports: []v1.ServicePort{
 				{
-					Name:       "jvb",
+					Name:       JvbName,
 					Protocol:   j.Service.Protocol,
 					Port:       port,
 					TargetPort: intstr.IntOrString{IntVal: port},
 				},
 			},
-			Selector: labels,
+			Selector: map[string]string{"jitsi-jvb": j.stsName},
 		},
 	}
 }
@@ -90,12 +124,11 @@ func (j *JVB) createSTS() error {
 }
 
 func (j *JVB) prepareSTS() *appsv1.StatefulSet {
-	labelKey := fmt.Sprintf("%s-%d", JvbPodName, j.replica)
-	labels := map[string]string{"jitsi-jvb": labelKey}
+	labels := map[string]string{"jitsi-jvb": j.stsName}
 	spec := j.prepareSTSSpec(labels)
 	return &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      labelKey,
+			Name:      j.stsName,
 			Namespace: j.namespace,
 			Labels:    labels,
 		},
@@ -202,6 +235,12 @@ func (j *JVB) getDockerHostAddr() v1.EnvVar {
 			Value: j.Environments[env].Value,
 		}
 	}
+	if j.ServiceType != v1.ServiceTypeLoadBalancer {
+		return v1.EnvVar{
+			Name:  "DOCKER_HOST_ADDRESS",
+			Value: "",
+		}
+	}
 	return v1.EnvVar{
 		Name:  "DOCKER_HOST_ADDRESS",
 		Value: j.getExternalIP(),
@@ -209,7 +248,6 @@ func (j *JVB) getDockerHostAddr() v1.EnvVar {
 }
 
 func (j *JVB) getExternalIP() string {
-	serviceName := fmt.Sprintf("%s-%d", JvbPodName, j.replica)
 	timeout := time.After(timeOutSecond)
 	tick := time.NewTicker(tickTimerSecond)
 	for {
@@ -217,7 +255,14 @@ func (j *JVB) getExternalIP() string {
 		case <-timeout:
 			return ""
 		case <-tick.C:
-			svc := j.getService(serviceName)
+			svc, err := j.getService()
+			if apierrors.IsNotFound(err) {
+				j.log.Info("can't get svc by name", "error", err)
+				return ""
+			}
+			if svc.Spec.Type != v1.ServiceTypeLoadBalancer {
+				return ""
+			}
 			if len(svc.Status.LoadBalancer.Ingress) != 0 {
 				return svc.Status.LoadBalancer.Ingress[0].IP
 			}
@@ -228,34 +273,34 @@ func (j *JVB) getExternalIP() string {
 	}
 }
 
-func (j *JVB) getService(serviceName string) v1.Service {
-	svc := v1.Service{}
+func (j *JVB) getService() (*v1.Service, error) {
+	svc := &v1.Service{}
 	if err := j.Client.Get(context.TODO(), types.NamespacedName{
 		Namespace: j.namespace,
-		Name:      serviceName,
-	}, &svc); err != nil {
-		j.log.Error(err, "failed to get service")
+		Name:      j.serviceName,
+	}, svc); err != nil {
+		return &v1.Service{}, err
 	}
-	return svc
+	return svc, nil
 }
 
 func (j *JVB) Update() error {
 	for replica := int32(1); replica <= j.Replicas; replica++ {
 		j.replica = replica
-		j.podName = fmt.Sprintf("%s-%d", JvbPodName, replica)
-		j.serviceName = fmt.Sprintf("jitsi-jvb-%d", replica)
-		if !j.isSTSExist(j.podName) {
-			if err := j.Create(); err != nil {
-				j.log.Info("failed to update jvb", "error", err, "namespace", j.namespace)
-			}
-		} else {
-			// We can't update pod.spec and deletion is required
-			if err := j.deleteSTS(j.podName); err != nil {
-				j.log.Info("failed to delete pod", "error", err, "namespace", j.namespace)
-			}
-			if err := j.Create(); err != nil {
-				j.log.Info("failed to update jvb", "error", err, "namespace", j.namespace)
-			}
+		j.stsName = fmt.Sprintf("%s-%d", JvbName, replica)
+		j.serviceName = fmt.Sprintf("%s-%d", JvbName, replica)
+		sts, err := j.getSTS()
+		if err != nil {
+			j.log.Info("failed to get sts", "error", err)
+			continue
+		}
+		if err := j.servicePerPod(); err != nil {
+			j.log.Info("failed to create service", "error", err, "namespace", j.namespace)
+		}
+		preparedSTS := j.prepareSTS()
+		sts.Spec.Template.Spec = preparedSTS.Spec.Template.Spec
+		if updErr := j.Client.Update(j.ctx, sts); updErr != nil {
+			j.log.Info("failed to update sts", "name", j.stsName, "error", updErr)
 		}
 	}
 	return nil
@@ -263,38 +308,37 @@ func (j *JVB) Update() error {
 
 func (j *JVB) Delete() error {
 	for replica := int32(1); replica <= j.Replicas; replica++ {
-		podName := fmt.Sprintf("%s-%d", JvbPodName, replica)
-		serviceName := fmt.Sprintf("jitsi-jvb-%d", replica)
-		if err := j.deleteSTS(podName); err != nil {
+		j.stsName = fmt.Sprintf("%s-%d", JvbName, replica)
+		j.serviceName = fmt.Sprintf("jitsi-jvb-%d", replica)
+		if err := j.deleteSTS(); err != nil {
 			j.log.Info("failed to delete pod", "error", err, "namespace", j.namespace)
 		}
-		if err := j.deleteService(serviceName); err != nil {
+		if err := j.deleteService(); err != nil {
 			j.log.Info("failed to delete service", "error", err, "namespace", j.namespace)
 		}
 	}
 	return nil
 }
 
-func (j *JVB) isSTSExist(name string) bool {
-	sts := appsv1.StatefulSet{}
-	err := j.Client.Get(context.TODO(), types.NamespacedName{
-		Namespace: j.namespace,
-		Name:      name,
-	}, &sts)
-	if err != nil && errors.IsNotFound(err) {
+func (j *JVB) isSTSExist() bool {
+	_, err := j.getSTS()
+	if err != nil && apierrors.IsNotFound(err) {
 		return false
 	}
 	return true
 }
 
-func (j *JVB) deleteSTS(podName string) error {
+func (j *JVB) getSTS() (*appsv1.StatefulSet, error) {
 	sts := &appsv1.StatefulSet{}
-	err := j.Client.Get(j.ctx, types.NamespacedName{
-		Namespace: j.namespace,
-		Name:      podName},
-		sts)
+	err := j.Client.Get(context.TODO(), types.NamespacedName{Namespace: j.namespace, Name: j.stsName}, sts)
+	return sts, err
+}
+
+func (j *JVB) deleteSTS() error {
+	sts := &appsv1.StatefulSet{}
+	err := j.Client.Get(j.ctx, types.NamespacedName{Namespace: j.namespace, Name: j.stsName}, sts)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return nil
 		}
 		j.log.Info("can't get pod by name", "error", err)
@@ -303,11 +347,10 @@ func (j *JVB) deleteSTS(podName string) error {
 	return j.Client.Delete(j.ctx, sts)
 }
 
-func (j *JVB) deleteService(name string) error {
-	svc := &v1.Service{}
-	err := j.Client.Get(j.ctx, types.NamespacedName{Namespace: j.namespace, Name: name}, svc)
+func (j *JVB) deleteService() error {
+	svc, err := j.getService()
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return nil
 		}
 		j.log.Info("can't get svc by name", "error", err)

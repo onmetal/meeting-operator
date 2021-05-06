@@ -124,12 +124,16 @@ func (r *Reconciler) makeJVB(ctx context.Context, j *v1alpha1.Jitsi) error {
 	if err != nil {
 		return err
 	}
-	if err := jts.Update(); err != nil {
-		r.Log.Info("failed to update jitsi deployment", "error", err)
-		return err
+	if createErr := jts.Create(); createErr != nil {
+		if apierrors.IsAlreadyExists(createErr) {
+			return jts.Update()
+		}
+		r.Log.Info("failed to update jvb", "error", createErr)
+		return createErr
 	}
 	return nil
 }
+
 
 func (r *Reconciler) onDelete(e event.DeleteEvent) bool {
 	ctx := context.Background()

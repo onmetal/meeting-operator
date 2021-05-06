@@ -19,6 +19,7 @@ package jitsi
 import (
 	"context"
 	"fmt"
+
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/onmetal/meeting-operator/internal/utils"
@@ -87,7 +88,7 @@ type JVB struct {
 
 	ctx                             context.Context
 	log                             logr.Logger
-	podName, serviceName, namespace string
+	stsName, serviceName, namespace string
 	replica                         int32
 }
 

@@ -157,9 +157,9 @@ func (s *Service) Update() error {
 		}
 	case service.Spec.Type == "LoadBalancer":
 		// can't delete annotations when service type is LoadBalancer
-		if compareServiceAnnotations(service.Annotations, s.annotations) {
-			if err := s.Client.Delete(s.ctx, service); err != nil {
-				s.log.Error(err, "failed to delete service")
+		if isAnnotationsChanged(service.Annotations, s.annotations) {
+			if delErr := s.Client.Delete(s.ctx, service); delErr != nil {
+				s.log.Error(delErr, "failed to delete service")
 			}
 			preparedService := s.prepareService()
 			return s.Client.Create(s.ctx, preparedService)
@@ -200,8 +200,8 @@ func (s *Service) Delete() error {
 	return s.Client.Delete(s.ctx, service)
 }
 
-func compareServiceAnnotations(oldAnnotations, newAnnotations map[string]string) bool {
-	if len(newAnnotations) < 1 {
+func isAnnotationsChanged(oldAnnotations, newAnnotations map[string]string) bool {
+	if len(oldAnnotations) != len(newAnnotations) {
 		return true
 	}
 	for name := range oldAnnotations {
