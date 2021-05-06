@@ -2,8 +2,6 @@ name: Release - DockerHub
 
 on:
   push:
-    branches:
-      - master
     tags:
       - v*
 
