@@ -63,3 +63,11 @@ start up with jitsi.
 ```
 
 TODO: docs for folders
+
+## Release Guide
+
+1. Make you Changes
+2. Edit the [`Chart.yml`](/deploy/helm/meeting-operator/Chart.yaml) and update the `version` and `appVersion` accordingly. 
+3. Commit and push (to master, e.g. by merging the PR)
+4. The automated Helm release will create a tag with the specified version
+5. After the Tag is pushed the Docker Release will create the Images specified by the tag. 

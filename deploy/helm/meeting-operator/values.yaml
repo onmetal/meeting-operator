@@ -17,25 +17,26 @@
 replicaCount: 1
 
 image:
-  repository: "yotsyni/meeting-operator"
+  repository: 'yotsyni/meeting-operator'
   pullPolicy: IfNotPresent
-  tag: "v0.3.7"
 
 imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+nameOverride: ''
+fullnameOverride: ''
 
 serviceAccount:
   create: true
   annotations: {}
-  name: "meeting-operator"
+  name: 'meeting-operator'
 
 podAnnotations: {}
 
-podSecurityContext: {}
+podSecurityContext:
+  {}
   # fsGroup: 2000
 
-securityContext: {}
+securityContext:
+  {}
   # capabilities:
   #   drop:
   #   - ALL

@@ -2,13 +2,11 @@ name: Release - DockerHub
 
 on:
   push:
-    branches:
-      - master
     tags:
       - v*
 
 env:
-  IMAGE_NAME: meeting-operator
+  IMAGE_NAME: yotsyni/meeting-operator
 
 jobs:
   push:
@@ -29,7 +27,7 @@ jobs:
 
       - name: Push image
         run: |
-          IMAGE_ID=hub.docker.com/${{ github.repository }}/$IMAGE_NAME
+          IMAGE_ID=$IMAGE_NAME
 
           # Change all uppercase to lowercase
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
