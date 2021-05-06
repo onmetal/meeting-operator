@@ -21,6 +21,16 @@ You can use helm for deploy meeting-operator in the cluster.
 ```
 helm install meeting-operator ./deploy/helm/meeting-operator
 ```
+### Use the published chart
+
+Add this to your `Chart.yaml`
+```yaml
+dependencies:
+  - name: meeting-operator
+    version: '0.3.7'
+    repository: 'https://onmetal.github.io/meeting-operator'
+```
+
 ### Manual install
 1. crd
 ```
@@ -50,7 +60,6 @@ start up with jitsi.
  ingress.yaml
  jitsi-config.yaml
  kustomization.yaml
-
 ```
 
 TODO: docs for folders
