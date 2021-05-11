@@ -26,10 +26,10 @@ spec:
       - name: docker
     service_annotations: {}
     service_type: "ClusterIP"
-    services:
-      - port_name: "http"
-        protocol: "TCP"
-        port: 80
+#    services:
+#      - port_name: "http"
+#        protocol: "TCP"
+#        port: 80
     environments:
       - name: ENABLE_LETSENCRYPT
         value: "0"
@@ -98,19 +98,19 @@ spec:
   prosody:
     replicas: 1
     service_type: "ClusterIP"
-    services:
-      - port_name: "http"
-        protocol: "TCP"
-        port: 5280
-      - port_name: "c2s"
-        protocol: "TCP"
-        port: 5282
-      - port_name: "xmpp"
-        protocol: "TCP"
-        port: 5222
-      - port_name: "external"
-        protocol: "TCP"
-        port: 5347
+#    services:
+#      - port_name: "http"
+#        protocol: "TCP"
+#        port: 5280
+#      - port_name: "c2s"
+#        protocol: "TCP"
+#        port: 5282
+#      - port_name: "xmpp"
+#        protocol: "TCP"
+#        port: 5222
+#      - port_name: "external"
+#        protocol: "TCP"
+#        port: 5347
     image: jitsi/prosody:stable-5390-3
     environments:
       - name: XMPP_DOMAIN
@@ -178,10 +178,10 @@ spec:
     ##            requests:
     ##              storage: "1Gi"
     #    service_type: "ClusterIP"
-    services:
-      - port_name: "http"
-        protocol: "TCP"
-        port: 5282
+#    services:
+#      - port_name: "http"
+#        protocol: "TCP"
+#        port: 5282
     environments:
       - name: JIBRI_RECORDING_DIR
         value: /config/recordings
@@ -245,12 +245,6 @@ spec:
         value: "true"
       - name: JVB_AUTH_USER
         value: jvb
-      - name: JVB_PORT
-        value: "30300"
-      #    - name: JVB_TCP_PORT
-      #      value: "4443"
-      #    - name: JVB_TCP_MAPPED_PORT
-      #      value: "4443"
       - name: JVB_BREWERY_MUC
         value: jvbbrewery
       - name: TZ
@@ -271,12 +265,12 @@ spec:
           secretKeyRef:
             name: jitsi-config
             key: JICOFO_AUTH_PASSWORD
-      # by default operator get ip from "type: LoadBalancer" service
-      #    - name: DOCKER_HOST_ADDRESS
-      #      value: <your public ip here>
-      #      valueFrom:
-      #        fieldRef:
-      #          fieldPath: status.hostIP
+# by default operator get ip from "type: LoadBalancer" service
+#      - name: DOCKER_HOST_ADDRESS
+#        value: <your public ip here>
+#        valueFrom:
+#          fieldRef:
+#            fieldPath: status.hostIP
       - name: NODE_NAME
         valueFrom:
           fieldRef:

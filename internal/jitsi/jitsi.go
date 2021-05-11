@@ -84,12 +84,13 @@ type Jibri struct {
 
 type JVB struct {
 	client.Client
-	*v1alpha1.JVB
+	v1alpha1.JVB
 
-	ctx                             context.Context
-	log                             logr.Logger
-	stsName, serviceName, namespace string
-	replica                         int32
+	ctx                          context.Context
+	log                          logr.Logger
+	envs                         []v1.EnvVar
+	name, serviceName, namespace string
+	replica                      int32
 }
 
 func NewJitsi(ctx context.Context, appName string,
@@ -138,14 +139,6 @@ func NewJitsi(ctx context.Context, appName string,
 			ctx:       ctx,
 			log:       l,
 			labels:    labels,
-		}, nil
-	case JvbName:
-		return &JVB{
-			Client:    c,
-			JVB:       &j.Spec.JVB,
-			namespace: j.Namespace,
-			ctx:       ctx,
-			log:       l,
 		}, nil
 	default:
 		return nil, fmt.Errorf(fmt.Sprintf("component: %s not exist", appName))

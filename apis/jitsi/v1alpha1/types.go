@@ -91,7 +91,7 @@ type Jibri struct {
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
-	Services    []Service      `json:"services"`
+	Services    []Service      `json:"services,omitempty"`
 }
 
 type JVB struct {

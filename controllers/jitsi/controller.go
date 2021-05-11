@@ -120,20 +120,33 @@ func (r *Reconciler) makeJVB(ctx context.Context, j *v1alpha1.Jitsi) error {
 	if !shouldContinue(jitsi.JvbName, j) {
 		return nil
 	}
-	jts, err := jitsi.NewJitsi(ctx, jitsi.JvbName, j, r.Client, r.Log)
-	if err != nil {
-		return err
-	}
-	if createErr := jts.Create(); createErr != nil {
-		if apierrors.IsAlreadyExists(createErr) {
-			return jts.Update()
+	for replica := int32(1); replica <= j.Spec.JVB.Replicas; replica++ {
+		jts := jitsi.NewJVB(ctx, replica, j, r.Client, r.Log)
+		if createErr := jts.Create(); createErr != nil {
+			if apierrors.IsAlreadyExists(createErr) {
+				if updErr := jts.Update(); updErr != nil {
+					r.Log.Info("failed to update jvb instance", "error", updErr)
+				}
+				continue
+			}
+			r.Log.Info("failed to create jvb", "error", createErr)
+			continue
 		}
-		r.Log.Info("failed to update jvb", "error", createErr)
-		return createErr
 	}
 	return nil
+	//jts, err := jitsi.NewJitsi(ctx, jitsi.JvbName, j, r.Client, r.Log)
+	//if err != nil {
+	//	return err
+	//}
+	//if createErr := jts.Create(); createErr != nil {
+	//	if apierrors.IsAlreadyExists(createErr) {
+	//		return jts.Update()
+	//	}
+	//	r.Log.Info("failed to update jvb", "error", createErr)
+	//	return createErr
+	//}
+	//return nil
 }
-
 
 func (r *Reconciler) onDelete(e event.DeleteEvent) bool {
 	ctx := context.Background()
@@ -168,12 +181,11 @@ func (r *Reconciler) deleteComponents(ctx context.Context, appName string, j *v1
 }
 
 func (r *Reconciler) deleteJVB(ctx context.Context, j *v1alpha1.Jitsi) error {
-	jts, err := jitsi.NewJitsi(ctx, "jvb", j, r.Client, r.Log)
-	if err != nil {
-		return err
-	}
-	if err := jts.Delete(); err != nil {
-		return client.IgnoreNotFound(err)
+	for replica := int32(1); replica <= j.Spec.JVB.Replicas; replica++ {
+		jts := jitsi.NewJVB(ctx, replica, j, r.Client, r.Log)
+		if err := jts.Delete(); client.IgnoreNotFound(err) != nil {
+			 r.Log.Info("failed to delete jvb instance", "error", err)
+		}
 	}
 	return nil
 }

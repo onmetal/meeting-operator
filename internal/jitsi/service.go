@@ -18,6 +18,7 @@ package jitsi
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/onmetal/meeting-operator/internal/utils"
@@ -41,6 +42,7 @@ type Service struct {
 	name, namespace string
 	serviceType     v1.ServiceType
 	services        []v1alpha1.Service
+	ports           []v1.ServicePort
 	annotations     map[string]string
 	labels          map[string]string
 }
@@ -52,7 +54,7 @@ func NewService(ctx context.Context, appName string,
 		labels := utils.GetDefaultLabels(WebName)
 		return &Service{
 			Client:      c,
-			services:    j.Spec.Web.Services,
+			ports:       getPorts(WebName, j.Spec.Web.Services),
 			serviceType: j.Spec.Web.ServiceType,
 			name:        WebName,
 			namespace:   j.Namespace,
@@ -65,7 +67,7 @@ func NewService(ctx context.Context, appName string,
 		labels := utils.GetDefaultLabels(ProsodyName)
 		return &Service{
 			Client:      c,
-			services:    j.Spec.Prosody.Services,
+			ports:       getPorts(ProsodyName, j.Spec.Prosody.Services),
 			serviceType: j.Spec.Prosody.ServiceType,
 			name:        ProsodyName,
 			namespace:   j.Namespace,
@@ -78,7 +80,7 @@ func NewService(ctx context.Context, appName string,
 		labels := utils.GetDefaultLabels(JicofoName)
 		return &Service{
 			Client:      c,
-			services:    j.Spec.Jicofo.Services,
+			ports:       getPorts(ProsodyName, j.Spec.Jicofo.Services),
 			serviceType: j.Spec.Jicofo.ServiceType,
 			name:        JicofoName,
 			namespace:   j.Namespace,
@@ -91,7 +93,7 @@ func NewService(ctx context.Context, appName string,
 		labels := utils.GetDefaultLabels(JibriName)
 		return &Service{
 			Client:      c,
-			services:    j.Spec.Jibri.Services,
+			ports:       getPorts(ProsodyName, j.Spec.Jibri.Services),
 			serviceType: j.Spec.Jibri.ServiceType,
 			name:        JibriName,
 			namespace:   j.Namespace,
@@ -104,10 +106,8 @@ func NewService(ctx context.Context, appName string,
 		return &Service{}
 	}
 }
+
 func (s *Service) Create() error {
-	if len(s.services) < 1 {
-		return nil
-	}
 	preparedService := s.prepareService()
 	return s.Client.Create(s.ctx, preparedService)
 }
@@ -126,7 +126,7 @@ func (s *Service) prepareService() *v1.Service {
 func (s *Service) prepareServiceSpec() v1.ServiceSpec {
 	return v1.ServiceSpec{
 		Type:     s.serviceType,
-		Ports:    getPorts(s.services),
+		Ports:    s.ports,
 		Selector: s.labels,
 	}
 }
@@ -142,27 +142,21 @@ func (s *Service) Update() error {
 		if err := s.Client.Delete(s.ctx, service); err != nil {
 			s.log.Error(err, "failed to delete service")
 		}
-		timeout := time.After(timeOutSecond)
-		tick := time.NewTicker(tickTimerSecond)
-		preparedService := s.prepareService()
-		for {
-			select {
-			case <-timeout:
-				return s.Client.Create(s.ctx, preparedService)
-			case <-tick.C:
-				if _, getErr := s.Get(); apierrors.IsNotFound(getErr) {
-					return s.Client.Create(s.ctx, preparedService)
-				}
-			}
+		if s.isDeleted() {
+			preparedService := s.prepareService()
+			return s.Client.Create(s.ctx, preparedService)
 		}
+		return errors.New("service deletion timeout")
 	case service.Spec.Type == "LoadBalancer":
-		// can't delete annotations when service type is LoadBalancer
+		// can't delete serviceAnnotations when service type is LoadBalancer
 		if isAnnotationsChanged(service.Annotations, s.annotations) {
 			if delErr := s.Client.Delete(s.ctx, service); delErr != nil {
 				s.log.Error(delErr, "failed to delete service")
 			}
-			preparedService := s.prepareService()
-			return s.Client.Create(s.ctx, preparedService)
+			for s.isDeleted() {
+				preparedService := s.prepareService()
+				return s.Client.Create(s.ctx, preparedService)
+			}
 		}
 		updatedServiceSpec := s.prepareServiceSpec()
 		service.Annotations = s.annotations
@@ -175,6 +169,21 @@ func (s *Service) Update() error {
 		service.Spec.Ports = updatedServiceSpec.Ports
 		service.Spec.Selector = updatedServiceSpec.Selector
 		return s.Client.Update(s.ctx, service)
+	}
+}
+
+func (s *Service) isDeleted() bool {
+	timeout := time.After(timeOutSecond)
+	tick := time.NewTicker(tickTimerSecond)
+	for {
+		select {
+		case <-timeout:
+			return true
+		case <-tick.C:
+			if _, getErr := s.Get(); apierrors.IsNotFound(getErr) {
+				return true
+			}
+		}
 	}
 }
 
@@ -209,8 +218,76 @@ func isAnnotationsChanged(oldAnnotations, newAnnotations map[string]string) bool
 	return false
 }
 
-func getPorts(services []v1alpha1.Service) []v1.ServicePort {
-	p := make([]v1.ServicePort, 0, 1)
+func getPorts(appName string, s []v1alpha1.Service) []v1.ServicePort {
+	switch appName {
+	case WebName:
+		ports := make([]v1.ServicePort, 0, 1)
+		ports = append(ports, v1.ServicePort{
+			Name:       "http",
+			Protocol:   v1.ProtocolTCP,
+			Port:       80,
+			TargetPort: intstr.IntOrString{IntVal: 80},
+		})
+		if len(s) != 0 {
+			return getAdditionalPorts(ports, s)
+		}
+		return ports
+	case ProsodyName:
+		ports := make([]v1.ServicePort, 0, 4)
+		ports = append(ports,
+			v1.ServicePort{
+				Name:       "http",
+				Protocol:   v1.ProtocolTCP,
+				Port:       5280,
+				TargetPort: intstr.IntOrString{IntVal: 5280},
+			},
+			v1.ServicePort{
+				Name:       "c2s",
+				Protocol:   v1.ProtocolTCP,
+				Port:       5282,
+				TargetPort: intstr.IntOrString{IntVal: 5282},
+			},
+			v1.ServicePort{
+				Name:       "xmpp",
+				Protocol: v1.ProtocolTCP,
+				Port:       5222,
+				TargetPort: intstr.IntOrString{IntVal: 5222},
+			},
+			v1.ServicePort{
+				Name:       "external",
+				Protocol:   v1.ProtocolTCP,
+				Port:       5347,
+				TargetPort: intstr.IntOrString{IntVal: 5347},
+			},
+		)
+		if len(s) != 0 {
+			return getAdditionalPorts(ports, s)
+		}
+		return ports
+	case JicofoName:
+		ports := make([]v1.ServicePort, 0, 1)
+		if len(s) != 0 {
+			return getAdditionalPorts(ports, s)
+		}
+		return ports
+	case JibriName:
+		ports := make([]v1.ServicePort, 0, 1)
+		ports = append(ports, v1.ServicePort{
+			Name:       "http",
+			Protocol:   v1.ProtocolTCP,
+			Port:       5282,
+			TargetPort: intstr.IntOrString{IntVal: 5282},
+		})
+		if len(s) != 0 {
+			return getAdditionalPorts(ports, s)
+		}
+		return ports
+	default:
+		return []v1.ServicePort{}
+	}
+
+}
+func getAdditionalPorts(p []v1.ServicePort, services []v1alpha1.Service) []v1.ServicePort {
 	for svc := range services {
 		p = append(p, v1.ServicePort{
 			Name:       services[svc].PortName,
