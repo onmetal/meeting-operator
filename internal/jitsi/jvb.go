@@ -74,7 +74,7 @@ func (j *JVB) Create() error {
 func (j *JVB) servicePerInstance() error {
 	service, err := j.getService()
 	preparedService := j.prepareServiceForInstance()
-	if j.Exporter.Type != "" {
+	if j.Exporter.Type == "" {
 		if exporterErr := j.Client.Create(j.ctx, j.prepareServiceForExporter()); !apierrors.IsAlreadyExists(exporterErr) {
 			j.log.Info("can't create exporter service", "error", exporterErr)
 		}

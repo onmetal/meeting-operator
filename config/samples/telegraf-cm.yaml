@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telegraf-config
+data:
+  telegraf.conf: |
+    [[inputs.http]]
+      name_override = "jitsi_stats"
+      urls = ["http://localhost:8080/colibri/stats"]
+      data_format = "json"
+    [[outputs.influxdb_v2]]
+      urls = ["http://localhost:8086"]
+      token = "secret_token"
+      bucket = "1"
