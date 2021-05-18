@@ -59,6 +59,7 @@ func (p *Prosody) prepareDeploymentSpec() appsv1.DeploymentSpec {
 						ImagePullPolicy: p.ImagePullPolicy,
 						Env:             p.Environments,
 						Ports:           getContainerPorts(p.Services),
+						Resources:       p.Resources,
 					},
 				},
 			},

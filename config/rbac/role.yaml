@@ -4,7 +4,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   creationTimestamp: null
-  name: manager-role
+  name: meeting-role
 rules:
 - apiGroups:
   - ""
@@ -133,7 +133,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - whiteboard.meeting.ko
+  - meeting.ko
   resources:
   - whiteboards
   verbs:
@@ -145,13 +145,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - whiteboard.meeting.ko
+  - meeting.ko
   resources:
   - whiteboards/finalizers
   verbs:
   - update
 - apiGroups:
-  - whiteboard.meeting.ko
+  - meeting.ko
   resources:
   - whiteboards/status
   verbs:

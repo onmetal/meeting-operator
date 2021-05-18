@@ -26,6 +26,10 @@ spec:
       - name: docker
     service_annotations: {}
     service_type: "ClusterIP"
+    resources:
+      requests:
+        cpu: "0.1"
+        memory: "128Mi"
 #    services:
 #      - port_name: "http"
 #        protocol: "TCP"
@@ -221,6 +225,15 @@ spec:
   jvb:
     replicas: 1
     image: jitsi/jvb:stable-5390-3
+    exporter:
+      port: 9888
+      image: "systemli/prometheus-jitsi-meet-exporter:latest"
+      security_context:
+        runAsNonRoot: true
+      resources:
+        requests:
+          cpu: "0.1"
+          memory: "128Mi"
     service_annotations: {}
     service_type: "LoadBalancer"
     service:
@@ -238,7 +251,7 @@ spec:
       #    - name: JVB_STUN_SERVERS
       #      value: stun.l.google.com:19302,stun1.l.google.com:19302,stun2.l.google.com:19302
       - name: JVB_ENABLE_APIS
-        value: colibri,rest
+        value: rest,colibri
       - name: JICOFO_AUTH_USER
         value: focus
       - name: JVB_TCP_HARVESTER_DISABLED

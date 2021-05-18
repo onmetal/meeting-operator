@@ -38,7 +38,7 @@ type Web struct {
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
 	Environments       []v1.EnvVar               `json:"environments,omitempty"`
-	Resources          v1.ResourceList           `json:"resources,omitempty"`
+	Resources          v1.ResourceRequirements   `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
@@ -54,7 +54,7 @@ type Prosody struct {
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
 	Environments       []v1.EnvVar               `json:"environments,omitempty"`
-	Resources          v1.ResourceList           `json:"resources,omitempty"`
+	Resources          v1.ResourceRequirements   `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
@@ -70,7 +70,7 @@ type Jicofo struct {
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
 	Environments       []v1.EnvVar               `json:"environments,omitempty"`
-	Resources          v1.ResourceList           `json:"resources,omitempty"`
+	Resources          v1.ResourceRequirements   `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
@@ -87,7 +87,7 @@ type Jibri struct {
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
 	Environments       []v1.EnvVar               `json:"environments,omitempty"`
 	Storage            *StorageSpec              `json:"storage,omitempty"`
-	Resources          v1.ResourceList           `json:"resources,omitempty"`
+	Resources          v1.ResourceRequirements   `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
@@ -95,6 +95,7 @@ type Jibri struct {
 }
 
 type JVB struct {
+	Exporter Exporter `json:"exporter,omitempty"`
 	//+kubebuilder:default:=1
 	Replicas int32 `json:"replicas,omitempty"`
 	//+kubebuilder:default="jitsi/jvb:stable-5390-3"
@@ -103,7 +104,7 @@ type JVB struct {
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
 	Environments       []v1.EnvVar               `json:"environments,omitempty"`
-	Resources          v1.ResourceList           `json:"resources,omitempty"`
+	Resources          v1.ResourceRequirements   `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
@@ -123,6 +124,21 @@ type Service struct {
 	PortName string `json:"port_name,omitempty"`
 	//+kubebuilder:default=80
 	Port int32 `json:"port,omitempty"`
+}
+
+type Exporter struct {
+	Type          string `json:"type,omitempty"`
+	ConfigMapName string `json:"config_map_name,omitempty"`
+	//+kubebuilder:default:="systemli/prometheus-jitsi-meet-exporter:latest"
+	Image string `json:"image,omitempty"`
+	//+kubebuilder:default:=9888
+	Port int32 `json:"port,omitempty"`
+	//+kubebuilder:default="IfNotPresent"
+	ImagePullPolicy  v1.PullPolicy             `json:"image_pull_policy,omitempty"`
+	ImagePullSecrets []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
+	Environments     []v1.EnvVar               `json:"environments,omitempty"`
+	Resources        v1.ResourceRequirements   `json:"resources,omitempty"`
+	SecurityContext  v1.SecurityContext        `json:"security_context,omitempty"`
 }
 
 // JitsiStatus defines the observed state of Jitsi

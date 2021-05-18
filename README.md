@@ -12,6 +12,9 @@ The Meeting-operator includes the following features:
 * **Kubernetes Custom Resources**: Use Kubernetes custom resources to deploy and manage Jitsi,
   and related components.
 
+### Folder Structure
+Information about folders can be found [here](docs/folder-structure.md).
+
 ## Prerequisites
 ```
 kubectl create -f config/samples/jitsi-config.yaml
@@ -49,7 +52,7 @@ kubectl apply -f config/samples/_v1alpha1_jitsi.yaml
 
 If you need to change default values, you should check values.yml
 
-#### Examples
+### Examples
 Folder ``` config/samples``` contain crds, ingress, config examples. It's enough to 
 start up with jitsi.
 ```
@@ -62,9 +65,7 @@ start up with jitsi.
  kustomization.yaml
 ```
 
-TODO: docs for folders
-
-## Release Guide
+### Release Guide
 
 1. Make you Changes
 2. Edit the [`Chart.yml`](/deploy/helm/meeting-operator/Chart.yaml) and update the `version` and `appVersion` accordingly. 
