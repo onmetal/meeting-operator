@@ -59,6 +59,7 @@ func (j *Jicofo) prepareDeploymentSpec() appsv1.DeploymentSpec {
 						ImagePullPolicy: j.ImagePullPolicy,
 						Env:             j.Environments,
 						Ports:           getContainerPorts(j.Services),
+						Resources:       j.Resources,
 					},
 				},
 			},

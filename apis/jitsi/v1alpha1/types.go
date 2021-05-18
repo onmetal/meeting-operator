@@ -38,7 +38,7 @@ type Web struct {
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
 	Environments       []v1.EnvVar               `json:"environments,omitempty"`
-	Resources          v1.ResourceList           `json:"resources,omitempty"`
+	Resources          v1.ResourceRequirements   `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
@@ -54,7 +54,7 @@ type Prosody struct {
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
 	Environments       []v1.EnvVar               `json:"environments,omitempty"`
-	Resources          v1.ResourceList           `json:"resources,omitempty"`
+	Resources          v1.ResourceRequirements   `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
@@ -70,7 +70,7 @@ type Jicofo struct {
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
 	Environments       []v1.EnvVar               `json:"environments,omitempty"`
-	Resources          v1.ResourceList           `json:"resources,omitempty"`
+	Resources          v1.ResourceRequirements   `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
@@ -87,7 +87,7 @@ type Jibri struct {
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
 	Environments       []v1.EnvVar               `json:"environments,omitempty"`
 	Storage            *StorageSpec              `json:"storage,omitempty"`
-	Resources          v1.ResourceList           `json:"resources,omitempty"`
+	Resources          v1.ResourceRequirements   `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
@@ -104,7 +104,7 @@ type JVB struct {
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
 	Environments       []v1.EnvVar               `json:"environments,omitempty"`
-	Resources          v1.ResourceList           `json:"resources,omitempty"`
+	Resources          v1.ResourceRequirements   `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`

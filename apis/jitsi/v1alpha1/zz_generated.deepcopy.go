@@ -70,13 +70,7 @@ func (in *JVB) DeepCopyInto(out *JVB) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.Resources != nil {
-		in, out := &in.Resources, &out.Resources
-		*out = make(v1.ResourceList, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val.DeepCopy()
-		}
-	}
+	in.Resources.DeepCopyInto(&out.Resources)
 	if in.ServiceAnnotations != nil {
 		in, out := &in.ServiceAnnotations, &out.ServiceAnnotations
 		*out = make(map[string]string, len(*in))
@@ -117,13 +111,7 @@ func (in *Jibri) DeepCopyInto(out *Jibri) {
 		*out = new(StorageSpec)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.Resources != nil {
-		in, out := &in.Resources, &out.Resources
-		*out = make(v1.ResourceList, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val.DeepCopy()
-		}
-	}
+	in.Resources.DeepCopyInto(&out.Resources)
 	if in.ServiceAnnotations != nil {
 		in, out := &in.ServiceAnnotations, &out.ServiceAnnotations
 		*out = make(map[string]string, len(*in))
@@ -163,13 +151,7 @@ func (in *Jicofo) DeepCopyInto(out *Jicofo) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.Resources != nil {
-		in, out := &in.Resources, &out.Resources
-		*out = make(v1.ResourceList, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val.DeepCopy()
-		}
-	}
+	in.Resources.DeepCopyInto(&out.Resources)
 	if in.ServiceAnnotations != nil {
 		in, out := &in.ServiceAnnotations, &out.ServiceAnnotations
 		*out = make(map[string]string, len(*in))
@@ -303,13 +285,7 @@ func (in *Prosody) DeepCopyInto(out *Prosody) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.Resources != nil {
-		in, out := &in.Resources, &out.Resources
-		*out = make(v1.ResourceList, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val.DeepCopy()
-		}
-	}
+	in.Resources.DeepCopyInto(&out.Resources)
 	if in.ServiceAnnotations != nil {
 		in, out := &in.ServiceAnnotations, &out.ServiceAnnotations
 		*out = make(map[string]string, len(*in))
@@ -385,13 +361,7 @@ func (in *Web) DeepCopyInto(out *Web) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.Resources != nil {
-		in, out := &in.Resources, &out.Resources
-		*out = make(v1.ResourceList, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val.DeepCopy()
-		}
-	}
+	in.Resources.DeepCopyInto(&out.Resources)
 	if in.ServiceAnnotations != nil {
 		in, out := &in.ServiceAnnotations, &out.ServiceAnnotations
 		*out = make(map[string]string, len(*in))

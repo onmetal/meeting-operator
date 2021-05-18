@@ -134,8 +134,8 @@ func (j *JVB) prepareServiceForInstance() *v1.Service {
 func (j *JVB) prepareServiceForExporter() *v1.Service {
 	return &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        fmt.Sprintf("exporter-%s", j.serviceName),
-			Namespace:   j.namespace,
+			Name:      fmt.Sprintf("exporter-%s", j.serviceName),
+			Namespace: j.namespace,
 		},
 		Spec: v1.ServiceSpec{
 			Type: v1.ServiceTypeClusterIP,
@@ -215,6 +215,7 @@ func (j *JVB) prepareJVBContainer() v1.Container {
 		Image:           j.Image,
 		ImagePullPolicy: j.ImagePullPolicy,
 		Env:             j.additionalEnvironments(),
+		Resources:       j.Resources,
 		Ports: []v1.ContainerPort{
 			{
 				Name:          JvbName,

@@ -59,6 +59,7 @@ func (w *Web) prepareDeploymentSpec() appsv1.DeploymentSpec {
 						ImagePullPolicy: w.ImagePullPolicy,
 						Env:             w.Environments,
 						Ports:           getContainerPorts(w.Services),
+						Resources:       w.Resources,
 					},
 				},
 			},
