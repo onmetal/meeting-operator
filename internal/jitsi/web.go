@@ -66,21 +66,6 @@ func (w *Web) prepareDeploymentSpec() appsv1.DeploymentSpec {
 	}
 }
 
-//func (w *Web) getContainerPorts() []v1.ContainerPort {
-//	var ports []v1.ContainerPort
-//	if len(w.Services) < 1 {
-//		return ports
-//	}
-//	for svc := range w.Services {
-//		ports = append(ports, v1.ContainerPort{
-//			Name:          w.Services[svc].PortName,
-//			ContainerPort: w.Services[svc].Port,
-//			Protocol:      w.Services[svc].Protocol,
-//		})
-//	}
-//	return ports
-//}
-
 func (w *Web) Update() error {
 	updatedDeployment := w.prepareDeployment()
 	return w.Client.Update(w.ctx, updatedDeployment)

@@ -76,7 +76,7 @@ func (j *JVB) servicePerInstance() error {
 	switch {
 	case apierrors.IsNotFound(err):
 		return j.Client.Create(j.ctx, preparedService)
-	case service.Spec.Type != j.ServiceType:
+	case service.Spec.Type != j.ServiceType || service.Spec.Ports[0].Protocol != j.Service.Protocol:
 		// You can't change spec.type on existing service
 		if delErr := j.Client.Delete(j.ctx, service); delErr != nil {
 			j.log.Error(delErr, "failed to update service type", "error", delErr)

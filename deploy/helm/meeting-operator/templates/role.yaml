@@ -1,64 +1,160 @@
+
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: manager-role
+  creationTimestamp: null
+  name: meeting-role
 rules:
-  - apiGroups:
-      - ""
-    resources:
-      - services
-      - endpoints
-      - pods
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - "apps"
-    resources:
-      - deployments
-      - statefulsets
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - meeting.ko
-    resources:
-      - etherpads
-      - jitsis
-      - whiteboards
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - meeting.ko
-    resources:
-      - etherpads/finalizers
-      - jitsis/finalizers
-      - whiteboards/finalizers
-    verbs:
-      - update
-  - apiGroups:
-      - meeting.ko
-    resources:
-      - etherpads/status
-      - jitsis/status
-      - whiteboards/status
-    verbs:
-      - get
-      - patch
-      - update
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - configmaps
+  resources:
+  - configmaps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - meeting.ko
+  resources:
+  - etherpads
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - meeting.ko
+  resources:
+  - etherpads/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - meeting.ko
+  resources:
+  - etherpads/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - meeting.ko
+  resources:
+  - jitsis
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - meeting.ko
+  resources:
+  - jitsis/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - meeting.ko
+  resources:
+  - jitssi/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - meeting.ko
+  resources:
+  - whiteboards
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - meeting.ko
+  resources:
+  - whiteboards/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - meeting.ko
+  resources:
+  - whiteboards/status
+  verbs:
+  - get
+  - patch
+  - update

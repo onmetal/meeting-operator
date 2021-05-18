@@ -51,9 +51,10 @@ func (r *Reconciler) constructPredicates() predicate.Predicate {
 	}
 }
 
-//+kubebuilder:rbac:groups=whiteboard.meeting.ko,resources=whiteboards,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=whiteboard.meeting.ko,resources=whiteboards/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=whiteboard.meeting.ko,resources=whiteboards/finalizers,verbs=update
+//+kubebuilder:rbac:groups=meeting.ko,resources=whiteboards,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=meeting.ko,resources=whiteboards/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=meeting.ko,resources=whiteboards/finalizers,verbs=update
+
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("whiteboard", req.NamespacedName)
 

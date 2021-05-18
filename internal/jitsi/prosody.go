@@ -66,21 +66,6 @@ func (p *Prosody) prepareDeploymentSpec() appsv1.DeploymentSpec {
 	}
 }
 
-//func (p *Prosody) getContainerPorts() []v1.ContainerPort {
-//	var ports []v1.ContainerPort
-//	if len(p.Services) < 1 {
-//		return ports
-//	}
-//	for svc := range p.Services {
-//		ports = append(ports, v1.ContainerPort{
-//			Name:          p.Services[svc].PortName,
-//			ContainerPort: p.Services[svc].Port,
-//			Protocol:      p.Services[svc].Protocol,
-//		})
-//	}
-//	return ports
-//}
-
 func (p *Prosody) Update() error {
 	updatedDeployment := p.prepareDeployment()
 	return p.Client.Update(p.ctx, updatedDeployment)

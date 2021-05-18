@@ -64,6 +64,7 @@ func (r *Reconciler) predicateFuncs() predicate.Predicate {
 // +kubebuilder:rbac:groups=configmaps,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=meeting.ko,resources=jitssi/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=meeting.ko,resources=jitsis/finalizers,verbs=update
+
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("jitsi", req.NamespacedName)
 
@@ -134,18 +135,6 @@ func (r *Reconciler) makeJVB(ctx context.Context, j *v1alpha1.Jitsi) error {
 		}
 	}
 	return nil
-	//jts, err := jitsi.NewJitsi(ctx, jitsi.JvbName, j, r.Client, r.Log)
-	//if err != nil {
-	//	return err
-	//}
-	//if createErr := jts.Create(); createErr != nil {
-	//	if apierrors.IsAlreadyExists(createErr) {
-	//		return jts.Update()
-	//	}
-	//	r.Log.Info("failed to update jvb", "error", createErr)
-	//	return createErr
-	//}
-	//return nil
 }
 
 func (r *Reconciler) onDelete(e event.DeleteEvent) bool {
