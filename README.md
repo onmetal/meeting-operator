@@ -24,13 +24,19 @@ You can use helm for deploy meeting-operator in the cluster.
 ```
 helm install meeting-operator ./deploy/helm/meeting-operator
 ```
+or
+```
+helm repo add onmetal https://onmetal.github.io/meeting-operator/
+helm repo update
+helm install meeting-operator onmetal/meeting-operator
+```
 ### Use the published chart
 
 Add this to your `Chart.yaml`
 ```yaml
 dependencies:
   - name: meeting-operator
-    version: '0.3.11'
+    version: '0.4.0'
     repository: 'https://onmetal.github.io/meeting-operator'
 ```
 
