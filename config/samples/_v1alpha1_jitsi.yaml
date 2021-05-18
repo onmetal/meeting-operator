@@ -228,6 +228,12 @@ spec:
     exporter:
       port: 9888
       image: "systemli/prometheus-jitsi-meet-exporter:latest"
+      security_context:
+        runAsNonRoot: true
+      resources:
+        requests:
+          cpu: "0.1"
+          memory: "128Mi"
     service_annotations: {}
     service_type: "LoadBalancer"
     service:

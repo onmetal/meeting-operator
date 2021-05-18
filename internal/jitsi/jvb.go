@@ -74,8 +74,10 @@ func (j *JVB) Create() error {
 func (j *JVB) servicePerInstance() error {
 	service, err := j.getService()
 	preparedService := j.prepareServiceForInstance()
-	if exporterErr := j.Client.Create(j.ctx, j.prepareServiceForExporter()); !apierrors.IsAlreadyExists(exporterErr) {
-		j.log.Info("can't create exporter service", "error", exporterErr)
+	if j.Exporter.Type != "" {
+		if exporterErr := j.Client.Create(j.ctx, j.prepareServiceForExporter()); !apierrors.IsAlreadyExists(exporterErr) {
+			j.log.Info("can't create exporter service", "error", exporterErr)
+		}
 	}
 	switch {
 	case apierrors.IsNotFound(err):
@@ -329,17 +331,14 @@ func (j *JVB) getService() (*v1.Service, error) {
 }
 
 func (j *JVB) prepareExporterContainer() (v1.Container, []v1.Volume) {
-	switch j.Exporter.MonitoringSystem {
-	case "influx":
+	switch j.Exporter.Type {
+	case "telegraf":
 		var volume []v1.Volume
 		volume = append(volume, v1.Volume{
 			Name: "configuration",
 			VolumeSource: v1.VolumeSource{
 				ConfigMap: &v1.ConfigMapVolumeSource{
 					LocalObjectReference: v1.LocalObjectReference{Name: j.Exporter.ConfigMapName},
-					Items:                nil,
-					DefaultMode:          nil,
-					Optional:             nil,
 				},
 			},
 		})

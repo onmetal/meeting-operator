@@ -127,8 +127,8 @@ type Service struct {
 }
 
 type Exporter struct {
-	MonitoringSystem string `json:"type,omitempty"`
-	ConfigMapName    string `json:"config_map_name,omitempty"`
+	Type          string `json:"type,omitempty"`
+	ConfigMapName string `json:"config_map_name,omitempty"`
 	//+kubebuilder:default:="systemli/prometheus-jitsi-meet-exporter:latest"
 	Image string `json:"image,omitempty"`
 	//+kubebuilder:default:=9888
