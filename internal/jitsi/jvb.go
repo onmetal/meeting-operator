@@ -20,10 +20,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 
@@ -73,6 +74,9 @@ func (j *JVB) Create() error {
 func (j *JVB) servicePerInstance() error {
 	service, err := j.getService()
 	preparedService := j.prepareServiceForInstance()
+	if exporterErr := j.Client.Create(j.ctx, j.prepareServiceForExporter()); !apierrors.IsAlreadyExists(exporterErr) {
+		j.log.Info("can't create exporter service", "error", exporterErr)
+	}
 	switch {
 	case apierrors.IsNotFound(err):
 		return j.Client.Create(j.ctx, preparedService)
@@ -127,6 +131,27 @@ func (j *JVB) prepareServiceForInstance() *v1.Service {
 	}
 }
 
+func (j *JVB) prepareServiceForExporter() *v1.Service {
+	return &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        fmt.Sprintf("exporter-%s", j.serviceName),
+			Namespace:   j.namespace,
+		},
+		Spec: v1.ServiceSpec{
+			Type: v1.ServiceTypeClusterIP,
+			Ports: []v1.ServicePort{
+				{
+					Name:       "exporter",
+					Protocol:   v1.ProtocolTCP,
+					Port:       j.Exporter.Port,
+					TargetPort: intstr.IntOrString{IntVal: j.Exporter.Port},
+				},
+			},
+			Selector: map[string]string{"jitsi-jvb": j.name},
+		},
+	}
+}
+
 func (j *JVB) isDeleted() bool {
 	timeout := time.After(timeOutSecond)
 	tick := time.NewTicker(tickTimerSecond)
@@ -149,7 +174,7 @@ func (j *JVB) createInstance() error {
 
 func (j *JVB) prepareInstance() *appsv1.Deployment {
 	labels := map[string]string{"jitsi-jvb": j.name}
-	spec := j.prepareSpec(labels)
+	spec := j.prepareDeploymentSpec(labels)
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      j.name,
@@ -160,8 +185,9 @@ func (j *JVB) prepareInstance() *appsv1.Deployment {
 	}
 }
 
-func (j *JVB) prepareSpec(labels map[string]string) appsv1.DeploymentSpec {
-	port := externalPort + j.replica
+func (j *JVB) prepareDeploymentSpec(labels map[string]string) appsv1.DeploymentSpec {
+	jvb := j.prepareJVBContainer()
+	exporter, volume := j.prepareExporterContainer()
 	return appsv1.DeploymentSpec{
 		Selector: &metav1.LabelSelector{
 			MatchLabels: labels,
@@ -172,21 +198,28 @@ func (j *JVB) prepareSpec(labels map[string]string) appsv1.DeploymentSpec {
 			},
 			Spec: v1.PodSpec{
 				ImagePullSecrets: j.ImagePullSecrets,
+				Volumes:          volume,
 				Containers: []v1.Container{
-					{
-						Name:            JvbName,
-						Image:           j.Image,
-						ImagePullPolicy: j.ImagePullPolicy,
-						Env:             j.additionalEnvironments(),
-						Ports: []v1.ContainerPort{
-							{
-								Name:          JvbName,
-								Protocol:      j.Service.Protocol,
-								ContainerPort: port,
-							},
-						},
-					},
+					jvb,
+					exporter,
 				},
+			},
+		},
+	}
+}
+
+func (j *JVB) prepareJVBContainer() v1.Container {
+	port := externalPort + j.replica
+	return v1.Container{
+		Name:            JvbName,
+		Image:           j.Image,
+		ImagePullPolicy: j.ImagePullPolicy,
+		Env:             j.additionalEnvironments(),
+		Ports: []v1.ContainerPort{
+			{
+				Name:          JvbName,
+				Protocol:      j.Service.Protocol,
+				ContainerPort: port,
 			},
 		},
 	}
@@ -222,9 +255,9 @@ func (j *JVB) additionalEnvironments() []v1.EnvVar {
 				Value: port,
 			})
 		for index := range additionalEnvs {
-			j.envs = append(j.Environments, additionalEnvs[index])
+			j.envs = append(j.envs, additionalEnvs[index])
 		}
-		return j.Environments
+		return j.envs
 	case j.Service.Protocol == v1.ProtocolUDP:
 		additionalEnvs := make([]v1.EnvVar, 0, 2)
 		if !isHostAddressExist(j.envs) {
@@ -294,6 +327,44 @@ func (j *JVB) getService() (*v1.Service, error) {
 	return svc, nil
 }
 
+func (j *JVB) prepareExporterContainer() (v1.Container, []v1.Volume) {
+	switch j.Exporter.MonitoringSystem {
+	case "influx":
+		var volume []v1.Volume
+		volume = append(volume, v1.Volume{
+			Name: "configuration",
+			VolumeSource: v1.VolumeSource{
+				ConfigMap: &v1.ConfigMapVolumeSource{
+					LocalObjectReference: v1.LocalObjectReference{Name: j.Exporter.ConfigMapName},
+					Items:                nil,
+					DefaultMode:          nil,
+					Optional:             nil,
+				},
+			},
+		})
+		return v1.Container{
+			Name:            "exporter",
+			Image:           j.Exporter.Image,
+			Env:             j.Exporter.Environments,
+			Resources:       j.Exporter.Resources,
+			VolumeMounts:    []v1.VolumeMount{{Name: "configuration", MountPath: "/etc/telegraf/"}},
+			ImagePullPolicy: j.Exporter.ImagePullPolicy,
+			SecurityContext: &j.Exporter.SecurityContext,
+		}, volume
+	default:
+		return v1.Container{
+			Name:            "exporter",
+			Image:           j.Exporter.Image,
+			Args:            []string{"-videobridge-url", "http://localhost:8080/colibri/stats"},
+			Ports:           []v1.ContainerPort{{Name: "http", ContainerPort: j.Exporter.Port, Protocol: v1.ProtocolTCP}},
+			Env:             j.Exporter.Environments,
+			Resources:       j.Exporter.Resources,
+			ImagePullPolicy: j.Exporter.ImagePullPolicy,
+			SecurityContext: &j.Exporter.SecurityContext,
+		}, nil
+	}
+}
+
 func (j *JVB) Update() error {
 	instance, err := j.getInstance()
 	if err != nil {
@@ -354,7 +425,29 @@ func (j *JVB) deleteService() error {
 		j.log.Info("can't get svc by name", "error", err)
 		return err
 	}
-	return j.Client.Delete(j.ctx, svc)
+	if deleteErr := j.Client.Delete(j.ctx, svc); deleteErr != nil {
+		return deleteErr
+	}
+	exporterSvc, err := j.getExporterService()
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		j.log.Info("can't get svc by name", "error", err)
+		return err
+	}
+	return j.Client.Delete(j.ctx, exporterSvc)
+}
+
+func (j *JVB) getExporterService() (*v1.Service, error) {
+	svc := &v1.Service{}
+	if err := j.Client.Get(context.TODO(), types.NamespacedName{
+		Namespace: j.namespace,
+		Name:      fmt.Sprintf("exporter-%s", j.serviceName),
+	}, svc); err != nil {
+		return &v1.Service{}, err
+	}
+	return svc, nil
 }
 
 func isHostAddressExist(envs []v1.EnvVar) bool {

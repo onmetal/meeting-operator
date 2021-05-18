@@ -95,6 +95,7 @@ type Jibri struct {
 }
 
 type JVB struct {
+	Exporter Exporter `json:"exporter,omitempty"`
 	//+kubebuilder:default:=1
 	Replicas int32 `json:"replicas,omitempty"`
 	//+kubebuilder:default="jitsi/jvb:stable-5390-3"
@@ -123,6 +124,21 @@ type Service struct {
 	PortName string `json:"port_name,omitempty"`
 	//+kubebuilder:default=80
 	Port int32 `json:"port,omitempty"`
+}
+
+type Exporter struct {
+	MonitoringSystem string `json:"type,omitempty"`
+	ConfigMapName    string `json:"config_map_name,omitempty"`
+	//+kubebuilder:default:="systemli/prometheus-jitsi-meet-exporter:latest"
+	Image string `json:"image,omitempty"`
+	//+kubebuilder:default:=9888
+	Port int32 `json:"port,omitempty"`
+	//+kubebuilder:default="IfNotPresent"
+	ImagePullPolicy  v1.PullPolicy             `json:"image_pull_policy,omitempty"`
+	ImagePullSecrets []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
+	Environments     []v1.EnvVar               `json:"environments,omitempty"`
+	Resources        v1.ResourceRequirements   `json:"resources,omitempty"`
+	SecurityContext  v1.SecurityContext        `json:"security_context,omitempty"`
 }
 
 // JitsiStatus defines the observed state of Jitsi

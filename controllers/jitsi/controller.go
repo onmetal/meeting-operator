@@ -78,9 +78,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 			return ctrl.Result{}, err
 		}
 	}
-	if err := r.makeJVB(ctx, j); err != nil {
-		return ctrl.Result{}, err
-	}
+	r.makeJVB(ctx, j)
 	r.Log.Info("reconciliation finished")
 	return ctrl.Result{}, nil
 }
@@ -117,9 +115,9 @@ func (r *Reconciler) make(ctx context.Context, appName string, j *v1alpha1.Jitsi
 	return nil
 }
 
-func (r *Reconciler) makeJVB(ctx context.Context, j *v1alpha1.Jitsi) error {
+func (r *Reconciler) makeJVB(ctx context.Context, j *v1alpha1.Jitsi) {
 	if !shouldContinue(jitsi.JvbName, j) {
-		return nil
+		return
 	}
 	for replica := int32(1); replica <= j.Spec.JVB.Replicas; replica++ {
 		jts := jitsi.NewJVB(ctx, replica, j, r.Client, r.Log)
@@ -134,7 +132,6 @@ func (r *Reconciler) makeJVB(ctx context.Context, j *v1alpha1.Jitsi) error {
 			continue
 		}
 	}
-	return nil
 }
 
 func (r *Reconciler) onDelete(e event.DeleteEvent) bool {
@@ -148,9 +145,7 @@ func (r *Reconciler) onDelete(e event.DeleteEvent) bool {
 			r.Log.Info("failed to delete component", "error", err)
 		}
 	}
-	if err := r.deleteJVB(ctx, jitsiObj); err != nil {
-		r.Log.Info("failed to delete jvb component", "error", err)
-	}
+	r.deleteJVB(ctx, jitsiObj)
 	return false
 }
 
@@ -169,14 +164,13 @@ func (r *Reconciler) deleteComponents(ctx context.Context, appName string, j *v1
 	return nil
 }
 
-func (r *Reconciler) deleteJVB(ctx context.Context, j *v1alpha1.Jitsi) error {
+func (r *Reconciler) deleteJVB(ctx context.Context, j *v1alpha1.Jitsi) {
 	for replica := int32(1); replica <= j.Spec.JVB.Replicas; replica++ {
 		jts := jitsi.NewJVB(ctx, replica, j, r.Client, r.Log)
 		if err := jts.Delete(); client.IgnoreNotFound(err) != nil {
-			 r.Log.Info("failed to delete jvb instance", "error", err)
+			r.Log.Info("failed to delete jvb instance", "error", err)
 		}
 	}
-	return nil
 }
 
 func shouldContinue(appName string, j *v1alpha1.Jitsi) bool {

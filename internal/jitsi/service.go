@@ -41,7 +41,6 @@ type Service struct {
 	log             logr.Logger
 	name, namespace string
 	serviceType     v1.ServiceType
-	services        []v1alpha1.Service
 	ports           []v1.ServicePort
 	annotations     map[string]string
 	labels          map[string]string
@@ -153,7 +152,7 @@ func (s *Service) Update() error {
 			if delErr := s.Client.Delete(s.ctx, service); delErr != nil {
 				s.log.Error(delErr, "failed to delete service")
 			}
-			for s.isDeleted() {
+			if s.isDeleted() {
 				preparedService := s.prepareService()
 				return s.Client.Create(s.ctx, preparedService)
 			}
@@ -178,7 +177,7 @@ func (s *Service) isDeleted() bool {
 	for {
 		select {
 		case <-timeout:
-			return true
+			return false
 		case <-tick.C:
 			if _, getErr := s.Get(); apierrors.IsNotFound(getErr) {
 				return true
@@ -249,7 +248,7 @@ func getPorts(appName string, s []v1alpha1.Service) []v1.ServicePort {
 			},
 			v1.ServicePort{
 				Name:       "xmpp",
-				Protocol: v1.ProtocolTCP,
+				Protocol:   v1.ProtocolTCP,
 				Port:       5222,
 				TargetPort: intstr.IntOrString{IntVal: 5222},
 			},
@@ -285,8 +284,8 @@ func getPorts(appName string, s []v1alpha1.Service) []v1.ServicePort {
 	default:
 		return []v1.ServicePort{}
 	}
-
 }
+
 func getAdditionalPorts(p []v1.ServicePort, services []v1alpha1.Service) []v1.ServicePort {
 	for svc := range services {
 		p = append(p, v1.ServicePort{
