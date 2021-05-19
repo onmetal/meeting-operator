@@ -128,8 +128,22 @@ spec:
                           type: string
                       type: object
                     type: array
+                  ports:
+                    items:
+                      properties:
+                        port:
+                          format: int32
+                          type: integer
+                        port_name:
+                          default: http
+                          type: string
+                        protocol:
+                          default: TCP
+                          type: string
+                      type: object
+                    type: array
                   replicas:
-                    default: 1
+                    default: 0
                     format: int32
                     type: integer
                   resources:
@@ -162,25 +176,6 @@ spec:
                     default: ClusterIP
                     description: Service Type string describes ingress methods for a service
                     type: string
-                  services:
-                    items:
-                      properties:
-                        port:
-                          default: 80
-                          format: int32
-                          type: integer
-                        port_name:
-                          default: http
-                          type: string
-                        protocol:
-                          default: TCP
-                          type: string
-                        type:
-                          default: ClusterIP
-                          description: Service Type string describes ingress methods for a service
-                          type: string
-                      type: object
-                    type: array
                   storage:
                     properties:
                       empty_dir:
@@ -445,6 +440,20 @@ spec:
                           type: string
                       type: object
                     type: array
+                  ports:
+                    items:
+                      properties:
+                        port:
+                          format: int32
+                          type: integer
+                        port_name:
+                          default: http
+                          type: string
+                        protocol:
+                          default: TCP
+                          type: string
+                      type: object
+                    type: array
                   replicas:
                     default: 1
                     format: int32
@@ -479,25 +488,6 @@ spec:
                     default: ClusterIP
                     description: Service Type string describes ingress methods for a service
                     type: string
-                  services:
-                    items:
-                      properties:
-                        port:
-                          default: 80
-                          format: int32
-                          type: integer
-                        port_name:
-                          default: http
-                          type: string
-                        protocol:
-                          default: TCP
-                          type: string
-                        type:
-                          default: ClusterIP
-                          description: Service Type string describes ingress methods for a service
-                          type: string
-                      type: object
-                    type: array
                 type: object
               jvb:
                 properties:
@@ -808,6 +798,18 @@ spec:
                           type: string
                       type: object
                     type: array
+                  port:
+                    properties:
+                      port:
+                        format: int32
+                        type: integer
+                      port_name:
+                        default: http
+                        type: string
+                      protocol:
+                        default: TCP
+                        type: string
+                    type: object
                   replicas:
                     default: 1
                     format: int32
@@ -833,23 +835,6 @@ spec:
                           x-kubernetes-int-or-string: true
                         description: 'Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                         type: object
-                    type: object
-                  service:
-                    properties:
-                      port:
-                        default: 80
-                        format: int32
-                        type: integer
-                      port_name:
-                        default: http
-                        type: string
-                      protocol:
-                        default: TCP
-                        type: string
-                      type:
-                        default: ClusterIP
-                        description: Service Type string describes ingress methods for a service
-                        type: string
                     type: object
                   service_annotations:
                     additionalProperties:
@@ -957,6 +942,20 @@ spec:
                           type: string
                       type: object
                     type: array
+                  ports:
+                    items:
+                      properties:
+                        port:
+                          format: int32
+                          type: integer
+                        port_name:
+                          default: http
+                          type: string
+                        protocol:
+                          default: TCP
+                          type: string
+                      type: object
+                    type: array
                   replicas:
                     default: 1
                     format: int32
@@ -991,25 +990,6 @@ spec:
                     default: ClusterIP
                     description: Service Type string describes ingress methods for a service
                     type: string
-                  services:
-                    items:
-                      properties:
-                        port:
-                          default: 80
-                          format: int32
-                          type: integer
-                        port_name:
-                          default: http
-                          type: string
-                        protocol:
-                          default: TCP
-                          type: string
-                        type:
-                          default: ClusterIP
-                          description: Service Type string describes ingress methods for a service
-                          type: string
-                      type: object
-                    type: array
                 type: object
               web:
                 properties:
@@ -1108,6 +1088,20 @@ spec:
                           type: string
                       type: object
                     type: array
+                  ports:
+                    items:
+                      properties:
+                        port:
+                          format: int32
+                          type: integer
+                        port_name:
+                          default: http
+                          type: string
+                        protocol:
+                          default: TCP
+                          type: string
+                      type: object
+                    type: array
                   replicas:
                     default: 1
                     format: int32
@@ -1142,25 +1136,6 @@ spec:
                     default: ClusterIP
                     description: Service Type string describes ingress methods for a service
                     type: string
-                  services:
-                    items:
-                      properties:
-                        port:
-                          default: 80
-                          format: int32
-                          type: integer
-                        port_name:
-                          default: http
-                          type: string
-                        protocol:
-                          default: TCP
-                          type: string
-                        type:
-                          default: ClusterIP
-                          description: Service Type string describes ingress methods for a service
-                          type: string
-                      type: object
-                    type: array
                 type: object
             required:
             - jibri

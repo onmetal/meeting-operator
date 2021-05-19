@@ -42,7 +42,7 @@ type Web struct {
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
-	Services    []Service      `json:"services,omitempty"`
+	Ports       []Port         `json:"ports,omitempty"`
 }
 
 type Prosody struct {
@@ -58,7 +58,7 @@ type Prosody struct {
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
-	Services    []Service      `json:"services,omitempty"`
+	Ports       []Port         `json:"ports,omitempty"`
 }
 
 type Jicofo struct {
@@ -74,11 +74,11 @@ type Jicofo struct {
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
-	Services    []Service      `json:"services,omitempty"`
+	Ports       []Port         `json:"ports,omitempty"`
 }
 
 type Jibri struct {
-	//+kubebuilder:default:=1
+	//+kubebuilder:default:=0
 	Replicas int32 `json:"replicas,omitempty"`
 	//+kubebuilder:default="jitsi/jibri:stable-5390-3"
 	Image string `json:"image,omitempty"`
@@ -91,7 +91,7 @@ type Jibri struct {
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
-	Services    []Service      `json:"services,omitempty"`
+	Ports       []Port         `json:"ports,omitempty"`
 }
 
 type JVB struct {
@@ -108,22 +108,7 @@ type JVB struct {
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
-	Service     Service        `json:"service,omitempty"`
-}
-
-type StorageSpec struct {
-	EmptyDir *v1.EmptyDirVolumeSource `json:"empty_dir,omitempty"`
-	PVC      v1.PersistentVolumeClaim `json:"pvc,omitempty"`
-}
-
-type Service struct {
-	//+kubebuilder:default:="ClusterIP"
-	Type     v1.ServiceType `json:"type,omitempty"`
-	Protocol v1.Protocol    `json:"protocol,omitempty"`
-	//+kubebuilder:default="http"
-	PortName string `json:"port_name,omitempty"`
-	//+kubebuilder:default=80
-	Port int32 `json:"port,omitempty"`
+	Port        Port           `json:"port,omitempty"`
 }
 
 type Exporter struct {
@@ -141,9 +126,20 @@ type Exporter struct {
 	SecurityContext  v1.SecurityContext        `json:"security_context,omitempty"`
 }
 
-// JitsiStatus defines the observed state of Jitsi
-type JitsiStatus struct {
+type StorageSpec struct {
+	EmptyDir *v1.EmptyDirVolumeSource `json:"empty_dir,omitempty"`
+	PVC      v1.PersistentVolumeClaim `json:"pvc,omitempty"`
 }
+
+type Port struct {
+	Protocol v1.Protocol `json:"protocol,omitempty"`
+	//+kubebuilder:default="http"
+	PortName string `json:"port_name,omitempty"`
+	Port     int32  `json:"port,omitempty"`
+}
+
+// JitsiStatus defines the observed state of Jitsi
+type JitsiStatus struct{}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status

@@ -62,7 +62,7 @@ func (j *Jibri) prepareSTSSpec() appsv1.StatefulSetSpec {
 						Image:           j.Image,
 						ImagePullPolicy: j.ImagePullPolicy,
 						Env:             j.Environments,
-						Ports:           getContainerPorts(j.Services),
+						Ports:           getContainerPorts(j.Ports),
 						Resources:       j.Resources,
 					},
 				},

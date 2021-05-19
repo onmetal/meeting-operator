@@ -38,6 +38,9 @@ import (
 const (
 	JvbName         = "jvb"
 	externalPort    = 10000
+)
+
+const (
 	timeOutSecond   = 300 * time.Second
 	tickTimerSecond = 15 * time.Second
 )
@@ -57,6 +60,7 @@ func NewJVB(ctx context.Context, replica int32,
 		replica:     replica,
 	}
 }
+
 func (j *JVB) Create() error {
 	if j.exist() {
 		return apierrors.NewAlreadyExists(appsv1.Resource("deployments"), j.name)
@@ -75,14 +79,14 @@ func (j *JVB) servicePerInstance() error {
 	service, err := j.getService()
 	preparedService := j.prepareServiceForInstance()
 	if j.Exporter.Type == "" {
-		if exporterErr := j.Client.Create(j.ctx, j.prepareServiceForExporter()); !apierrors.IsAlreadyExists(exporterErr) {
+		if exporterErr := j.Client.Create(j.ctx, j.serviceForExporter()); err != nil {
 			j.log.Info("can't create exporter service", "error", exporterErr)
 		}
 	}
 	switch {
 	case apierrors.IsNotFound(err):
 		return j.Client.Create(j.ctx, preparedService)
-	case service.Spec.Type != j.ServiceType || service.Spec.Ports[0].Protocol != j.Service.Protocol:
+	case service.Spec.Type != j.ServiceType || service.Spec.Ports[0].Protocol != j.Port.Protocol:
 		// You can't change spec.type on existing service
 		if delErr := j.Client.Delete(j.ctx, service); delErr != nil {
 			j.log.Error(delErr, "failed to update service type", "error", delErr)
@@ -123,7 +127,7 @@ func (j *JVB) prepareServiceForInstance() *v1.Service {
 			Ports: []v1.ServicePort{
 				{
 					Name:       JvbName,
-					Protocol:   j.Service.Protocol,
+					Protocol:   j.Port.Protocol,
 					Port:       port,
 					TargetPort: intstr.IntOrString{IntVal: port},
 				},
@@ -133,7 +137,7 @@ func (j *JVB) prepareServiceForInstance() *v1.Service {
 	}
 }
 
-func (j *JVB) prepareServiceForExporter() *v1.Service {
+func (j *JVB) serviceForExporter() *v1.Service {
 	return &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("exporter-%s", j.serviceName),
@@ -221,7 +225,7 @@ func (j *JVB) prepareJVBContainer() v1.Container {
 		Ports: []v1.ContainerPort{
 			{
 				Name:          JvbName,
-				Protocol:      j.Service.Protocol,
+				Protocol:      j.Port.Protocol,
 				ContainerPort: port,
 			},
 		},
@@ -231,7 +235,7 @@ func (j *JVB) prepareJVBContainer() v1.Container {
 func (j *JVB) additionalEnvironments() []v1.EnvVar {
 	port := fmt.Sprint(externalPort + j.replica)
 	switch {
-	case j.Service.Protocol == v1.ProtocolTCP:
+	case j.Port.Protocol == v1.ProtocolTCP:
 		additionalEnvs := make([]v1.EnvVar, 0, 6)
 		if !isHostAddressExist(j.envs) {
 			additionalEnvs = append(additionalEnvs, j.getDockerHostAddr())
@@ -261,7 +265,7 @@ func (j *JVB) additionalEnvironments() []v1.EnvVar {
 			j.envs = append(j.envs, additionalEnvs[index])
 		}
 		return j.envs
-	case j.Service.Protocol == v1.ProtocolUDP:
+	case j.Port.Protocol == v1.ProtocolUDP:
 		additionalEnvs := make([]v1.EnvVar, 0, 2)
 		if !isHostAddressExist(j.envs) {
 			additionalEnvs = append(additionalEnvs, j.getDockerHostAddr())

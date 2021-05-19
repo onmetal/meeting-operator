@@ -145,17 +145,17 @@ func NewJitsi(ctx context.Context, appName string,
 	}
 }
 
-func getContainerPorts(services []v1alpha1.Service) []v1.ContainerPort {
-	var ports []v1.ContainerPort
-	if len(services) < 1 {
+func getContainerPorts(ports []v1alpha1.Port) []v1.ContainerPort {
+	var containerPorts []v1.ContainerPort
+	if len(ports) < 1 {
 		return nil
 	}
-	for svc := range services {
-		ports = append(ports, v1.ContainerPort{
-			Name:          services[svc].PortName,
-			ContainerPort: services[svc].Port,
-			Protocol:      services[svc].Protocol,
+	for svc := range ports {
+		containerPorts = append(containerPorts, v1.ContainerPort{
+			Name:          ports[svc].PortName,
+			ContainerPort: ports[svc].Port,
+			Protocol:      ports[svc].Protocol,
 		})
 	}
-	return ports
+	return containerPorts
 }

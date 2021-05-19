@@ -53,7 +53,7 @@ func NewService(ctx context.Context, appName string,
 		labels := utils.GetDefaultLabels(WebName)
 		return &Service{
 			Client:      c,
-			ports:       getPorts(WebName, j.Spec.Web.Services),
+			ports:       getPorts(WebName, j.Spec.Web.Ports),
 			serviceType: j.Spec.Web.ServiceType,
 			name:        WebName,
 			namespace:   j.Namespace,
@@ -66,7 +66,7 @@ func NewService(ctx context.Context, appName string,
 		labels := utils.GetDefaultLabels(ProsodyName)
 		return &Service{
 			Client:      c,
-			ports:       getPorts(ProsodyName, j.Spec.Prosody.Services),
+			ports:       getPorts(ProsodyName, j.Spec.Prosody.Ports),
 			serviceType: j.Spec.Prosody.ServiceType,
 			name:        ProsodyName,
 			namespace:   j.Namespace,
@@ -79,7 +79,7 @@ func NewService(ctx context.Context, appName string,
 		labels := utils.GetDefaultLabels(JicofoName)
 		return &Service{
 			Client:      c,
-			ports:       getPorts(ProsodyName, j.Spec.Jicofo.Services),
+			ports:       getPorts(ProsodyName, j.Spec.Jicofo.Ports),
 			serviceType: j.Spec.Jicofo.ServiceType,
 			name:        JicofoName,
 			namespace:   j.Namespace,
@@ -92,7 +92,7 @@ func NewService(ctx context.Context, appName string,
 		labels := utils.GetDefaultLabels(JibriName)
 		return &Service{
 			Client:      c,
-			ports:       getPorts(ProsodyName, j.Spec.Jibri.Services),
+			ports:       getPorts(ProsodyName, j.Spec.Jibri.Ports),
 			serviceType: j.Spec.Jibri.ServiceType,
 			name:        JibriName,
 			namespace:   j.Namespace,
@@ -217,7 +217,7 @@ func isAnnotationsChanged(oldAnnotations, newAnnotations map[string]string) bool
 	return false
 }
 
-func getPorts(appName string, s []v1alpha1.Service) []v1.ServicePort {
+func getPorts(appName string, s []v1alpha1.Port) []v1.ServicePort {
 	switch appName {
 	case WebName:
 		ports := make([]v1.ServicePort, 0, 1)
@@ -286,14 +286,14 @@ func getPorts(appName string, s []v1alpha1.Service) []v1.ServicePort {
 	}
 }
 
-func getAdditionalPorts(p []v1.ServicePort, services []v1alpha1.Service) []v1.ServicePort {
-	for svc := range services {
-		p = append(p, v1.ServicePort{
-			Name:       services[svc].PortName,
-			TargetPort: intstr.IntOrString{IntVal: services[svc].Port},
-			Port:       services[svc].Port,
-			Protocol:   services[svc].Protocol,
+func getAdditionalPorts(servicePorts []v1.ServicePort, ports []v1alpha1.Port) []v1.ServicePort {
+	for port := range ports {
+		servicePorts = append(servicePorts, v1.ServicePort{
+			Name:       ports[port].PortName,
+			TargetPort: intstr.IntOrString{IntVal: ports[port].Port},
+			Port:       ports[port].Port,
+			Protocol:   ports[port].Protocol,
 		})
 	}
-	return p
+	return servicePorts
 }

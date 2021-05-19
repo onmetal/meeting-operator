@@ -30,10 +30,7 @@ spec:
       requests:
         cpu: "0.1"
         memory: "128Mi"
-#    services:
-#      - port_name: "http"
-#        protocol: "TCP"
-#        port: 80
+    ports: []
     environments:
       - name: ENABLE_LETSENCRYPT
         value: "0"
@@ -68,7 +65,7 @@ spec:
     replicas: 1
     image: jitsi/jicofo:stable-5390-3
     service_type: "ClusterIP"
-    services: []
+    ports: []
     environments:
       - name: XMPP_SERVER
         value: prosody
@@ -102,19 +99,7 @@ spec:
   prosody:
     replicas: 1
     service_type: "ClusterIP"
-#    services:
-#      - port_name: "http"
-#        protocol: "TCP"
-#        port: 5280
-#      - port_name: "c2s"
-#        protocol: "TCP"
-#        port: 5282
-#      - port_name: "xmpp"
-#        protocol: "TCP"
-#        port: 5222
-#      - port_name: "external"
-#        protocol: "TCP"
-#        port: 5347
+    ports: []
     image: jitsi/prosody:stable-5390-3
     environments:
       - name: XMPP_DOMAIN
@@ -182,10 +167,7 @@ spec:
     ##            requests:
     ##              storage: "1Gi"
     #    service_type: "ClusterIP"
-#    services:
-#      - port_name: "http"
-#        protocol: "TCP"
-#        port: 5282
+    ports: []
     environments:
       - name: JIBRI_RECORDING_DIR
         value: /config/recordings
@@ -236,8 +218,7 @@ spec:
           memory: "128Mi"
     service_annotations: {}
     service_type: "LoadBalancer"
-    service:
-      port_name: "jvb"
+    port:
       protocol: "UDP"
     environments:
       - name: XMPP_SERVER
