@@ -131,12 +131,12 @@ spec:
                   ports:
                     items:
                       properties:
+                        name:
+                          default: http
+                          type: string
                         port:
                           format: int32
                           type: integer
-                        port_name:
-                          default: http
-                          type: string
                         protocol:
                           default: TCP
                           type: string
@@ -443,12 +443,12 @@ spec:
                   ports:
                     items:
                       properties:
+                        name:
+                          default: http
+                          type: string
                         port:
                           format: int32
                           type: integer
-                        port_name:
-                          default: http
-                          type: string
                         protocol:
                           default: TCP
                           type: string
@@ -800,12 +800,12 @@ spec:
                     type: array
                   port:
                     properties:
+                      name:
+                        default: http
+                        type: string
                       port:
                         format: int32
                         type: integer
-                      port_name:
-                        default: http
-                        type: string
                       protocol:
                         default: TCP
                         type: string
@@ -945,12 +945,12 @@ spec:
                   ports:
                     items:
                       properties:
+                        name:
+                          default: http
+                          type: string
                         port:
                           format: int32
                           type: integer
-                        port_name:
-                          default: http
-                          type: string
                         protocol:
                           default: TCP
                           type: string
@@ -1091,12 +1091,12 @@ spec:
                   ports:
                     items:
                       properties:
+                        name:
+                          default: http
+                          type: string
                         port:
                           format: int32
                           type: integer
-                        port_name:
-                          default: http
-                          type: string
                         protocol:
                           default: TCP
                           type: string

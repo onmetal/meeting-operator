@@ -152,7 +152,7 @@ func getContainerPorts(ports []v1alpha1.Port) []v1.ContainerPort {
 	}
 	for svc := range ports {
 		containerPorts = append(containerPorts, v1.ContainerPort{
-			Name:          ports[svc].PortName,
+			Name:          ports[svc].Name,
 			ContainerPort: ports[svc].Port,
 			Protocol:      ports[svc].Protocol,
 		})

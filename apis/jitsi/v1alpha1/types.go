@@ -132,10 +132,10 @@ type StorageSpec struct {
 }
 
 type Port struct {
-	Protocol v1.Protocol `json:"protocol,omitempty"`
 	//+kubebuilder:default="http"
-	PortName string `json:"port_name,omitempty"`
-	Port     int32  `json:"port,omitempty"`
+	Name     string      `json:"name,omitempty"`
+	Protocol v1.Protocol `json:"protocol,omitempty"`
+	Port     int32       `json:"port,omitempty"`
 }
 
 // JitsiStatus defines the observed state of Jitsi

@@ -18,7 +18,6 @@ package jitsi
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -36,8 +35,8 @@ import (
 )
 
 const (
-	JvbName         = "jvb"
-	externalPort    = 10000
+	JvbName      = "jvb"
+	externalPort = 10000
 )
 
 const (
@@ -79,37 +78,17 @@ func (j *JVB) servicePerInstance() error {
 	service, err := j.getService()
 	preparedService := j.prepareServiceForInstance()
 	if j.Exporter.Type == "" {
-		if exporterErr := j.Client.Create(j.ctx, j.serviceForExporter()); err != nil {
+		if exporterErr := j.Client.Create(j.ctx, j.serviceForExporter()); exporterErr != nil && !apierrors.IsAlreadyExists(exporterErr) {
 			j.log.Info("can't create exporter service", "error", exporterErr)
 		}
 	}
 	switch {
 	case apierrors.IsNotFound(err):
 		return j.Client.Create(j.ctx, preparedService)
-	case service.Spec.Type != j.ServiceType || service.Spec.Ports[0].Protocol != j.Port.Protocol:
-		// You can't change spec.type on existing service
-		if delErr := j.Client.Delete(j.ctx, service); delErr != nil {
-			j.log.Error(delErr, "failed to update service type", "error", delErr)
-		}
-		if j.isDeleted() {
-			return j.Client.Create(j.ctx, preparedService)
-		}
-		return errors.New("service deletion timeout")
-	case service.Spec.Type == v1.ServiceTypeLoadBalancer:
-		// can't change serviceAnnotations when service type is LoadBalancer
-		if isAnnotationsChanged(service.Annotations, j.ServiceAnnotations) {
-			if delErr := j.Client.Delete(j.ctx, service); delErr != nil {
-				j.log.Error(delErr, "failed to delete service", "error", delErr)
-			}
-			if j.isDeleted() {
-				return j.Client.Create(j.ctx, preparedService)
-			}
-			return errors.New("service deletion timeout")
-		}
-		service.Spec.Ports = preparedService.Spec.Ports
-		return j.Client.Update(j.ctx, service)
 	default:
+		service.ObjectMeta.Annotations = preparedService.Annotations
 		service.Spec.Ports = preparedService.Spec.Ports
+		service.Spec.Type = j.ServiceType
 		return j.Client.Update(j.ctx, service)
 	}
 }
@@ -142,6 +121,10 @@ func (j *JVB) serviceForExporter() *v1.Service {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("exporter-%s", j.serviceName),
 			Namespace: j.namespace,
+			Labels: map[string]string{
+				"app":                   "jvb",
+				"kubernetes.io/part-of": "jitsi",
+			},
 		},
 		Spec: v1.ServiceSpec{
 			Type: v1.ServiceTypeClusterIP,

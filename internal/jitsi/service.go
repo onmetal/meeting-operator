@@ -18,7 +18,6 @@ package jitsi
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/onmetal/meeting-operator/internal/utils"
@@ -135,40 +134,12 @@ func (s *Service) Update() error {
 	if err != nil {
 		return err
 	}
-	switch {
-	case service.Spec.Type != s.serviceType:
-		// You can't change spec.type on existing service
-		if err := s.Client.Delete(s.ctx, service); err != nil {
-			s.log.Error(err, "failed to delete service")
-		}
-		if s.isDeleted() {
-			preparedService := s.prepareService()
-			return s.Client.Create(s.ctx, preparedService)
-		}
-		return errors.New("service deletion timeout")
-	case service.Spec.Type == "LoadBalancer":
-		// can't delete serviceAnnotations when service type is LoadBalancer
-		if isAnnotationsChanged(service.Annotations, s.annotations) {
-			if delErr := s.Client.Delete(s.ctx, service); delErr != nil {
-				s.log.Error(delErr, "failed to delete service")
-			}
-			if s.isDeleted() {
-				preparedService := s.prepareService()
-				return s.Client.Create(s.ctx, preparedService)
-			}
-		}
-		updatedServiceSpec := s.prepareServiceSpec()
-		service.Annotations = s.annotations
-		service.Spec.Ports = updatedServiceSpec.Ports
-		service.Spec.Selector = updatedServiceSpec.Selector
-		return s.Client.Update(s.ctx, service)
-	default:
-		updatedServiceSpec := s.prepareServiceSpec()
-		service.Annotations = s.annotations
-		service.Spec.Ports = updatedServiceSpec.Ports
-		service.Spec.Selector = updatedServiceSpec.Selector
-		return s.Client.Update(s.ctx, service)
-	}
+	updatedServiceSpec := s.prepareServiceSpec()
+	service.Annotations = s.annotations
+	service.Spec.Type = s.serviceType
+	service.Spec.Ports = updatedServiceSpec.Ports
+	service.Spec.Selector = updatedServiceSpec.Selector
+	return s.Client.Update(s.ctx, service)
 }
 
 func (s *Service) isDeleted() bool {
@@ -206,15 +177,6 @@ func (s *Service) Delete() error {
 		return nil
 	}
 	return s.Client.Delete(s.ctx, service)
-}
-
-func isAnnotationsChanged(oldAnnotations, newAnnotations map[string]string) bool {
-	for name, newValue := range newAnnotations {
-		if oldValue, ok := oldAnnotations[name]; !ok || oldValue != newValue {
-			return true
-		}
-	}
-	return false
 }
 
 func getPorts(appName string, s []v1alpha1.Port) []v1.ServicePort {
@@ -289,7 +251,7 @@ func getPorts(appName string, s []v1alpha1.Port) []v1.ServicePort {
 func getAdditionalPorts(servicePorts []v1.ServicePort, ports []v1alpha1.Port) []v1.ServicePort {
 	for port := range ports {
 		servicePorts = append(servicePorts, v1.ServicePort{
-			Name:       ports[port].PortName,
+			Name:       ports[port].Name,
 			TargetPort: intstr.IntOrString{IntVal: ports[port].Port},
 			Port:       ports[port].Port,
 			Protocol:   ports[port].Protocol,
