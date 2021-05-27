@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha1
+package v1alpha2
 
 import (
 	v1 "k8s.io/api/core/v1"
@@ -23,6 +23,7 @@ import (
 
 // WhiteBoardSpec defines the desired state of WhiteBoard
 type WhiteBoardSpec struct {
+	Annotations map[string]string `json:"annotations,omitempty"`
 	//+kubebuilder:default:=1
 	Replicas int32 `json:"replicas,omitempty"`
 	//+kubebuilder:default="excalidraw/excalidraw:sha-5c73c58"
@@ -30,22 +31,20 @@ type WhiteBoardSpec struct {
 	//+kubebuilder:default="IfNotPresent"
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
+	SecurityContext    v1.SecurityContext        `json:"security_context,omitempty"`
 	Environments       []v1.EnvVar               `json:"environments,omitempty"`
-	Resources          v1.ResourceList           `json:"resources,omitempty"`
+	Resources          v1.ResourceRequirements   `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
-	Services    []Service      `json:"services,omitempty"`
+	Ports       []Port         `json:"ports,omitempty"`
 }
 
-type Service struct {
-	//+kubebuilder:default:="ClusterIP"
-	Type     v1.ServiceType `json:"type,omitempty"`
-	Protocol v1.Protocol    `json:"protocol,omitempty"`
+type Port struct {
 	//+kubebuilder:default="http"
-	PortName string `json:"port_name,omitempty"`
-	//+kubebuilder:default=80
-	Port int32 `json:"port,omitempty"`
+	Name     string      `json:"name,omitempty"`
+	Protocol v1.Protocol `json:"protocol,omitempty"`
+	Port     int32       `json:"port,omitempty"`
 }
 
 // WhiteBoardStatus defines the observed state of WhiteBoard

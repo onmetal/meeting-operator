@@ -18,9 +18,13 @@ package etherpad
 
 import (
 	"context"
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/go-logr/logr"
-	"github.com/onmetal/meeting-operator/apis/etherpad/v1alpha1"
+	"github.com/onmetal/meeting-operator/apis/etherpad/v1alpha2"
+	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
+	"github.com/onmetal/meeting-operator/internal/utils"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -30,42 +34,72 @@ type Etherpad interface {
 	Delete() error
 }
 
-type Deployment struct {
+type etherpad struct {
+	client.Client
+	*v1alpha2.Etherpad
+
+	ctx    context.Context
+	log    logr.Logger
+	labels map[string]string
+}
+
+type service struct {
 	client.Client
 
-	ctx context.Context
-	log logr.Logger
-	e   *v1alpha1.Etherpad
+	ctx             context.Context
+	log             logr.Logger
+	name, namespace string
+	labels          map[string]string
+	annotations     map[string]string
+	serviceType     v1.ServiceType
+	ports           []v1alpha2.Port
 }
 
-type Service struct {
-	client.Client
-
-	ctx context.Context
-	log logr.Logger
-	e   *v1alpha1.Etherpad
-}
-
-func NewEtherpad(ctx context.Context, c client.Client, l logr.Logger, e *v1alpha1.Etherpad) Etherpad {
-	return &Deployment{
-		Client: c,
-		ctx:    ctx,
-		log:    l,
-		e:      e,
+func New(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) (Etherpad, error) {
+	eth := &v1alpha2.Etherpad{}
+	if err := c.Get(ctx, req.NamespacedName, eth); err != nil {
+		l.Error(err, "can't get etherpad")
+		return nil, err
 	}
-}
-
-func NewService(ctx context.Context, c client.Client, l logr.Logger, e *v1alpha1.Etherpad) Etherpad {
-	return &Service{
-		Client: c,
-		ctx:    ctx,
-		log:    l,
-		e:      e,
+	if !eth.DeletionTimestamp.IsZero() {
+		return &etherpad{
+			Client:   c,
+			Etherpad: eth,
+			ctx:      ctx,
+			log:      l,
+		}, meetingerr.UnderDeletion()
 	}
+	if err := addFinalizer(ctx, c, eth); err != nil {
+		l.Info("can't add finalizer to etherpad", "error", err)
+	}
+	defaultLabels := utils.GetDefaultLabels(eth.Kind)
+	return &etherpad{
+		Client:   c,
+		Etherpad: eth,
+		ctx:      ctx,
+		log:      l,
+		labels:   defaultLabels,
+	}, nil
 }
 
-func getDefaultLabels() map[string]string {
-	var defaultLabels = make(map[string]string)
-	defaultLabels["app.kubernetes.io/appName"] = applicationName
-	return defaultLabels
+func addFinalizer(ctx context.Context, c client.Client, etherpad *v1alpha2.Etherpad) error {
+	if !utils.ContainsString(etherpad.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
+		etherpad.ObjectMeta.Finalizers = append(etherpad.ObjectMeta.Finalizers, utils.MeetingFinalizer)
+		return c.Update(ctx, etherpad)
+	}
+	return nil
+}
+
+func newService(e *etherpad) Etherpad {
+	return &service{
+		Client:      e.Client,
+		ctx:         e.ctx,
+		log:         e.log,
+		name:        e.Name,
+		namespace:   e.Namespace,
+		labels:      e.labels,
+		annotations: e.Spec.ServiceAnnotations,
+		serviceType: e.Spec.ServiceType,
+		ports:       e.Spec.Ports,
+	}
 }

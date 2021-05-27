@@ -93,7 +93,7 @@ type JVB struct {
 	replica                      int32
 }
 
-func NewJitsi(ctx context.Context, appName string,
+func New(ctx context.Context, appName string,
 	j *v1alpha1.Jitsi, c client.Client, l logr.Logger) (Jitsi, error) {
 	switch appName {
 	case WebName:

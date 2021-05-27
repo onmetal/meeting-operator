@@ -15,6 +15,22 @@ resources:
   kind: Etherpad
   path: github.com/onmetal/meeting-operator/apis/ehterpad/v1alpha1
   version: v1alpha1
+  webhooks:
+    defaulting: false
+    validation: false
+    webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: meeting.ko
+  kind: Etherpad
+  path: github.com/onmetal/meeting-operator/apis/ehterpad/v1alpha2
+  version: v1alpha2
+  webhooks:
+    defaulting: true
+    validation: true
+    webhookVersion: v1
 - api:
     crdVersion: v1
     namespaced: true

@@ -28,3 +28,5 @@ spec:
           namespace: system
           name: webhook-service
           path: /convert
+      conversionReviewVersions:
+        - v1

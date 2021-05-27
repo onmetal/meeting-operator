@@ -14,19 +14,25 @@
 # limitations under the License.
 # */
 
-apiVersion: meeting.ko/v1alpha1
+apiVersion: meeting.ko/v1alpha2
 kind: Etherpad
 metadata:
   name: etherpad
 spec:
   replicas: 1
   image: etherpad/etherpad:1.8.12
-  image_pull_secrets:
-    - name: docker
-  service:
-    - port_name: http
+  environments: []
+  service_type: "ClusterIP"
+  security_context:
+    runAsNonRoot: false
+    allowPrivilegeEscalation: false
+  ports:
+    - name: http
       protocol: "TCP"
       port: 9001
+  image_pull_secrets:
+    - name: docker
   resources:
-    cpu: 10m
-    memory: 128Mi
+    requests:
+      cpu: "0.1"
+      memory: "128Mi"

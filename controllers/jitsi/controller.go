@@ -66,7 +66,7 @@ func (r *Reconciler) predicateFuncs() predicate.Predicate {
 // +kubebuilder:rbac:groups=meeting.ko,resources=jitsis/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = r.Log.WithValues("jitsi", req.NamespacedName)
+	reqLogger := r.Log.WithValues("jitsi", req.NamespacedName)
 
 	j := &v1alpha1.Jitsi{}
 	if err := r.Get(ctx, req.NamespacedName, j); err != nil {
@@ -79,7 +79,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		}
 	}
 	r.makeJVB(ctx, j)
-	r.Log.Info("reconciliation finished")
+	reqLogger.Info("reconciliation finished")
 	return ctrl.Result{}, nil
 }
 
@@ -87,7 +87,7 @@ func (r *Reconciler) make(ctx context.Context, appName string, j *v1alpha1.Jitsi
 	if !shouldContinue(appName, j) {
 		return nil
 	}
-	jts, err := jitsi.NewJitsi(ctx, appName, j, r.Client, r.Log)
+	jts, err := jitsi.New(ctx, appName, j, r.Client, r.Log)
 	if err != nil {
 		return err
 	}
@@ -150,7 +150,7 @@ func (r *Reconciler) onDelete(e event.DeleteEvent) bool {
 }
 
 func (r *Reconciler) deleteComponents(ctx context.Context, appName string, j *v1alpha1.Jitsi) error {
-	jts, err := jitsi.NewJitsi(ctx, appName, j, r.Client, r.Log)
+	jts, err := jitsi.New(ctx, appName, j, r.Client, r.Log)
 	if err != nil {
 		return err
 	}
