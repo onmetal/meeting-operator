@@ -30,6 +30,7 @@ type JitsiSpec struct {
 }
 
 type Web struct {
+	Annotations map[string]string `json:"annotations,omitempty"`
 	//+kubebuilder:default:=1
 	Replicas int32 `json:"replicas,omitempty"`
 	//+kubebuilder:default="jitsi/web:stable-5390-3"
@@ -37,6 +38,7 @@ type Web struct {
 	//+kubebuilder:default="IfNotPresent"
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
+	SecurityContext    v1.SecurityContext        `json:"security_context,omitempty"`
 	Environments       []v1.EnvVar               `json:"environments,omitempty"`
 	Resources          v1.ResourceRequirements   `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
@@ -46,6 +48,7 @@ type Web struct {
 }
 
 type Prosody struct {
+	Annotations map[string]string `json:"annotations,omitempty"`
 	//+kubebuilder:default:=1
 	Replicas int32 `json:"replicas,omitempty"`
 	//+kubebuilder:default="jitsi/prosody:stable-5390-3"
@@ -53,6 +56,7 @@ type Prosody struct {
 	//+kubebuilder:default="IfNotPresent"
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
+	SecurityContext    v1.SecurityContext        `json:"security_context,omitempty"`
 	Environments       []v1.EnvVar               `json:"environments,omitempty"`
 	Resources          v1.ResourceRequirements   `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
@@ -62,6 +66,7 @@ type Prosody struct {
 }
 
 type Jicofo struct {
+	Annotations map[string]string `json:"annotations,omitempty"`
 	//+kubebuilder:default:=1
 	Replicas int32 `json:"replicas,omitempty"`
 	//+kubebuilder:default="jitsi/jicofo:stable-5390-3"
@@ -69,6 +74,7 @@ type Jicofo struct {
 	//+kubebuilder:default="IfNotPresent"
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
+	SecurityContext    v1.SecurityContext        `json:"security_context,omitempty"`
 	Environments       []v1.EnvVar               `json:"environments,omitempty"`
 	Resources          v1.ResourceRequirements   `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
@@ -78,6 +84,7 @@ type Jicofo struct {
 }
 
 type Jibri struct {
+	Annotations map[string]string `json:"annotations,omitempty"`
 	//+kubebuilder:default:=0
 	Replicas int32 `json:"replicas,omitempty"`
 	//+kubebuilder:default="jitsi/jibri:stable-5390-3"
@@ -85,6 +92,7 @@ type Jibri struct {
 	//+kubebuilder:default="IfNotPresent"
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
+	SecurityContext    v1.SecurityContext        `json:"security_context,omitempty"`
 	Environments       []v1.EnvVar               `json:"environments,omitempty"`
 	Storage            *StorageSpec              `json:"storage,omitempty"`
 	Resources          v1.ResourceRequirements   `json:"resources,omitempty"`
@@ -95,7 +103,8 @@ type Jibri struct {
 }
 
 type JVB struct {
-	Exporter Exporter `json:"exporter,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+	Exporter    Exporter          `json:"exporter,omitempty"`
 	//+kubebuilder:default:=1
 	Replicas int32 `json:"replicas,omitempty"`
 	//+kubebuilder:default="jitsi/jvb:stable-5390-3"
@@ -103,7 +112,9 @@ type JVB struct {
 	//+kubebuilder:default="IfNotPresent"
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
+	SecurityContext    v1.SecurityContext        `json:"security_context,omitempty"`
 	Environments       []v1.EnvVar               `json:"environments,omitempty"`
+	CustomSIP          []string                  `json:"custom_sip,omitempty"`
 	Resources          v1.ResourceRequirements   `json:"resources,omitempty"`
 	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
@@ -121,9 +132,9 @@ type Exporter struct {
 	//+kubebuilder:default="IfNotPresent"
 	ImagePullPolicy  v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
+	SecurityContext  v1.SecurityContext        `json:"security_context,omitempty"`
 	Environments     []v1.EnvVar               `json:"environments,omitempty"`
 	Resources        v1.ResourceRequirements   `json:"resources,omitempty"`
-	SecurityContext  v1.SecurityContext        `json:"security_context,omitempty"`
 }
 
 type StorageSpec struct {

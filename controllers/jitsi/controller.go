@@ -18,13 +18,11 @@ package controller
 
 import (
 	"context"
-
-	"github.com/onmetal/meeting-operator/internal/jitsi"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
-
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
+	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
+	"github.com/onmetal/meeting-operator/internal/jitsi"
+	"github.com/onmetal/meeting-operator/internal/utils"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -44,15 +42,15 @@ type Reconciler struct {
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.Jitsi{}).
-		WithEventFilter(r.predicateFuncs()).
+		//WithEventFilter(r.predicateFuncs()).
 		Complete(r)
 }
 
-func (r *Reconciler) predicateFuncs() predicate.Predicate {
-	return predicate.Funcs{
-		DeleteFunc: r.onDelete,
-	}
-}
+//func (r *Reconciler) predicateFuncs() predicate.Predicate {
+//	return predicate.Funcs{
+//		DeleteFunc: r.onDelete,
+//	}
+//}
 
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;delete
@@ -70,11 +68,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	j := &v1alpha1.Jitsi{}
 	if err := r.Get(ctx, req.NamespacedName, j); err != nil {
-		r.Log.Info("unable to fetch Jitsi", "error", err)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+	if !j.DeletionTimestamp.IsZero() {
+		r.onDelete(ctx, j)
+		return ctrl.Result{}, nil
 	}
 	for _, appName := range jitsiServices {
 		if err := r.make(ctx, appName, j); err != nil {
+			reqLogger.Error(err, "can't install jitsi component", "name", appName)
 			return ctrl.Result{}, err
 		}
 	}
@@ -91,25 +93,25 @@ func (r *Reconciler) make(ctx context.Context, appName string, j *v1alpha1.Jitsi
 	if err != nil {
 		return err
 	}
-	if err := jts.Update(); err != nil {
-		if apierrors.IsNotFound(err) {
+	if jtsUpdErr := jts.Update(); jtsUpdErr != nil {
+		if apierrors.IsNotFound(jtsUpdErr) {
 			if createErr := jts.Create(); createErr != nil {
 				return createErr
 			}
 		} else {
-			r.Log.Info("failed to update jitsi deployment", "error", err)
-			return err
+			r.Log.Info("failed to update jitsi deployment", "error", jtsUpdErr)
+			return jtsUpdErr
 		}
 	}
 	svc := jitsi.NewService(ctx, appName, j, r.Client, r.Log)
-	if err := svc.Update(); err != nil {
-		if apierrors.IsNotFound(err) {
+	if svcUpdErr := svc.Update(); svcUpdErr != nil {
+		if apierrors.IsNotFound(svcUpdErr) {
 			if createErr := svc.Create(); createErr != nil {
 				return createErr
 			}
 		} else {
-			r.Log.Info("failed to update jitsi service", "error", err)
-			return err
+			r.Log.Info("failed to update jitsi service", "error", svcUpdErr)
+			return svcUpdErr
 		}
 	}
 	return nil
@@ -122,7 +124,7 @@ func (r *Reconciler) makeJVB(ctx context.Context, j *v1alpha1.Jitsi) {
 	for replica := int32(1); replica <= j.Spec.JVB.Replicas; replica++ {
 		jts := jitsi.NewJVB(ctx, replica, j, r.Client, r.Log)
 		if createErr := jts.Create(); createErr != nil {
-			if apierrors.IsAlreadyExists(createErr) {
+			if meetingerr.IsAlreadyExists(createErr) {
 				if updErr := jts.Update(); updErr != nil {
 					r.Log.Info("failed to update jvb instance", "error", updErr)
 				}
@@ -134,19 +136,19 @@ func (r *Reconciler) makeJVB(ctx context.Context, j *v1alpha1.Jitsi) {
 	}
 }
 
-func (r *Reconciler) onDelete(e event.DeleteEvent) bool {
-	ctx := context.Background()
-	jitsiObj, ok := e.Object.(*v1alpha1.Jitsi)
-	if !ok {
-		return false
-	}
+func (r *Reconciler) onDelete(ctx context.Context, j *v1alpha1.Jitsi) {
 	for _, appName := range jitsiServices {
-		if err := r.deleteComponents(ctx, appName, jitsiObj); err != nil {
+		if err := r.deleteComponents(ctx, appName, j); err != nil {
 			r.Log.Info("failed to delete component", "error", err)
 		}
 	}
-	r.deleteJVB(ctx, jitsiObj)
-	return false
+	r.deleteJVB(ctx, j)
+	if utils.ContainsString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
+		j.ObjectMeta.Finalizers = utils.RemoveString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer)
+		if err := r.Client.Update(ctx, j); err != nil {
+			r.Log.Info("can't update jitsi cr", "error", err)
+		}
+	}
 }
 
 func (r *Reconciler) deleteComponents(ctx context.Context, appName string, j *v1alpha1.Jitsi) error {
@@ -166,8 +168,8 @@ func (r *Reconciler) deleteComponents(ctx context.Context, appName string, j *v1
 
 func (r *Reconciler) deleteJVB(ctx context.Context, j *v1alpha1.Jitsi) {
 	for replica := int32(1); replica <= j.Spec.JVB.Replicas; replica++ {
-		jts := jitsi.NewJVB(ctx, replica, j, r.Client, r.Log)
-		if err := jts.Delete(); client.IgnoreNotFound(err) != nil {
+		jvb := jitsi.NewJVB(ctx, replica, j, r.Client, r.Log)
+		if err := jvb.Delete(); client.IgnoreNotFound(err) != nil {
 			r.Log.Info("failed to delete jvb instance", "error", err)
 		}
 	}

@@ -21,6 +21,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func (j *Jicofo) Create() error {
@@ -32,9 +33,10 @@ func (j *Jicofo) prepareDeployment() *appsv1.Deployment {
 	spec := j.prepareDeploymentSpec()
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      j.name,
-			Namespace: j.namespace,
-			Labels:    j.labels,
+			Name:        j.name,
+			Namespace:   j.namespace,
+			Labels:      j.labels,
+			Annotations: j.Annotations,
 		},
 		Spec: spec,
 	}
@@ -60,6 +62,21 @@ func (j *Jicofo) prepareDeploymentSpec() appsv1.DeploymentSpec {
 						Env:             j.Environments,
 						Ports:           getContainerPorts(j.Ports),
 						Resources:       j.Resources,
+						SecurityContext: &j.SecurityContext,
+						LivenessProbe: &v1.Probe{
+							Handler: v1.Handler{
+								HTTPGet: &v1.HTTPGetAction{
+									Path:   "/about/health",
+									Port:   intstr.IntOrString{IntVal: 8888},
+									Scheme: v1.URISchemeHTTP,
+								},
+							},
+							InitialDelaySeconds: 30,
+							TimeoutSeconds:      30,
+							PeriodSeconds:       15,
+							SuccessThreshold:    1,
+							FailureThreshold:    3,
+						},
 					},
 				},
 			},

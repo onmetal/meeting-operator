@@ -32,9 +32,10 @@ func (p *Prosody) prepareDeployment() *appsv1.Deployment {
 	spec := p.prepareDeploymentSpec()
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      p.name,
-			Namespace: p.namespace,
-			Labels:    p.labels,
+			Name:        p.name,
+			Namespace:   p.namespace,
+			Labels:      p.labels,
+			Annotations: p.Annotations,
 		},
 		Spec: spec,
 	}
@@ -60,6 +61,7 @@ func (p *Prosody) prepareDeploymentSpec() appsv1.DeploymentSpec {
 						Env:             p.Environments,
 						Ports:           getContainerPorts(p.Ports),
 						Resources:       p.Resources,
+						SecurityContext: &p.SecurityContext,
 					},
 				},
 			},
