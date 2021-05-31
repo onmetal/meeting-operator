@@ -19,6 +19,7 @@ package jitsi
 import (
 	"context"
 	"fmt"
+
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/onmetal/meeting-operator/internal/utils"

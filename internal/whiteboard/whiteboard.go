@@ -2,6 +2,7 @@ package whiteboard
 
 import (
 	"context"
+
 	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
 	v1 "k8s.io/api/core/v1"
 

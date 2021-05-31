@@ -77,15 +77,6 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
-
-	//if err = (&etherpadcontroller.Reconciler{
-	//	Client: mgr.GetClient(),
-	//	Log:    ctrl.Log.WithName("controllers").WithName("Etherpad_v1alpha1"),
-	//	Scheme: mgr.GetScheme(),
-	//}).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "Etherpad", "version", "v1alpha1")
-	//	os.Exit(1)
-	//}
 	if err = (&etherpadcontroller.Reconcile{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Etherpad"),

@@ -40,15 +40,8 @@ type Reconciler struct {
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha2.WhiteBoard{}).
-		//WithEventFilter(r.constructPredicates()).
 		Complete(r)
 }
-
-//func (r *Reconciler) constructPredicates() predicate.Predicate {
-//	return predicate.Funcs{
-//		DeleteFunc: r.onDelete,
-//	}
-//}
 
 //+kubebuilder:rbac:groups=meeting.ko,resources=whiteboards,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=meeting.ko,resources=whiteboards/status,verbs=get;update;patch
@@ -78,24 +71,3 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	reqLogger.Info("reconciliation finished")
 	return ctrl.Result{}, nil
 }
-
-//func (r *Reconciler) onDelete(e event.DeleteEvent) bool {
-//	deletedObj, ok := e.Object.(*v1alpha2.WhiteBoard)
-//	if !ok {
-//		return false
-//	}
-//	ctx := context.Background()
-//	wb, err := whiteboard.New(ctx, deletedObj, r.Client, r.Log)
-//	if err != nil {
-//		r.Log.Info("cannot create new instance of whiteboard", "error", err)
-//		return false
-//	}
-//	if err := wb.Delete(); err != nil {
-//		r.Log.Error(err, "failed to delete whiteboard deployment")
-//	}
-//	svc := whiteboard.newService(ctx, deletedObj, r.Client, r.Log)
-//	if err := svc.Delete(); err != nil {
-//		r.Log.Error(err, "failed to delete whiteboard deployment")
-//	}
-//	return false
-//}

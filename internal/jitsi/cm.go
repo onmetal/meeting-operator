@@ -1,5 +1,9 @@
 package jitsi
 
+type SIP struct {
+	Options []string
+}
+
 const jvbGracefulShutdown = `
 	#!/bin/bash
     #
@@ -82,7 +86,8 @@ const jvbGracefulShutdown = `
       echo "$@" 1>&2
     }
     
-    shutdownStatus=` + "`curl -s -o /dev/null -H \"Content-Type: application/json\" -d '{ \"graceful-shutdown\": \"true\" }' -w \"%{http_code}\" \"$hostUrl/colibri/shutdown\"`\n" +
+    shutdownStatus=` + "`curl -s -o /dev/null -H \"Content-Type: application/json\"" +
+	" -d '{ \"graceful-shutdown\": \"true\" }' -w \"%{http_code}\" \"$hostUrl/colibri/shutdown\"`\n" +
 	`	
 	if [ "$shutdownStatus" == "200" ]
     then
@@ -143,8 +148,12 @@ const jvbGracefulShutdown = `
       exit 1
     fi
 `
-	//
-	//const jvbCustomSIP =
-	//	`
-	//	org.jitsi.videobridge.ENABLE_REST_SHUTDOWN=true
-	//	`
+
+const jvbCustomSIP = `
+	{{"{{ if .Env.DOCKER_HOST_ADDRESS }}"}}
+	org.ice4j.ice.harvest.NAT_HARVESTER_LOCAL_ADDRESS={{"{{ .Env.LOCAL_ADDRESS }}"}}
+	org.ice4j.ice.harvest.NAT_HARVESTER_PUBLIC_ADDRESS={{"{{ .Env.DOCKER_HOST_ADDRESS }}"}}
+	org.jitsi.videobridge.ENABLE_REST_SHUTDOWN=true
+	{{"{{ end }}"}}
+	{{ range $s := .Options }}{{ printf "%s\n" $s }} {{ end }}
+	`

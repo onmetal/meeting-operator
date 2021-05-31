@@ -17,9 +17,10 @@ limitations under the License.
 package jitsi
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"strings"
+	"html/template"
 	"time"
 
 	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
@@ -47,6 +48,8 @@ const (
 	timeOutSecond   = 300 * time.Second
 	tickTimerSecond = 15 * time.Second
 )
+
+const telegrafExporter = "telegraf"
 
 func NewJVB(ctx context.Context, replica int32,
 	j *v1alpha1.Jitsi, c client.Client, l logr.Logger) Jitsi {
@@ -96,12 +99,29 @@ func (j *JVB) createShutdownCM() error {
 }
 
 func (j *JVB) createCustomSIPCM() error {
-	sip := prepareSIPCM(j.CustomSIP, j.namespace)
+	sip := j.prepareSIPCM()
 	err := j.Client.Create(j.ctx, sip)
 	if apierrors.IsAlreadyExists(err) {
 		return nil
 	}
 	return err
+}
+
+func (j *JVB) prepareSIPCM() *v1.ConfigMap {
+	tpl, err := template.New("sip").Parse(jvbCustomSIP)
+	if err != nil {
+		j.log.Info("can't template sip config", "error", err)
+		return nil
+	}
+	var b bytes.Buffer
+	d := SIP{Options: j.CustomSIP}
+	if executeErr := tpl.Execute(&b, d); executeErr != nil {
+		j.log.Info("can't template sip config", "error", err)
+		return nil
+	}
+	return &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "jvb-custom-sip", Namespace: j.namespace,
+		Labels: map[string]string{"app": "jvb"}},
+		Data: map[string]string{"custom-sip-communicator.properties": b.String()}}
 }
 
 func (j *JVB) servicePerInstance() error {
@@ -148,8 +168,9 @@ func (j *JVB) serviceForExporter() *v1.Service {
 				"app":                   "jvb",
 				"kubernetes.io/part-of": "jitsi"}},
 		Spec: v1.ServiceSpec{
-			Type:     v1.ServiceTypeClusterIP,
-			Ports:    []v1.ServicePort{{Name: "exporter", Protocol: v1.ProtocolTCP, Port: j.Exporter.Port, TargetPort: intstr.IntOrString{IntVal: j.Exporter.Port}}},
+			Type: v1.ServiceTypeClusterIP,
+			Ports: []v1.ServicePort{{Name: "exporter", Protocol: v1.ProtocolTCP,
+				Port: j.Exporter.Port, TargetPort: intstr.IntOrString{IntVal: j.Exporter.Port}}},
 			Selector: map[string]string{"jitsi-jvb": j.name},
 		},
 	}
@@ -161,30 +182,30 @@ func (j *JVB) createInstance() error {
 }
 
 func (j *JVB) prepareInstance() *appsv1.Deployment {
-	labels := map[string]string{"jitsi-jvb": j.name}
-	spec := j.prepareDeploymentSpec(labels)
+	l := map[string]string{"jitsi-jvb": j.name}
+	spec := j.prepareDeploymentSpec(l)
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        j.name,
 			Namespace:   j.namespace,
-			Labels:      labels,
+			Labels:      l,
 			Annotations: j.Annotations,
 		},
 		Spec: spec,
 	}
 }
 
-func (j *JVB) prepareDeploymentSpec(labels map[string]string) appsv1.DeploymentSpec {
+func (j *JVB) prepareDeploymentSpec(l map[string]string) appsv1.DeploymentSpec {
 	jvb := j.prepareJVBContainer()
 	exporter := j.prepareExporterContainer()
 	volumes := j.prepareVolumesForJVB()
 	return appsv1.DeploymentSpec{
 		Selector: &metav1.LabelSelector{
-			MatchLabels: labels,
+			MatchLabels: l,
 		},
 		Template: v1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
-				Labels: labels,
+				Labels: l,
 			},
 			Spec: v1.PodSpec{
 				ImagePullSecrets: j.ImagePullSecrets,
@@ -252,13 +273,12 @@ func (j *JVB) prepareVolumesForJVB() []v1.Volume {
 	shutdown := v1.Volume{Name: "shutdown", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
 		DefaultMode: &permissions, LocalObjectReference: v1.LocalObjectReference{Name: "jvb-graceful-shutdown"}}}}
 	sipConfig := v1.Volume{Name: "custom-sip", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
-		Items: []v1.KeyToPath{{Key: "custom-sip-communicator.properties", Path: "sip-communicator.properties"}},
+		Items:                []v1.KeyToPath{{Key: "custom-sip-communicator.properties", Path: "sip-communicator.properties"}},
 		LocalObjectReference: v1.LocalObjectReference{Name: "jvb-custom-sip"}}}}
-	if j.Exporter.Type == "telegraf" {
+	if j.Exporter.Type == telegrafExporter {
 		telegrafCM := v1.Volume{Name: "telegraf", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
 			LocalObjectReference: v1.LocalObjectReference{Name: j.Exporter.ConfigMapName}}}}
 		return append(volume, shutdown, sipConfig, telegrafCM)
-
 	}
 	return append(volume, shutdown, sipConfig)
 }
@@ -412,7 +432,7 @@ func (j *JVB) Update() error {
 }
 
 func (j *JVB) updateCustomSIPCM() error {
-	sip := prepareSIPCM(j.CustomSIP, j.namespace)
+	sip := j.prepareSIPCM()
 	return j.Client.Update(j.ctx, sip)
 }
 
@@ -504,28 +524,6 @@ func (j *JVB) deleteCMs() error {
 		}
 	}
 	return nil
-}
-
-func prepareSIPCM(sipConfig []string, namespace string) *v1.ConfigMap {
-	var sb strings.Builder
-	sb.WriteString("{{ if .Env.DOCKER_HOST_ADDRESS }}")
-	sb.WriteString("\n")
-	sb.WriteString("org.ice4j.ice.harvest.NAT_HARVESTER_LOCAL_ADDRESS={{ .Env.LOCAL_ADDRESS }}")
-	sb.WriteString("\n")
-	sb.WriteString("org.ice4j.ice.harvest.NAT_HARVESTER_PUBLIC_ADDRESS={{ .Env.DOCKER_HOST_ADDRESS }}")
-	sb.WriteString("\n")
-	sb.WriteString("{{ end }}")
-	sb.WriteString("\n")
-	sb.WriteString("org.jitsi.videobridge.ENABLE_REST_SHUTDOWN=true")
-	if len(sipConfig) > 0 {
-		for i := range sipConfig {
-			sb.WriteString("\n")
-			sb.WriteString(sipConfig[i])
-		}
-	}
-	return &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "jvb-custom-sip", Namespace: namespace,
-		Labels: map[string]string{"app": "jvb"}},
-		Data: map[string]string{"custom-sip-communicator.properties": sb.String()}}
 }
 
 func isHostAddressExist(envs []v1.EnvVar) bool {

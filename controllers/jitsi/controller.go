@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
 	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
 	"github.com/onmetal/meeting-operator/internal/jitsi"
@@ -42,15 +43,8 @@ type Reconciler struct {
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.Jitsi{}).
-		//WithEventFilter(r.predicateFuncs()).
 		Complete(r)
 }
-
-//func (r *Reconciler) predicateFuncs() predicate.Predicate {
-//	return predicate.Funcs{
-//		DeleteFunc: r.onDelete,
-//	}
-//}
 
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;delete
