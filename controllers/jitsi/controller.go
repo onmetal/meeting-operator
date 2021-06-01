@@ -116,7 +116,6 @@ func (r *Reconciler) makeJVB(ctx context.Context, j *v1alpha1.Jitsi) {
 			jts := jitsi.NewJVB(ctx, replica, j, r.Client, r.Log)
 			if delErr := jts.Delete(); delErr != nil {
 				r.Log.Info("can't scale down jvb replicas", "error", delErr)
-				continue
 			}
 			replica--
 		}
