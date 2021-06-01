@@ -54,6 +54,7 @@ const telegrafExporter = "telegraf"
 func NewJVB(ctx context.Context, replica int32,
 	j *v1alpha1.Jitsi, c client.Client, l logr.Logger) Jitsi {
 	name := fmt.Sprintf("%s-%d", JvbName, replica)
+	deleted := !j.DeletionTimestamp.IsZero()
 	return &JVB{
 		Client:      c,
 		JVB:         j.Spec.JVB,
@@ -64,6 +65,7 @@ func NewJVB(ctx context.Context, replica int32,
 		serviceName: name,
 		namespace:   j.Namespace,
 		replica:     replica,
+		deleted:     deleted,
 	}
 }
 
@@ -443,8 +445,10 @@ func (j *JVB) Delete() error {
 	if err := j.deleteService(); client.IgnoreNotFound(err) != nil {
 		j.log.Info("failed to delete service", "error", err, "namespace", j.namespace)
 	}
-	if err := j.deleteCMs(); client.IgnoreNotFound(err) != nil {
-		j.log.Info("failed to delete service", "error", err, "namespace", j.namespace)
+	if j.deleted {
+		if err := j.deleteCMs(); client.IgnoreNotFound(err) != nil {
+			j.log.Info("failed to delete service", "error", err, "namespace", j.namespace)
+		}
 	}
 	return nil
 }

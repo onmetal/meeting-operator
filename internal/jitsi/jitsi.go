@@ -91,6 +91,7 @@ type JVB struct {
 	envs                         []v1.EnvVar
 	name, serviceName, namespace string
 	replica                      int32
+	deleted                      bool
 }
 
 func New(ctx context.Context, appName string,

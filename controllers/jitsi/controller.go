@@ -54,7 +54,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 // +kubebuilder:rbac:groups=meeting.ko,resources=jitsis,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=configmaps,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=meeting.ko,resources=jitssi/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=meeting.ko,resources=jitsis/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=meeting.ko,resources=jitsis/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -80,9 +80,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 }
 
 func (r *Reconciler) make(ctx context.Context, appName string, j *v1alpha1.Jitsi) error {
-	if !shouldContinue(appName, j) {
-		return nil
-	}
 	jts, err := jitsi.New(ctx, appName, j, r.Client, r.Log)
 	if err != nil {
 		return err
@@ -112,8 +109,17 @@ func (r *Reconciler) make(ctx context.Context, appName string, j *v1alpha1.Jitsi
 }
 
 func (r *Reconciler) makeJVB(ctx context.Context, j *v1alpha1.Jitsi) {
-	if !shouldContinue(jitsi.JvbName, j) {
-		return
+	if j.Status.JVBReplicas > j.Spec.JVB.Replicas {
+		replica := j.Status.JVBReplicas
+		delta := j.Status.JVBReplicas - j.Spec.JVB.Replicas
+		for replica >= delta && replica != 1 {
+			jts := jitsi.NewJVB(ctx, replica, j, r.Client, r.Log)
+			if delErr := jts.Delete(); delErr != nil {
+				r.Log.Info("can't scale down jvb replicas", "error", delErr)
+				continue
+			}
+			replica--
+		}
 	}
 	for replica := int32(1); replica <= j.Spec.JVB.Replicas; replica++ {
 		jts := jitsi.NewJVB(ctx, replica, j, r.Client, r.Log)
@@ -127,6 +133,10 @@ func (r *Reconciler) makeJVB(ctx context.Context, j *v1alpha1.Jitsi) {
 			r.Log.Info("failed to create jvb", "error", createErr)
 			continue
 		}
+	}
+	j.Status.JVBReplicas = j.Spec.JVB.Replicas
+	if err := r.Client.Status().Update(ctx, j); err != nil {
+		r.Log.Info("can't update jitsi cr status", "error", err)
 	}
 }
 
@@ -166,22 +176,5 @@ func (r *Reconciler) deleteJVB(ctx context.Context, j *v1alpha1.Jitsi) {
 		if err := jvb.Delete(); client.IgnoreNotFound(err) != nil {
 			r.Log.Info("failed to delete jvb instance", "error", err)
 		}
-	}
-}
-
-func shouldContinue(appName string, j *v1alpha1.Jitsi) bool {
-	switch appName {
-	case jitsi.WebName:
-		return j.Spec.Web.Replicas > 0
-	case jitsi.ProsodyName:
-		return j.Spec.Prosody.Replicas > 0
-	case jitsi.JicofoName:
-		return j.Spec.Jicofo.Replicas > 0
-	case jitsi.JibriName:
-		return j.Spec.Jibri.Replicas > 0
-	case jitsi.JvbName:
-		return j.Spec.JVB.Replicas > 0
-	default:
-		return false
 	}
 }

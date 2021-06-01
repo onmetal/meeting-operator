@@ -150,7 +150,9 @@ type Port struct {
 }
 
 // JitsiStatus defines the observed state of Jitsi
-type JitsiStatus struct{}
+type JitsiStatus struct {
+	JVBReplicas int32 `json:"jvb_replicas,omitempty"`
+}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status

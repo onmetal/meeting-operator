@@ -1590,6 +1590,10 @@ spec:
             type: object
           status:
             description: JitsiStatus defines the observed state of Jitsi
+            properties:
+              jvb_replicas:
+                format: int32
+                type: integer
             type: object
         type: object
     served: true
