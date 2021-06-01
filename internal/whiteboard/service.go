@@ -17,46 +17,14 @@ limitations under the License.
 package whiteboard
 
 import (
-	"context"
-
-	"github.com/onmetal/meeting-operator/internal/utils"
-
-	"github.com/go-logr/logr"
-	"github.com/onmetal/meeting-operator/apis/whiteboard/v1alpha1"
+	"github.com/onmetal/meeting-operator/apis/whiteboard/v1alpha2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type Service struct {
-	client.Client
-
-	ctx             context.Context
-	log             logr.Logger
-	name, namespace string
-	serviceType     v1.ServiceType
-	services        []v1alpha1.Service
-	annotations     map[string]string
-	labels          map[string]string
-}
-
-func NewService(ctx context.Context, w *v1alpha1.WhiteBoard, c client.Client, l logr.Logger) WhiteBoard {
-	labels := utils.GetDefaultLabels(w.Name)
-	return &Service{
-		Client:      c,
-		services:    w.Spec.Services,
-		serviceType: w.Spec.ServiceType,
-		name:        w.Name,
-		namespace:   w.Namespace,
-		ctx:         ctx,
-		log:         l,
-		annotations: w.Spec.ServiceAnnotations,
-		labels:      labels,
-	}
-}
 func (s *Service) Create() error {
 	preparedService := s.prepareService()
 	return s.Client.Create(s.ctx, preparedService)
@@ -65,7 +33,7 @@ func (s *Service) Create() error {
 func (s *Service) prepareService() *v1.Service {
 	return &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        s.name,
+			Name:        "whiteboard",
 			Namespace:   s.namespace,
 			Annotations: s.annotations,
 		},
@@ -76,7 +44,7 @@ func (s *Service) prepareService() *v1.Service {
 func (s *Service) prepareServiceSpec() v1.ServiceSpec {
 	return v1.ServiceSpec{
 		Type:     s.serviceType,
-		Ports:    getPorts(s.services),
+		Ports:    getPorts(s.ports),
 		Selector: s.labels,
 	}
 }
@@ -89,8 +57,8 @@ func (s *Service) Update() error {
 	switch {
 	case service.Spec.Type != s.serviceType:
 		// You can't change spec.type on existing service
-		if err := s.Client.Delete(s.ctx, service); err != nil {
-			s.log.Error(err, "failed to delete ServiceTemplate")
+		if delErr := s.Client.Delete(s.ctx, service); delErr != nil {
+			s.log.Error(delErr, "failed to delete ServiceTemplate")
 		}
 		preparedService := s.prepareService()
 		return s.Client.Create(s.ctx, preparedService)
@@ -106,7 +74,7 @@ func (s *Service) Update() error {
 func (s *Service) Get() (*v1.Service, error) {
 	service := &v1.Service{}
 	err := s.Client.Get(s.ctx, types.NamespacedName{
-		Name:      s.name,
+		Name:      "whiteboard",
 		Namespace: s.namespace,
 	}, service)
 	return service, err
@@ -125,14 +93,14 @@ func (s *Service) Delete() error {
 	return s.Client.Delete(s.ctx, service)
 }
 
-func getPorts(services []v1alpha1.Service) []v1.ServicePort {
+func getPorts(ports []v1alpha2.Port) []v1.ServicePort {
 	p := make([]v1.ServicePort, 0, 1)
-	for svc := range services {
+	for svc := range ports {
 		p = append(p, v1.ServicePort{
-			Name:       services[svc].PortName,
-			TargetPort: intstr.IntOrString{IntVal: services[svc].Port},
-			Port:       services[svc].Port,
-			Protocol:   services[svc].Protocol,
+			Name:       ports[svc].Name,
+			TargetPort: intstr.IntOrString{IntVal: ports[svc].Port},
+			Port:       ports[svc].Port,
+			Protocol:   ports[svc].Protocol,
 		})
 	}
 	return p

@@ -30,7 +30,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	meetingkov1alpha1 "github.com/onmetal/meeting-operator/apis/whiteboard/v1alpha1"
+	meetingkov1alpha1 "github.com/onmetal/meeting-operator/apis/whiteboard/v1alpha2"
 	//+kubebuilder:scaffold:imports
 )
 

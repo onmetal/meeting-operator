@@ -36,9 +36,10 @@ func (j *Jibri) prepareSTS() *appsv1.StatefulSet {
 	spec := j.prepareSTSSpec()
 	return &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      j.name,
-			Namespace: j.namespace,
-			Labels:    j.labels,
+			Name:        j.name,
+			Namespace:   j.namespace,
+			Labels:      j.labels,
+			Annotations: j.Annotations,
 		},
 		Spec: spec,
 	}
@@ -64,6 +65,7 @@ func (j *Jibri) prepareSTSSpec() appsv1.StatefulSetSpec {
 						Env:             j.Environments,
 						Ports:           getContainerPorts(j.Ports),
 						Resources:       j.Resources,
+						SecurityContext: &j.SecurityContext,
 					},
 				},
 			},

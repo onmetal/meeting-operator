@@ -127,7 +127,7 @@ rules:
 - apiGroups:
   - meeting.ko
   resources:
-  - jitssi/status
+  - jitsis/status
   verbs:
   - get
   - patch

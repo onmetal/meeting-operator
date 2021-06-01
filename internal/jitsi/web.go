@@ -32,9 +32,10 @@ func (w *Web) prepareDeployment() *appsv1.Deployment {
 	spec := w.prepareDeploymentSpec()
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      w.name,
-			Namespace: w.namespace,
-			Labels:    w.labels,
+			Name:        w.name,
+			Namespace:   w.namespace,
+			Labels:      w.labels,
+			Annotations: w.Annotations,
 		},
 		Spec: spec,
 	}
@@ -60,6 +61,7 @@ func (w *Web) prepareDeploymentSpec() appsv1.DeploymentSpec {
 						Env:             w.Environments,
 						Ports:           getContainerPorts(w.Ports),
 						Resources:       w.Resources,
+						SecurityContext: &w.SecurityContext,
 					},
 				},
 			},

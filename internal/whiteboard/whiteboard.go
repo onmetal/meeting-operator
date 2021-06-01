@@ -1,137 +1,84 @@
-/*
-Copyright 2021.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package whiteboard
 
 import (
 	"context"
 
-	"github.com/go-logr/logr"
-	"github.com/onmetal/meeting-operator/apis/whiteboard/v1alpha1"
-	"github.com/onmetal/meeting-operator/internal/utils"
-	appsv1 "k8s.io/api/apps/v1"
+	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/go-logr/logr"
+	"github.com/onmetal/meeting-operator/apis/whiteboard/v1alpha2"
+	"github.com/onmetal/meeting-operator/internal/utils"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type WhiteBoard interface {
-	Create() error
-	Update() error
-	Delete() error
+type whiteboard struct {
+	client.Client
+	*v1alpha2.WhiteBoard
+
+	ctx    context.Context
+	log    logr.Logger
+	labels map[string]string
 }
 
-type Board struct {
+type Service struct {
 	client.Client
-	*v1alpha1.WhiteBoardSpec
 
 	ctx             context.Context
 	log             logr.Logger
 	name, namespace string
 	labels          map[string]string
+	annotations     map[string]string
+	serviceType     v1.ServiceType
+	ports           []v1alpha2.Port
 }
 
-func NewWhiteboard(ctx context.Context, w *v1alpha1.WhiteBoard,
-	c client.Client, l logr.Logger) (WhiteBoard, error) {
+func New(ctx context.Context, c client.Client,
+	l logr.Logger, req ctrl.Request) (WhiteBoard, error) {
+	w := &v1alpha2.WhiteBoard{}
+	if err := c.Get(ctx, req.NamespacedName, w); err != nil {
+		return nil, err
+	}
+	if !w.DeletionTimestamp.IsZero() {
+		return &whiteboard{
+			Client:     c,
+			WhiteBoard: w,
+			ctx:        ctx,
+			log:        l,
+		}, meetingerr.UnderDeletion()
+	}
+	if err := addFinalizer(ctx, c, w); err != nil {
+		l.Info("can't add finalizer to etherpad", "error", err)
+	}
 	labels := utils.GetDefaultLabels(w.Name)
-	return &Board{
-		Client:         c,
-		WhiteBoardSpec: &w.Spec,
-		ctx:            ctx,
-		log:            l,
-		name:           w.Name,
-		namespace:      w.Namespace,
-		labels:         labels,
+	return &whiteboard{
+		Client:     c,
+		WhiteBoard: w,
+		ctx:        ctx,
+		log:        l,
+		labels:     labels,
 	}, nil
 }
 
-func (w *Board) Create() error {
-	preparedDeployment := w.prepareDeployment()
-	return w.Client.Create(w.ctx, preparedDeployment)
-}
-
-func (w *Board) prepareDeployment() *appsv1.Deployment {
-	spec := w.prepareDeploymentSpec()
-	return &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      w.name,
-			Namespace: w.namespace,
-			Labels:    w.labels,
-		},
-		Spec: spec,
+func addFinalizer(ctx context.Context, c client.Client, etherpad *v1alpha2.WhiteBoard) error {
+	if !utils.ContainsString(etherpad.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
+		etherpad.ObjectMeta.Finalizers = append(etherpad.ObjectMeta.Finalizers, utils.MeetingFinalizer)
+		return c.Update(ctx, etherpad)
 	}
+	return nil
 }
 
-func (w *Board) prepareDeploymentSpec() appsv1.DeploymentSpec {
-	return appsv1.DeploymentSpec{
-		Selector: &metav1.LabelSelector{
-			MatchLabels: w.labels,
-		},
-		Replicas: &w.Replicas,
-		Template: v1.PodTemplateSpec{
-			ObjectMeta: metav1.ObjectMeta{
-				Labels: w.labels,
-			},
-			Spec: v1.PodSpec{
-				ImagePullSecrets: w.WhiteBoardSpec.ImagePullSecrets,
-				Containers: []v1.Container{
-					{
-						Name:            w.name,
-						Image:           w.Image,
-						ImagePullPolicy: w.ImagePullPolicy,
-						Env:             w.Environments,
-						Ports:           w.getContainerPorts(),
-					},
-				},
-			},
-		},
+func newService(w *whiteboard) WhiteBoard {
+	return &Service{
+		Client:      w.Client,
+		ports:       w.Spec.Ports,
+		serviceType: w.Spec.ServiceType,
+		name:        w.Name,
+		namespace:   w.Namespace,
+		ctx:         w.ctx,
+		log:         w.log,
+		annotations: w.Spec.ServiceAnnotations,
+		labels:      w.labels,
 	}
-}
-
-func (w *Board) getContainerPorts() []v1.ContainerPort {
-	var ports []v1.ContainerPort
-	for svc := range w.Services {
-		ports = append(ports, v1.ContainerPort{
-			Name:          w.Services[svc].PortName,
-			ContainerPort: w.Services[svc].Port,
-			Protocol:      w.Services[svc].Protocol,
-		})
-	}
-	return ports
-}
-
-func (w *Board) Update() error {
-	updatedDeployment := w.prepareDeployment()
-	return w.Client.Update(w.ctx, updatedDeployment)
-}
-
-func (w *Board) Delete() error {
-	deployment, err := w.Get()
-	if err != nil {
-		return err
-	}
-	return w.Client.Delete(w.ctx, deployment)
-}
-
-func (w *Board) Get() (*appsv1.Deployment, error) {
-	deployment := &appsv1.Deployment{}
-	err := w.Client.Get(w.ctx, types.NamespacedName{
-		Namespace: w.namespace,
-		Name:      w.name,
-	}, deployment)
-	return deployment, err
 }

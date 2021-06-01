@@ -14,7 +14,7 @@
 # limitations under the License.
 # */
 
-apiVersion: meeting.ko/v1alpha1
+apiVersion: meeting.ko/v1alpha2
 kind: WhiteBoard
 metadata:
   name: whiteboard-sample
@@ -22,7 +22,20 @@ spec:
   replicas: 1
   image: excalidraw/excalidraw:sha-5c73c58
   environments: []
-  services:
-    - port_name: "http"
+  service_type: "ClusterIP"
+  service_annotations:
+    test: "test"
+  security_context:
+    runAsNonRoot: false
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+  ports:
+    - name: http
       protocol: "TCP"
       port: 80
+  image_pull_secrets:
+    - name: docker
+  resources:
+    requests:
+      cpu: "0.1"
+      memory: "128Mi"

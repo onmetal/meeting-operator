@@ -18,6 +18,7 @@ package utils
 
 const (
 	AppKubernetesPartOf = "jitsi-meet"
+	MeetingFinalizer    = "onmetal.de/meeting-operator"
 )
 
 func ContainsString(slice []string, s string) bool {

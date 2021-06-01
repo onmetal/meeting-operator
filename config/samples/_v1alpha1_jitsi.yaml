@@ -83,6 +83,8 @@ spec:
         value: jvbbrewery
       - name: PUBLIC_URL
         value: https://<<your public url here>>
+      - name: JICOFO_ENABLE_HEALTH_CHECKS
+        value: "true"
       - name: JICOFO_COMPONENT_SECRET
         valueFrom:
           secretKeyRef:
@@ -211,7 +213,7 @@ spec:
       port: 9888
       image: "systemli/prometheus-jitsi-meet-exporter:latest"
       security_context:
-        runAsNonRoot: true
+        runAsNonRoot: false
       resources:
         requests:
           cpu: "0.1"
@@ -220,6 +222,8 @@ spec:
     service_type: "LoadBalancer"
     port:
       protocol: "UDP"
+    custom_sip:
+      - org.jitsi.videobridge.ENABLE_STATISTICS=true
     environments:
       - name: XMPP_SERVER
         value: prosody
@@ -243,8 +247,6 @@ spec:
         value: jvbbrewery
       - name: TZ
         value: UTC
-      - name: JICOFO_ENABLE_HEALTH_CHECKS
-        value: "false"
       - name: PUBLIC_URL
         value: https://<<your public url here>>
       - name: DISABLE_AWS_HARVESTER
@@ -260,8 +262,8 @@ spec:
             name: jitsi-config
             key: JICOFO_AUTH_PASSWORD
 # by default operator get ip from "type: LoadBalancer" service
-#      - name: DOCKER_HOST_ADDRESS
-#        value: <your public ip here>
+      - name: DOCKER_HOST_ADDRESS
+        value: <your public ip here>
 #        valueFrom:
 #          fieldRef:
 #            fieldPath: status.hostIP

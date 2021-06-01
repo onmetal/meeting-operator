@@ -20,9 +20,10 @@ import (
 	"flag"
 	"os"
 
-	etherpadv1alpha "github.com/onmetal/meeting-operator/apis/etherpad/v1alpha1"
+	ethv1alpha2 "github.com/onmetal/meeting-operator/apis/etherpad/v1alpha2"
+
 	jitsiv1alpha "github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
-	boardv1alpha1 "github.com/onmetal/meeting-operator/apis/whiteboard/v1alpha1"
+	boardv1alpha1 "github.com/onmetal/meeting-operator/apis/whiteboard/v1alpha2"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
@@ -47,11 +48,7 @@ var (
 )
 
 func main() {
-	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(jitsiv1alpha.AddToScheme(scheme))
-	utilruntime.Must(etherpadv1alpha.AddToScheme(scheme))
-	utilruntime.Must(boardv1alpha1.AddToScheme(scheme))
-	//+kubebuilder:scaffold:scheme
+	addToScheme()
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
@@ -80,13 +77,12 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
-
-	if err = (&etherpadcontroller.Reconciler{
+	if err = (&etherpadcontroller.Reconcile{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Etherpad"),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Etherpad")
+		setupLog.Error(err, "unable to create controller", "controller", "Etherpad", "version", "v1alpha2")
 		os.Exit(1)
 	}
 	if err = (&jitsicontroller.Reconciler{
@@ -106,19 +102,26 @@ func main() {
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
-
-	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
 		os.Exit(1)
 	}
-	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+	if err = mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err = mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func addToScheme() {
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(jitsiv1alpha.AddToScheme(scheme))
+	utilruntime.Must(ethv1alpha2.AddToScheme(scheme))
+	utilruntime.Must(boardv1alpha1.AddToScheme(scheme))
+	//+kubebuilder:scaffold:scheme
 }

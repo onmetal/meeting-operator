@@ -18,7 +18,6 @@ package jitsi
 
 import (
 	"context"
-	"time"
 
 	"github.com/onmetal/meeting-operator/internal/utils"
 
@@ -140,21 +139,6 @@ func (s *Service) Update() error {
 	service.Spec.Ports = updatedServiceSpec.Ports
 	service.Spec.Selector = updatedServiceSpec.Selector
 	return s.Client.Update(s.ctx, service)
-}
-
-func (s *Service) isDeleted() bool {
-	timeout := time.After(timeOutSecond)
-	tick := time.NewTicker(tickTimerSecond)
-	for {
-		select {
-		case <-timeout:
-			return false
-		case <-tick.C:
-			if _, getErr := s.Get(); apierrors.IsNotFound(getErr) {
-				return true
-			}
-		}
-	}
 }
 
 func (s *Service) Get() (*v1.Service, error) {

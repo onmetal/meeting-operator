@@ -91,10 +91,14 @@ type JVB struct {
 	envs                         []v1.EnvVar
 	name, serviceName, namespace string
 	replica                      int32
+	deleted                      bool
 }
 
-func NewJitsi(ctx context.Context, appName string,
+func New(ctx context.Context, appName string,
 	j *v1alpha1.Jitsi, c client.Client, l logr.Logger) (Jitsi, error) {
+	if err := addFinalizer(ctx, c, j); err != nil {
+		l.Info("can't add finalizer to etherpad", "error", err)
+	}
 	switch appName {
 	case WebName:
 		labels := utils.GetDefaultLabels(WebName)
@@ -143,6 +147,14 @@ func NewJitsi(ctx context.Context, appName string,
 	default:
 		return nil, fmt.Errorf(fmt.Sprintf("component: %s not exist", appName))
 	}
+}
+
+func addFinalizer(ctx context.Context, c client.Client, j *v1alpha1.Jitsi) error {
+	if !utils.ContainsString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
+		j.ObjectMeta.Finalizers = append(j.ObjectMeta.Finalizers, utils.MeetingFinalizer)
+		return c.Update(ctx, j)
+	}
+	return nil
 }
 
 func getContainerPorts(ports []v1alpha1.Port) []v1.ContainerPort {
