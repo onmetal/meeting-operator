@@ -20,7 +20,10 @@ import (
 	"flag"
 	"os"
 
+	jascontroller "github.com/onmetal/meeting-operator/controllers/jitsiautoscaler"
+
 	ethv1alpha2 "github.com/onmetal/meeting-operator/apis/etherpad/v1alpha2"
+	jasv1alpha1 "github.com/onmetal/meeting-operator/apis/jitsiautoscaler/v1alpha1"
 
 	jitsiv1alpha "github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
 	boardv1alpha1 "github.com/onmetal/meeting-operator/apis/whiteboard/v1alpha2"
@@ -101,6 +104,14 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "WhiteBoard")
 		os.Exit(1)
 	}
+	if err = (&jascontroller.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("AutoScaler"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AutoScaler")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
@@ -123,5 +134,6 @@ func addToScheme() {
 	utilruntime.Must(jitsiv1alpha.AddToScheme(scheme))
 	utilruntime.Must(ethv1alpha2.AddToScheme(scheme))
 	utilruntime.Must(boardv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(jasv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }

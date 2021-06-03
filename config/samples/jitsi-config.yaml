@@ -15,6 +15,7 @@
 # */
 
 apiVersion: v1
+
 data:
   JICOFO_AUTH_PASSWORD: dG90bw==
   JICOFO_COMPONENT_SECRET: dG90bw==

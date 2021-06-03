@@ -87,6 +87,8 @@ kind_start:
 kind_delete:
 	kind delete cluster
 
+lint:
+	golangci-lint run ./... --timeout 5m
 ##@ Build
 
 build: generate fmt vet ## Build manager binary.

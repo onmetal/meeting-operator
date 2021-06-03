@@ -207,7 +207,7 @@ spec:
             fieldPath: metadata.name
 
   jvb:
-    replicas: 1
+    replicas: 2
     image: jitsi/jvb:stable-5390-3
     exporter:
       port: 9888

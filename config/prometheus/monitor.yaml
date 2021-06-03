@@ -22,11 +22,11 @@ metadata:
   labels:
     control-plane: controller-manager
   name: controller-manager-metrics-monitor
-  namespace: system
 spec:
   endpoints:
     - path: /metrics
-      port: https
+      port: "exporter"
+      scheme: http
   selector:
     matchLabels:
-      control-plane: controller-manager
+      app: jvb

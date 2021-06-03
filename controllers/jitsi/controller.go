@@ -135,7 +135,7 @@ func (r *Reconciler) makeJVB(ctx context.Context, j *v1alpha1.Jitsi) {
 	}
 	j.Status.JVBReplicas = j.Spec.JVB.Replicas
 	if err := r.Client.Status().Update(ctx, j); err != nil {
-		r.Log.Info("can't update jitsi cr status", "error", err)
+		r.Log.Info("can't update jitsi custom resource status", "error", err)
 	}
 }
 
