@@ -43,6 +43,8 @@ spec:
                 type: object
               host:
                 type: string
+              interval:
+                type: string
               labels:
                 additionalProperties:
                   type: string
@@ -77,15 +79,9 @@ spec:
               scaleTargetRef:
                 description: CrossVersionObjectReference contains enough information to let you identify the referred resource.
                 properties:
-                  apiVersion:
-                    type: string
-                  kind:
-                    type: string
                   name:
                     type: string
                 required:
-                - apiVersion
-                - kind
                 - name
                 type: object
               type:

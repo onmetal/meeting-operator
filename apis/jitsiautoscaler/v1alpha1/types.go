@@ -29,22 +29,20 @@ const (
 
 // AutoScalerSpec defines the desired state of AutoScaler
 type AutoScalerSpec struct {
-	Labels map[string]string `json:"labels,omitempty"`
-	Type   string            `json:"type,omitempty"`
-	Host   string            `json:"host"`
-	Auth   Auth              `json:"auth,omitempty"`
-
-	ScaleTargetRef CrossVersionObjectReference `json:"scaleTargetRef,omitempty"`
-	MinReplicas    *int32                      `json:"minReplicas,omitempty"`
-	MaxReplicas    *int32                      `json:"maxReplicas,omitempty"`
-	Metrics        []Metric                    `json:"metrics,omitempty"`
+	Labels         map[string]string `json:"labels,omitempty"`
+	Type           string            `json:"type,omitempty"`
+	Host           string            `json:"host"`
+	Interval       string            `json:"interval,omitempty"`
+	Auth           Auth              `json:"auth,omitempty"`
+	ScaleTargetRef ScaleTargetRef    `json:"scaleTargetRef,omitempty"`
+	MinReplicas    *int32            `json:"minReplicas,omitempty"`
+	MaxReplicas    *int32            `json:"maxReplicas,omitempty"`
+	Metrics        []Metric          `json:"metrics,omitempty"`
 }
 
-// CrossVersionObjectReference contains enough information to let you identify the referred resource.
-type CrossVersionObjectReference struct {
-	APIVersion string `json:"apiVersion"`
-	Kind       string `json:"kind"`
-	Name       string `json:"name"`
+// ScaleTargetRef contains enough information to let you identify the referred resource.
+type ScaleTargetRef struct {
+	Name string `json:"name"`
 }
 
 type Metric struct {

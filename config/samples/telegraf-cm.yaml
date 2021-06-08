@@ -9,6 +9,7 @@ data:
       urls = ["http://localhost:8080/colibri/stats"]
       data_format = "json"
     [[outputs.influxdb_v2]]
-      urls = ["http://localhost:8086"]
-      token = "secret_token"
-      bucket = "1"
+      urls = ["http://influx-influxdb2:80"]
+      token = "your token"
+      bucket = "jitsi"
+      organization = "influxdata"

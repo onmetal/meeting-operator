@@ -395,7 +395,7 @@ func (j *JVB) prepareExporterContainer() v1.Container {
 			Image:           j.Exporter.Image,
 			Env:             j.Exporter.Environments,
 			Resources:       j.Exporter.Resources,
-			VolumeMounts:    []v1.VolumeMount{{Name: "configuration", MountPath: "/etc/telegraf/"}},
+			VolumeMounts:    []v1.VolumeMount{{Name: "telegraf", MountPath: "/etc/telegraf/"}},
 			ImagePullPolicy: j.Exporter.ImagePullPolicy,
 			SecurityContext: &j.Exporter.SecurityContext,
 		}

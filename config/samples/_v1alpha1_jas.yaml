@@ -5,9 +5,8 @@ metadata:
 spec:
   type: "prometheus"
   host: "http://172.28.174.90:9090/"
+  interval: "60s"
   scaleTargetRef:
-    apiVersion: v1alpha1
-    kind: Jitsi
     name: jitsi-sample
   minReplicas: 1
   maxReplicas: 3
@@ -17,48 +16,25 @@ spec:
         name: jitsi_conference
         targetAverageUtilization: 40
 ---
-#apiVersion: meeting.ko/v1alpha1
-#kind: AutoScaler
-#metadata:
-#  name: jas-influx-sample
-#  annotations:
-#    # These annotations are optional.
-#    # If specified, then they are used for setting up the InfluxDB client properly,
-#    # instead of using the ones specified via CLI. Respectively:
-#    #  - --influxdb-address
-#    #  - --influxdb-token
-#    #  - --influxdb-org
-#    metric-config.external.queue-depth.influxdb/address: "http://influxdbv2.my-namespace.svc"
-#    metric-config.external.queue-depth.influxdb/token: "secret-token"
+apiVersion: meeting.ko/v1alpha1
+kind: AutoScaler
+metadata:
+  name: jas-influx-sample
+  annotations:
+    jas.influxdb/token: "e9XEamUiqMeoa0HmsXiZ8zIe5BDr2p8D"
 #    # This could be either the organization name or the ID.
-#    metric-config.external.queue-depth.influxdb/org: "deadbeef"
-#    # metric-config.<metricType>.<metricName>.<collectorType>/<configKey>
-#    # <configKey> == query-name
-#    metric-config.external.queue-depth.influxdb/query: |
-#      from(bucket: "apps")
-#        |> range(start: -30s)
-#        |> filter(fn: (r) => r._measurement == "queue_depth")
-#        |> group()
-#        |> max()
-#        // Rename "_value" to "metricvalue" for letting the metrics server properly unmarshal the result.
-#        |> rename(columns: {_value: "metricvalue"})
-#        |> keep(columns: ["metricvalue"])
-#    metric-config.external.queue-depth.influxdb/interval: "60s" # optional
-#spec:
-#  scaleTargetRef:
-#    apiVersion: v1alpha1
-#    kind: Jitsi
-#    name: jitsi-sample
-#  minReplicas: 1
-#  maxReplicas: 4
-#  metrics:
-#  - type: External
-#    external:
-#        metric:
-#          name: queue-depth
-#          selector:
-#            matchLabels:
-#              type: influxdb
-#        target:
-#          type: Value
-#          value: "1"
+    jas.influxdb/org: "influxdata"
+    jas.influxdb/bucket: "jitsi"
+spec:
+  type: "influxdb"
+  host: "http://influx-influxdb2:80/"
+  interval: "60s"
+  scaleTargetRef:
+    name: jitsi-sample
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+  - type: "Resource"
+    resource:
+      name: jitsi_conference
+      targetAverageUtilization: 40

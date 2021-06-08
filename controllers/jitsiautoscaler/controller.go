@@ -18,18 +18,16 @@ package controller
 
 import (
 	"context"
-	"time"
+
+	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
 
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/jitsiautoscaler/v1alpha1"
-	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
 	"github.com/onmetal/meeting-operator/internal/jitsiautoscaler"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-const requeueAfterSecond = 600 * time.Second
 
 type Reconciler struct {
 	client.Client
@@ -48,14 +46,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	reqLogger := r.Log.WithValues("jitsi autoscaler", req.NamespacedName)
 	jas, err := jitsiautoscaler.New(ctx, r.Client, reqLogger, req)
 	if err != nil {
-		if meetingerr.IsUnderDeletion(err) {
-			return ctrl.Result{}, jas.Stop()
+		if meetingerr.IsNotExist(err) {
+			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, err
 	}
-	if watchErr := jas.Watch(); watchErr != nil {
-		return ctrl.Result{}, watchErr
-	}
+	jas.Scale()
 	reqLogger.Info("reconciliation finished")
-	return ctrl.Result{RequeueAfter: requeueAfterSecond}, nil
+	return ctrl.Result{RequeueAfter: jas.Repeat()}, nil
 }
