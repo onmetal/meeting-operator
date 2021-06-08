@@ -21,6 +21,7 @@ resources:
 - bases/meeting.ko_etherpads.yaml
 - bases/meeting.ko_jitsis.yaml
 - bases/meeting.ko_whiteboards.yaml
+- bases/meeting.ko_autoscalers.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
