@@ -77,7 +77,7 @@ spec:
                 format: int32
                 type: integer
               scaleTargetRef:
-                description: CrossVersionObjectReference contains enough information to let you identify the referred resource.
+                description: ScaleTargetRef contains enough information to let you identify the referred resource.
                 properties:
                   name:
                     type: string

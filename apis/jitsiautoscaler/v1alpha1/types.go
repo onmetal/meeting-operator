@@ -35,8 +35,8 @@ type AutoScalerSpec struct {
 	Interval       string            `json:"interval,omitempty"`
 	Auth           Auth              `json:"auth,omitempty"`
 	ScaleTargetRef ScaleTargetRef    `json:"scaleTargetRef,omitempty"`
-	MinReplicas    *int32            `json:"minReplicas,omitempty"`
-	MaxReplicas    *int32            `json:"maxReplicas,omitempty"`
+	MinReplicas    int32            `json:"minReplicas,omitempty"`
+	MaxReplicas    int32            `json:"maxReplicas,omitempty"`
 	Metrics        []Metric          `json:"metrics,omitempty"`
 }
 

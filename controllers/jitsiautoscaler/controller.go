@@ -42,6 +42,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+// +kubebuilder:rbac:groups=meeting.ko,resources=autoscalers,verbs=get;list;watch;update
+
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	reqLogger := r.Log.WithValues("jitsi autoscaler", req.NamespacedName)
 	jas, err := jitsiautoscaler.New(ctx, r.Client, reqLogger, req)

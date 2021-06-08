@@ -83,6 +83,15 @@ rules:
 - apiGroups:
   - meeting.ko
   resources:
+  - autoscalers
+  verbs:
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - meeting.ko
+  resources:
   - etherpads
   verbs:
   - create

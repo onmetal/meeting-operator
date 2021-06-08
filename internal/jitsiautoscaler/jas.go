@@ -140,13 +140,15 @@ func (p *prom) Scale() {
 		avg := p.metricsCounting(p.Spec.Metrics[m].Resource.Name)
 		if target > avg {
 			desiredReplicas := math.RoundToEven(float64(avg / target))
-			if err := scaleDown(p.ctx, p.Client, p.Spec.ScaleTargetRef.Name, p.Namespace, int32(desiredReplicas)); err != nil {
+			if err := scaleDown(p.ctx, p.Client, p.Spec.ScaleTargetRef.Name,
+				p.Namespace, int32(desiredReplicas), p.Spec.MinReplicas); err != nil {
 				p.log.Info("can't scale down", "error", err)
 			}
 			continue
 		}
 		desiredReplicas := math.RoundToEven(float64(avg / target))
-		if err := scaleUp(p.ctx, p.Client, p.Spec.ScaleTargetRef.Name, p.Namespace, int32(desiredReplicas)); err != nil {
+		if err := scaleUp(p.ctx, p.Client, p.Spec.ScaleTargetRef.Name,
+			p.Namespace, int32(desiredReplicas), p.Spec.MaxReplicas); err != nil {
 			p.log.Info("can't scale up", "error", err)
 		}
 	}
@@ -194,13 +196,15 @@ func (i *influx) Scale() {
 		avg := i.metricsCounting(i.Spec.Metrics[m].Resource.Name)
 		if target > avg {
 			desiredReplicas := math.RoundToEven(float64(avg / target))
-			if err := scaleDown(i.ctx, i.Client, i.Spec.ScaleTargetRef.Name, i.Namespace, int32(desiredReplicas)); err != nil {
+			if err := scaleDown(i.ctx, i.Client, i.Spec.ScaleTargetRef.Name,
+				i.Namespace, int32(desiredReplicas), i.Spec.MinReplicas); err != nil {
 				i.log.Info("can't scale down", "error", err)
 			}
 			continue
 		}
 		desiredReplicas := math.RoundToEven(float64(avg / target))
-		if err := scaleUp(i.ctx, i.Client, i.Spec.ScaleTargetRef.Name, i.Namespace, int32(desiredReplicas)); err != nil {
+		if err := scaleUp(i.ctx, i.Client, i.Spec.ScaleTargetRef.Name,
+			i.Namespace, int32(desiredReplicas), i.Spec.MaxReplicas); err != nil {
 			i.log.Info("can't scale up", "error", err)
 		}
 	}
@@ -274,21 +278,27 @@ func (i *influx) Repeat() time.Duration {
 	return interval
 }
 
-func scaleUp(ctx context.Context, c client.Client, name, namespace string, desiredReplicas int32) error {
+func scaleUp(ctx context.Context, c client.Client, name, namespace string, desiredReplicas, maxReplicas int32) error {
 	jitsi, getErr := getJitsiCR(ctx, c, name, namespace)
 	if getErr != nil {
 		return getErr
 	}
 	jitsi.Spec.JVB.Replicas *= desiredReplicas
+	if jitsi.Spec.JVB.Replicas > maxReplicas {
+		return nil
+	}
 	return c.Update(ctx, jitsi)
 }
 
-func scaleDown(ctx context.Context, c client.Client, name, namespace string, desiredReplicas int32) error {
+func scaleDown(ctx context.Context, c client.Client, name, namespace string, desiredReplicas, minReplicas int32) error {
 	jitsi, getErr := getJitsiCR(ctx, c, name, namespace)
 	if getErr != nil {
 		return getErr
 	}
 	jitsi.Spec.JVB.Replicas = desiredReplicas
+	if jitsi.Spec.JVB.Replicas < minReplicas {
+		jitsi.Spec.JVB.Replicas = minReplicas
+	}
 	return c.Update(ctx, jitsi)
 }
 
