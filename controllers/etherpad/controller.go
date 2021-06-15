@@ -60,7 +60,7 @@ func (r *Reconcile) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resul
 			}
 			return ctrl.Result{}, nil
 		}
-		return ctrl.Result{}, err
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	if updErr := newEtherpad.Update(); updErr != nil {
 		if apierrors.IsNotFound(updErr) {

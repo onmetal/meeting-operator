@@ -58,8 +58,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 			}
 			return ctrl.Result{}, nil
 		}
-		r.Log.Info("cannot create new instance of whiteboard", "error", err)
-		return ctrl.Result{}, err
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	if updErr := wb.Update(); updErr != nil {
 		if apierrors.IsNotFound(updErr) {

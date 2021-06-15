@@ -59,7 +59,6 @@ type service struct {
 func New(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) (Etherpad, error) {
 	eth := &v1alpha2.Etherpad{}
 	if err := c.Get(ctx, req.NamespacedName, eth); err != nil {
-		l.Error(err, "can't get etherpad")
 		return nil, err
 	}
 	if !eth.DeletionTimestamp.IsZero() {
