@@ -64,6 +64,16 @@ spec:
   jicofo:
     replicas: 1
     image: jitsi/jicofo:stable-5390-3
+    exporter:
+      type: "telegraf"
+      config_map_name: telegraf-config
+      image: "telegraf:latest"
+      security_context:
+        runAsNonRoot: false
+      resources:
+        requests:
+          cpu: "0.1"
+          memory: "128Mi"
     service_type: "ClusterIP"
     ports: []
     environments:

@@ -43,6 +43,8 @@ func (j *Jicofo) prepareDeployment() *appsv1.Deployment {
 }
 
 func (j *Jicofo) prepareDeploymentSpec() appsv1.DeploymentSpec {
+	jicofo := j.prepareJicofoContainer()
+	exporter := j.prepareExporterContainer()
 	return appsv1.DeploymentSpec{
 		Selector: &metav1.LabelSelector{
 			MatchLabels: j.labels,
@@ -55,32 +57,63 @@ func (j *Jicofo) prepareDeploymentSpec() appsv1.DeploymentSpec {
 			Spec: v1.PodSpec{
 				ImagePullSecrets: j.ImagePullSecrets,
 				Containers: []v1.Container{
-					{
-						Name:            JicofoName,
-						Image:           j.Image,
-						ImagePullPolicy: j.ImagePullPolicy,
-						Env:             j.Environments,
-						Ports:           getContainerPorts(j.Ports),
-						Resources:       j.Resources,
-						SecurityContext: &j.SecurityContext,
-						LivenessProbe: &v1.Probe{
-							Handler: v1.Handler{
-								HTTPGet: &v1.HTTPGetAction{
-									Path:   "/about/health",
-									Port:   intstr.IntOrString{IntVal: 8888},
-									Scheme: v1.URISchemeHTTP,
-								},
-							},
-							InitialDelaySeconds: 30,
-							TimeoutSeconds:      30,
-							PeriodSeconds:       15,
-							SuccessThreshold:    1,
-							FailureThreshold:    3,
-						},
-					},
+					jicofo,
+					exporter,
 				},
 			},
 		},
+	}
+}
+
+func (j *Jicofo) prepareJicofoContainer() v1.Container {
+	return v1.Container{
+		Name:            JicofoName,
+		Image:           j.Image,
+		ImagePullPolicy: j.ImagePullPolicy,
+		Env:             j.Environments,
+		Ports:           getContainerPorts(j.Ports),
+		Resources:       j.Resources,
+		SecurityContext: &j.SecurityContext,
+		LivenessProbe: &v1.Probe{
+			Handler: v1.Handler{
+				HTTPGet: &v1.HTTPGetAction{
+					Path:   "/about/health",
+					Port:   intstr.IntOrString{IntVal: 8888},
+					Scheme: v1.URISchemeHTTP,
+				},
+			},
+			InitialDelaySeconds: 30,
+			TimeoutSeconds:      30,
+			PeriodSeconds:       15,
+			SuccessThreshold:    1,
+			FailureThreshold:    3,
+		},
+	}
+}
+
+func (j *Jicofo) prepareExporterContainer() v1.Container {
+	switch j.Exporter.Type {
+	case telegrafExporter:
+		return v1.Container{
+			Name:            "exporter",
+			Image:           j.Exporter.Image,
+			Env:             j.Exporter.Environments,
+			Resources:       j.Exporter.Resources,
+			VolumeMounts:    []v1.VolumeMount{{Name: "telegraf", MountPath: "/etc/telegraf/"}},
+			ImagePullPolicy: j.Exporter.ImagePullPolicy,
+			SecurityContext: &j.Exporter.SecurityContext,
+		}
+	default:
+		return v1.Container{
+			Name:            "exporter",
+			Image:           j.Exporter.Image,
+			Args:            []string{"-videobridge-url", "http://localhost:8080/colibri/stats"},
+			Ports:           []v1.ContainerPort{{Name: "http", ContainerPort: j.Exporter.Port, Protocol: v1.ProtocolTCP}},
+			Env:             j.Exporter.Environments,
+			Resources:       j.Exporter.Resources,
+			ImagePullPolicy: j.Exporter.ImagePullPolicy,
+			SecurityContext: &j.Exporter.SecurityContext,
+		}
 	}
 }
 

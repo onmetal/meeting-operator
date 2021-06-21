@@ -67,6 +67,7 @@ type Prosody struct {
 
 type Jicofo struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
+	Exporter    Exporter          `json:"exporter,omitempty"`
 	//+kubebuilder:default:=1
 	Replicas int32 `json:"replicas,omitempty"`
 	//+kubebuilder:default="jitsi/jicofo:stable-5390-3"
