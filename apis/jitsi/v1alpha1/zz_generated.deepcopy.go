@@ -167,6 +167,7 @@ func (in *Jicofo) DeepCopyInto(out *Jicofo) {
 			(*out)[key] = val
 		}
 	}
+	in.Exporter.DeepCopyInto(&out.Exporter)
 	if in.ImagePullSecrets != nil {
 		in, out := &in.ImagePullSecrets, &out.ImagePullSecrets
 		*out = make([]v1.LocalObjectReference, len(*in))
