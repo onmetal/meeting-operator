@@ -43,6 +43,7 @@ func (j *Jicofo) prepareDeployment() *appsv1.Deployment {
 }
 
 func (j *Jicofo) prepareDeploymentSpec() appsv1.DeploymentSpec {
+	volumes := j.prepareVolumesForJicofo()
 	jicofo := j.prepareJicofoContainer()
 	exporter := j.prepareExporterContainer()
 	return appsv1.DeploymentSpec{
@@ -56,6 +57,7 @@ func (j *Jicofo) prepareDeploymentSpec() appsv1.DeploymentSpec {
 			},
 			Spec: v1.PodSpec{
 				ImagePullSecrets: j.ImagePullSecrets,
+				Volumes: volumes,
 				Containers: []v1.Container{
 					jicofo,
 					exporter,
@@ -63,6 +65,16 @@ func (j *Jicofo) prepareDeploymentSpec() appsv1.DeploymentSpec {
 			},
 		},
 	}
+}
+
+func (j *Jicofo) prepareVolumesForJicofo() []v1.Volume {
+	var volume []v1.Volume
+	if j.Exporter.Type == telegrafExporter {
+		telegrafCM := v1.Volume{Name: "telegraf", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
+			LocalObjectReference: v1.LocalObjectReference{Name: j.Exporter.ConfigMapName}}}}
+		return append(volume, telegrafCM)
+	}
+	return volume
 }
 
 func (j *Jicofo) prepareJicofoContainer() v1.Container {
