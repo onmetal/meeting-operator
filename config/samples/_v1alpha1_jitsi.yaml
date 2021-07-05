@@ -246,8 +246,8 @@ spec:
         value: auth.jitsi.jitsi
       - name: XMPP_INTERNAL_MUC_DOMAIN
         value: internal-muc.jitsi.jitsi
-      #    - name: JVB_STUN_SERVERS
-      #      value: stun.l.google.com:19302,stun1.l.google.com:19302,stun2.l.google.com:19302
+      - name: JVB_STUN_SERVERS
+        value: "meet-jit-si-turnrelay.jitsi.net:443"
       - name: JVB_ENABLE_APIS
         value: rest,colibri
       - name: JICOFO_AUTH_USER
