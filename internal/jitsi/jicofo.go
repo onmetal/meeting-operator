@@ -57,7 +57,7 @@ func (j *Jicofo) prepareDeploymentSpec() appsv1.DeploymentSpec {
 			},
 			Spec: v1.PodSpec{
 				ImagePullSecrets: j.ImagePullSecrets,
-				Volumes:          volumes,
+				Volumes: volumes,
 				Containers: []v1.Container{
 					jicofo,
 					exporter,
