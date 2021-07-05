@@ -23,12 +23,12 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func (j *Prosody) Create() error {
+func (j *Jigasi) Create() error {
 	preparedDeployment := j.prepareDeployment()
 	return j.Client.Create(j.ctx, preparedDeployment)
 }
 
-func (j *Prosody) prepareDeployment() *appsv1.Deployment {
+func (j *Jigasi) prepareDeployment() *appsv1.Deployment {
 	spec := j.prepareDeploymentSpec()
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -41,7 +41,7 @@ func (j *Prosody) prepareDeployment() *appsv1.Deployment {
 	}
 }
 
-func (j *Prosody) prepareDeploymentSpec() appsv1.DeploymentSpec {
+func (j *Jigasi) prepareDeploymentSpec() appsv1.DeploymentSpec {
 	return appsv1.DeploymentSpec{
 		Selector: &metav1.LabelSelector{
 			MatchLabels: j.labels,
@@ -69,12 +69,12 @@ func (j *Prosody) prepareDeploymentSpec() appsv1.DeploymentSpec {
 	}
 }
 
-func (j *Prosody) Update() error {
+func (j *Jigasi) Update() error {
 	updatedDeployment := j.prepareDeployment()
 	return j.Client.Update(j.ctx, updatedDeployment)
 }
 
-func (j *Prosody) Delete() error {
+func (j *Jigasi) Delete() error {
 	deployment, err := j.Get()
 	if err != nil {
 		return err
@@ -82,7 +82,7 @@ func (j *Prosody) Delete() error {
 	return j.Client.Delete(j.ctx, deployment)
 }
 
-func (j *Prosody) Get() (*appsv1.Deployment, error) {
+func (j *Jigasi) Get() (*appsv1.Deployment, error) {
 	deployment := &appsv1.Deployment{}
 	err := j.Client.Get(j.ctx, types.NamespacedName{
 		Namespace: j.namespace,
