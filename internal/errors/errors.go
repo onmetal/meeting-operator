@@ -40,6 +40,7 @@ const (
 	StatusReasonAlreadyExist  StatusReason = "already exist"
 	StatusReasonNotExist      StatusReason = "resource not exist"
 	StatusReasonUnderDeletion StatusReason = "under deletion"
+	StatusReasonNotRequired   StatusReason = "not required"
 	StatusReasonUnknown       StatusReason = "unknown"
 )
 
@@ -57,6 +58,10 @@ func IsAlreadyExists(err error) bool {
 
 func IsUnderDeletion(err error) bool {
 	return ReasonForError(err) == StatusReasonUnderDeletion
+}
+
+func IsNotRequired(err error) bool {
+	return ReasonForError(err) == StatusReasonNotRequired
 }
 
 func ReasonForError(err error) StatusReason {
@@ -89,6 +94,15 @@ func UnderDeletion() *ErrorStatus {
 		Reason: Reason{
 			Message:      "component is under deletion",
 			StatusReason: StatusReasonUnderDeletion,
+		},
+	}
+}
+
+func NotRequired() *ErrorStatus {
+	return &ErrorStatus{
+		Reason: Reason{
+			Message:      "not required",
+			StatusReason: StatusReasonNotRequired,
 		},
 	}
 }

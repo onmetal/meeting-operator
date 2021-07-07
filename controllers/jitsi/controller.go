@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var jitsiServices = []string{jitsi.WebName, jitsi.ProsodyName, jitsi.JicofoName, jitsi.JibriName}
+var jitsiServices = []string{jitsi.WebName, jitsi.ProsodyName, jitsi.JicofoName, jitsi.JibriName, jitsi.JigasiName}
 
 type Reconciler struct {
 	client.Client
@@ -95,7 +95,10 @@ func (r *Reconciler) make(ctx context.Context, appName string, j *v1alpha1.Jitsi
 			return jtsUpdErr
 		}
 	}
-	svc := jitsi.NewService(ctx, appName, j, r.Client, r.Log)
+	svc, err := jitsi.NewService(ctx, appName, j, r.Client, r.Log)
+	if meetingerr.IsNotRequired(err) {
+		return nil
+	}
 	if svcUpdErr := svc.Update(); svcUpdErr != nil {
 		if apierrors.IsNotFound(svcUpdErr) {
 			if createErr := svc.Create(); createErr != nil {
@@ -160,12 +163,15 @@ func (r *Reconciler) deleteComponents(ctx context.Context, appName string, j *v1
 	if err != nil {
 		return err
 	}
-	if err := jts.Delete(); err != nil {
-		return err
+	if delErr := jts.Delete(); delErr != nil {
+		return delErr
 	}
-	svc := jitsi.NewService(ctx, appName, j, r.Client, r.Log)
-	if err := svc.Delete(); err != nil {
-		return err
+	svc, err := jitsi.NewService(ctx, appName, j, r.Client, r.Log)
+	if meetingerr.IsNotRequired(err) {
+		return nil
+	}
+	if delErr := svc.Delete(); delErr != nil {
+		return delErr
 	}
 	return nil
 }

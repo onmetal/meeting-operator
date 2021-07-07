@@ -34,6 +34,7 @@ const (
 	ProsodyName = "prosody"
 	JicofoName  = "jicofo"
 	JibriName   = "jibri"
+	JigasiName  = "jigasi"
 )
 
 type Jitsi interface {
@@ -75,6 +76,16 @@ type Jicofo struct {
 type Jibri struct {
 	client.Client
 	*v1alpha1.Jibri
+
+	ctx             context.Context
+	log             logr.Logger
+	name, namespace string
+	labels          map[string]string
+}
+
+type Jigasi struct {
+	client.Client
+	*v1alpha1.Jigasi
 
 	ctx             context.Context
 	log             logr.Logger
@@ -139,6 +150,17 @@ func New(ctx context.Context, appName string,
 			Client:    c,
 			Jibri:     &j.Spec.Jibri,
 			name:      JibriName,
+			namespace: j.Namespace,
+			ctx:       ctx,
+			log:       l,
+			labels:    labels,
+		}, nil
+	case JigasiName:
+		labels := utils.GetDefaultLabels(JigasiName)
+		return &Jigasi{
+			Client:    c,
+			Jigasi:    &j.Spec.Jigasi,
+			name:      JigasiName,
 			namespace: j.Namespace,
 			ctx:       ctx,
 			log:       l,

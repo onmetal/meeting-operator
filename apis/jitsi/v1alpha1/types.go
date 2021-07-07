@@ -25,7 +25,8 @@ type JitsiSpec struct {
 	Web     `json:"web"`
 	Prosody `json:"prosody"`
 	Jicofo  `json:"jicofo"`
-	Jibri   `json:"jibri"`
+	Jibri   `json:"jibri,omitempty"`
+	Jigasi  `json:"jigasi,omitempty"`
 	JVB     `json:"jvb"`
 }
 
@@ -89,6 +90,25 @@ type Jibri struct {
 	//+kubebuilder:default:=0
 	Replicas int32 `json:"replicas,omitempty"`
 	//+kubebuilder:default="jitsi/jibri:stable-5390-3"
+	Image string `json:"image,omitempty"`
+	//+kubebuilder:default="IfNotPresent"
+	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
+	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
+	SecurityContext    v1.SecurityContext        `json:"security_context,omitempty"`
+	Environments       []v1.EnvVar               `json:"environments,omitempty"`
+	Storage            *StorageSpec              `json:"storage,omitempty"`
+	Resources          v1.ResourceRequirements   `json:"resources,omitempty"`
+	ServiceAnnotations map[string]string         `json:"service_annotations,omitempty"`
+	//+kubebuilder:default:="ClusterIP"
+	ServiceType v1.ServiceType `json:"service_type,omitempty"`
+	Ports       []Port         `json:"ports,omitempty"`
+}
+
+type Jigasi struct {
+	Annotations map[string]string `json:"annotations,omitempty"`
+	//+kubebuilder:default:=0
+	Replicas int32 `json:"replicas,omitempty"`
+	//+kubebuilder:default="jitsi/jigasi:stable-5390-3"
 	Image string `json:"image,omitempty"`
 	//+kubebuilder:default="IfNotPresent"
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
