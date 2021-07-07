@@ -325,6 +325,7 @@ func (in *JitsiSpec) DeepCopyInto(out *JitsiSpec) {
 	in.Prosody.DeepCopyInto(&out.Prosody)
 	in.Jicofo.DeepCopyInto(&out.Jicofo)
 	in.Jibri.DeepCopyInto(&out.Jibri)
+	in.Jigasi.DeepCopyInto(&out.Jigasi)
 	in.JVB.DeepCopyInto(&out.JVB)
 }
 

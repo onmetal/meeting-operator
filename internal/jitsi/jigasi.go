@@ -55,7 +55,7 @@ func (j *Jigasi) prepareDeploymentSpec() appsv1.DeploymentSpec {
 				ImagePullSecrets: j.ImagePullSecrets,
 				Containers: []v1.Container{
 					{
-						Name:            JicofoName,
+						Name:            JigasiName,
 						Image:           j.Image,
 						ImagePullPolicy: j.ImagePullPolicy,
 						Env:             j.Environments,

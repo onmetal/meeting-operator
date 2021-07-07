@@ -23,10 +23,10 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
+	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -45,7 +45,7 @@ type Service struct {
 }
 
 func NewService(ctx context.Context, appName string,
-	j *v1alpha1.Jitsi, c client.Client, l logr.Logger) Jitsi {
+	j *v1alpha1.Jitsi, c client.Client, l logr.Logger) (Jitsi, error) {
 	switch appName {
 	case WebName:
 		labels := utils.GetDefaultLabels(WebName)
@@ -59,7 +59,7 @@ func NewService(ctx context.Context, appName string,
 			log:         l,
 			annotations: j.Spec.Web.ServiceAnnotations,
 			labels:      labels,
-		}
+		}, nil
 	case ProsodyName:
 		labels := utils.GetDefaultLabels(ProsodyName)
 		return &Service{
@@ -72,25 +72,14 @@ func NewService(ctx context.Context, appName string,
 			log:         l,
 			annotations: j.Spec.Prosody.ServiceAnnotations,
 			labels:      labels,
-		}
+		}, nil
 	case JicofoName:
-		labels := utils.GetDefaultLabels(JicofoName)
-		return &Service{
-			Client:      c,
-			ports:       getPorts(ProsodyName, j.Spec.Jicofo.Ports),
-			serviceType: j.Spec.Jicofo.ServiceType,
-			name:        JicofoName,
-			namespace:   j.Namespace,
-			ctx:         ctx,
-			log:         l,
-			annotations: j.Spec.Jicofo.ServiceAnnotations,
-			labels:      labels,
-		}
+		return &Service{}, meetingerr.NotRequired()
 	case JibriName:
 		labels := utils.GetDefaultLabels(JibriName)
 		return &Service{
 			Client:      c,
-			ports:       getPorts(ProsodyName, j.Spec.Jibri.Ports),
+			ports:       getPorts(JibriName, j.Spec.Jibri.Ports),
 			serviceType: j.Spec.Jibri.ServiceType,
 			name:        JibriName,
 			namespace:   j.Namespace,
@@ -98,9 +87,11 @@ func NewService(ctx context.Context, appName string,
 			log:         l,
 			annotations: j.Spec.Jibri.ServiceAnnotations,
 			labels:      labels,
-		}
+		}, nil
+	case JigasiName:
+		return &Service{}, meetingerr.NotRequired()
 	default:
-		return &Service{}
+		return &Service{}, meetingerr.NotRequired()
 	}
 }
 

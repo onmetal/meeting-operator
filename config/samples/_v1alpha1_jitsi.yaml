@@ -237,17 +237,17 @@ spec:
       - name: PUBLIC_URL
         value: https://<<your public url here>>
       - name: JIGASI_SIP_URI
-        value: ""
+        value: "<<your sip config here>>"
       - name: JIGASI_SIP_PASSWORD
-        value: ""
+        value: "<<your sip config here>>"
       - name: JIGASI_SIP_SERVER
-        value: ""
+        value: "<<your sip config here>>"
       - name: JIGASI_SIP_PORT
-        value: ""
+        value: "<<your sip config here>>"
       - name: JIGASI_SIP_TRANSPORT
-        value: ""
+        value: "<<your sip config here>>"
       - name: JIGASI_SIP_DEFAULT_ROOM
-        value: ""
+        value: "<<your sip config here>>"
       - name: JIGASI_XMPP_USER
         value: jigasi
       - name: JIGASI_XMPP_PASSWORD
@@ -258,9 +258,9 @@ spec:
       - name: JIGASI_BREWERY_MUC
         value: jigasibrewery
       - name: JIGASI_PORT_MIN
-        value: 20000
+        value: "20000"
       - name: JIGASI_PORT_MAX
-        value: 20050
+        value: "20050"
       - name: JIGASI_HEALTH_CHECK_SIP_URI
         value: "keepalive"
       - name: JIGASI_HEALTH_CHECK_INTERVAL
@@ -268,9 +268,9 @@ spec:
       - name: JIGASI_SIP_KEEP_ALIVE_METHOD
         value: "OPTIONS"
       - name: JIGASI_ENABLE_SDES_SRTP
-        value: 1
+        value: "1"
       - name: ENABLE_TRANSCRIPTIONS
-        value: 1
+        value: "0"
       - name: JIGASI_TRANSCRIBER_ADVERTISE_URL
         value: "false"
       - name: JIGASI_TRANSCRIBER_RECORD_AUDIO
