@@ -49,8 +49,16 @@ const (
 )
 
 const (
-	promCPURequest        = "rate(container_cpu_usage_seconds_total{container=\"jvb\", id=~\"/kubelet.*\"}[5m])"
-	promConferenceRequest = "jitsi_conferences{job=~\"exporter-jvb-.*\"}"
+	promCPURequest         = `rate(container_cpu_usage_seconds_total{container="jvb", id=~"/kubelet.*"}[5m])`
+	promConferenceRequest  = `jitsi_conferences{job=~"exporter-jvb-.*"}`
+	promParticipantRequest = `jitsi_participants{job=~"exporter-jvb-.*"}`
+)
+
+const (
+	influxQuery               = `from(bucket: "%s")|> range(start: -15m) |>filter(fn: (r) => r["_measurement"] == "jitsi_stats")|> filter(fn: (r) => r["_field"] == "%s")|> distinct(column: "_value")` //nolint:lll
+	influxCPUMetrics          = "cpu"
+	influxConferencesMetrics  = "conferences"
+	influxParticipantsMetrics = "participants"
 )
 
 const defaultRepeatIntervalSecond = 600 * time.Second
@@ -136,17 +144,17 @@ func (p *prom) Scale() {
 	defer cancel()
 	p.ctx = ctx
 	for m := range p.Spec.Metrics {
-		target := p.Spec.Metrics[m].Resource.TargetAverageUtilization
+		target := float64(p.Spec.Metrics[m].Resource.TargetAverageUtilization)
 		avg := p.metricsCounting(p.Spec.Metrics[m].Resource.Name)
 		if target > avg {
-			desiredReplicas := math.RoundToEven(float64(avg / target))
+			desiredReplicas := math.RoundToEven(avg / target)
 			if err := scaleDown(p.ctx, p.Client, p.Spec.ScaleTargetRef.Name,
 				p.Namespace, int32(desiredReplicas), p.Spec.MinReplicas); err != nil {
 				p.log.Info("can't scale down", "error", err)
 			}
 			continue
 		}
-		desiredReplicas := math.RoundToEven(float64(avg / target))
+		desiredReplicas := math.RoundToEven(avg / target)
 		if err := scaleUp(p.ctx, p.Client, p.Spec.ScaleTargetRef.Name,
 			p.Namespace, int32(desiredReplicas), p.Spec.MaxReplicas); err != nil {
 			p.log.Info("can't scale up", "error", err)
@@ -154,18 +162,20 @@ func (p *prom) Scale() {
 	}
 }
 
-func (p *prom) metricsCounting(resource v1alpha1.ResourceName) int32 {
+func (p *prom) metricsCounting(resource v1alpha1.ResourceName) float64 {
 	switch resource {
 	case v1alpha1.ResourceCPU:
 		return p.countAvg(promCPURequest)
 	case v1alpha1.ResourceConference:
 		return p.countAvg(promConferenceRequest)
+	case v1alpha1.ResourceParticipants:
+		return p.countAvg(promParticipantRequest)
 	default:
 		return 0
 	}
 }
 
-func (p *prom) countAvg(request string) int32 {
+func (p *prom) countAvg(request string) float64 {
 	result, _, err := p.apiv1.QueryRange(p.ctx, request, p.timeRange)
 	if err != nil {
 		p.log.Info("can't query prometheus", "error", err)
@@ -175,7 +185,7 @@ func (p *prom) countAvg(request string) int32 {
 	for res := range result.(model.Matrix) {
 		sum = +result.(model.Matrix)[res].Values[1].Value
 	}
-	return int32(sum / model.SampleValue(len(result.(model.Matrix))))
+	return float64(sum / model.SampleValue(len(result.(model.Matrix))))
 }
 
 func (p *prom) Repeat() time.Duration {
@@ -192,17 +202,17 @@ func (p *prom) Repeat() time.Duration {
 
 func (i *influx) Scale() {
 	for m := range i.Spec.Metrics {
-		target := i.Spec.Metrics[m].Resource.TargetAverageUtilization
+		target := float64(i.Spec.Metrics[m].Resource.TargetAverageUtilization)
 		avg := i.metricsCounting(i.Spec.Metrics[m].Resource.Name)
 		if target > avg {
-			desiredReplicas := math.RoundToEven(float64(avg / target))
+			desiredReplicas := math.RoundToEven(avg / target)
 			if err := scaleDown(i.ctx, i.Client, i.Spec.ScaleTargetRef.Name,
 				i.Namespace, int32(desiredReplicas), i.Spec.MinReplicas); err != nil {
 				i.log.Info("can't scale down", "error", err)
 			}
 			continue
 		}
-		desiredReplicas := math.RoundToEven(float64(avg / target))
+		desiredReplicas := math.RoundToEven(avg / target)
 		if err := scaleUp(i.ctx, i.Client, i.Spec.ScaleTargetRef.Name,
 			i.Namespace, int32(desiredReplicas), i.Spec.MaxReplicas); err != nil {
 			i.log.Info("can't scale up", "error", err)
@@ -210,20 +220,22 @@ func (i *influx) Scale() {
 	}
 }
 
-func (i *influx) metricsCounting(resource v1alpha1.ResourceName) int32 {
+func (i *influx) metricsCounting(resource v1alpha1.ResourceName) float64 {
 	switch resource {
 	case v1alpha1.ResourceCPU:
-		return i.countAvg()
+		return i.countAvg(influxCPUMetrics)
 	case v1alpha1.ResourceConference:
-		return i.countAvg()
+		return i.countAvg(influxConferencesMetrics)
+	case v1alpha1.ResourceParticipants:
+		return i.countAvg(influxParticipantsMetrics)
 	default:
 		return 0
 	}
 }
 
-func (i *influx) countAvg() int32 {
+func (i *influx) countAvg(field string) float64 {
 	var org, bucket string
-	var sum, count, value int32
+	var sum, count, value float64
 	var ok bool
 	org, ok = i.Annotations["jas.influxdb/org"]
 	if !ok {
@@ -235,14 +247,7 @@ func (i *influx) countAvg() int32 {
 		i.log.Info("influx bucket not provided, setting default to `jitsi`")
 		bucket = "jitsi"
 	}
-	query := fmt.Sprintf(
-		`
-		from(bucket: "%s")
-			|> range(start: -15m)
-			|> filter(fn: (r) => r["_measurement"] == "jitsi_stats")
-			|> filter(fn: (r) => r["_field"] == "conferences")
-			|> distinct(column: "_value")
-	`, bucket)
+	query := fmt.Sprintf(influxQuery, bucket, field)
 	result, err := i.iclient.QueryAPI(org).Query(i.ctx, query)
 	if err != nil {
 		i.log.Info("can't query influx database", "error", err)
@@ -255,7 +260,8 @@ func (i *influx) countAvg() int32 {
 	}(result)
 
 	for result.Next() {
-		value, ok = result.Record().Value().(int32)
+		values := result.Record().Values()
+		value, ok = values["_value"].(float64)
 		if !ok {
 			count++
 			continue

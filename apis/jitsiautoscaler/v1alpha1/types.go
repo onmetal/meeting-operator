@@ -23,8 +23,9 @@ import (
 type ResourceName string
 
 const (
-	ResourceCPU        ResourceName = "cpu"
-	ResourceConference ResourceName = "jitsi_conference"
+	ResourceCPU          ResourceName = "cpu"
+	ResourceConference   ResourceName = "jitsi_conference"
+	ResourceParticipants ResourceName = "jitsi_participants"
 )
 
 // AutoScalerSpec defines the desired state of AutoScaler
