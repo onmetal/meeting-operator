@@ -18,7 +18,8 @@ package jitsi
 
 import (
 	"context"
-	"fmt"
+
+	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
 
 	v1 "k8s.io/api/core/v1"
 
@@ -167,7 +168,7 @@ func New(ctx context.Context, appName string,
 			labels:    labels,
 		}, nil
 	default:
-		return nil, fmt.Errorf(fmt.Sprintf("component: %s not exist", appName))
+		return nil, meetingerr.NotExist(appName)
 	}
 }
 

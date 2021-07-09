@@ -17,16 +17,57 @@ limitations under the License.
 package jitsi
 
 import (
+	"bytes"
+	"html/template"
+
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func (j *Jicofo) Create() error {
+	if err := j.createCustomLoggingCM(); err != nil {
+		j.log.Info("can't create jicofo logging config map", "error", err)
+	}
 	preparedDeployment := j.prepareDeployment()
 	return j.Client.Create(j.ctx, preparedDeployment)
+}
+
+func (j *Jicofo) createCustomLoggingCM() error {
+	logging := j.prepareLoggingCM()
+	err := j.Client.Create(j.ctx, logging)
+	if apierrors.IsAlreadyExists(err) {
+		return nil
+	}
+	return err
+}
+
+func (j *Jicofo) prepareLoggingCM() *v1.ConfigMap {
+	tpl, err := template.New("sip").Parse(jicofoCustomLogging)
+	if err != nil {
+		j.log.Info("can't template logging config", "error", err)
+		return nil
+	}
+	var level = "INFO"
+	for k := range j.Environments {
+		if j.Environments[k].Name != loggingLevel {
+			continue
+		}
+		level = j.Environments[k].Value
+	}
+	var b bytes.Buffer
+	if executeErr := tpl.Execute(&b, level); executeErr != nil {
+		j.log.Info("can't template logging config", "error", err)
+		return nil
+	}
+	return &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "jicofo-custom-logging", Namespace: j.namespace,
+		Labels: map[string]string{"app": "jicofo"}},
+		Data: map[string]string{"custom-logging.properties": b.String()}}
 }
 
 func (j *Jicofo) prepareDeployment() *appsv1.Deployment {
@@ -69,12 +110,15 @@ func (j *Jicofo) prepareDeploymentSpec() appsv1.DeploymentSpec {
 
 func (j *Jicofo) prepareVolumesForJicofo() []v1.Volume {
 	var volume []v1.Volume
+	loggingConfig := v1.Volume{Name: "custom-logging", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
+		Items:                []v1.KeyToPath{{Key: "custom-logging.properties", Path: "logging.properties"}},
+		LocalObjectReference: v1.LocalObjectReference{Name: "jvb-custom-logging"}}}}
 	if j.Exporter.Type == telegrafExporter {
 		telegrafCM := v1.Volume{Name: "telegraf", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
 			LocalObjectReference: v1.LocalObjectReference{Name: j.Exporter.ConfigMapName}}}}
-		return append(volume, telegrafCM)
+		return append(volume, telegrafCM, loggingConfig)
 	}
-	return volume
+	return append(volume, loggingConfig)
 }
 
 func (j *Jicofo) prepareJicofoContainer() v1.Container {
@@ -86,6 +130,8 @@ func (j *Jicofo) prepareJicofoContainer() v1.Container {
 		Ports:           getContainerPorts(j.Ports),
 		Resources:       j.Resources,
 		SecurityContext: &j.SecurityContext,
+		VolumeMounts: []v1.VolumeMount{
+			{Name: "custom-logging", MountPath: "/defaults/logging.properties", SubPath: "logging.properties"}},
 		LivenessProbe: &v1.Probe{
 			Handler: v1.Handler{
 				HTTPGet: &v1.HTTPGetAction{
@@ -130,16 +176,42 @@ func (j *Jicofo) prepareExporterContainer() v1.Container {
 }
 
 func (j *Jicofo) Update() error {
+	if err := j.updateCustomLoggingCM(); err != nil {
+		j.log.Info("can't update jicofo logging cm", "error", err)
+	}
 	updatedDeployment := j.prepareDeployment()
 	return j.Client.Update(j.ctx, updatedDeployment)
 }
 
+func (j *Jicofo) updateCustomLoggingCM() error {
+	logging := j.prepareLoggingCM()
+	return j.Client.Update(j.ctx, logging)
+}
+
 func (j *Jicofo) Delete() error {
+	if err := j.deleteCMs(); client.IgnoreNotFound(err) != nil {
+		j.log.Info("failed to delete jicofo logging cm", "error", err, "namespace", j.namespace)
+	}
 	deployment, err := j.Get()
 	if err != nil {
 		return err
 	}
 	return j.Client.Delete(j.ctx, deployment)
+}
+
+func (j *Jicofo) deleteCMs() error {
+	var cms v1.ConfigMapList
+	filter := &client.ListOptions{
+		LabelSelector: client.MatchingLabelsSelector{Selector: labels.SelectorFromSet(map[string]string{"app": "jicofo"})}}
+	if err := j.Client.List(j.ctx, &cms, filter); err != nil {
+		return err
+	}
+	for cm := range cms.Items {
+		if err := j.Client.Delete(j.ctx, &cms.Items[cm]); err != nil {
+			j.log.Info("can't delete config map", "name", cms.Items[cm].Name, "error", err)
+		}
+	}
+	return nil
 }
 
 func (j *Jicofo) Get() (*appsv1.Deployment, error) {

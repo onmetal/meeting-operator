@@ -77,6 +77,8 @@ spec:
     service_type: "ClusterIP"
     ports: []
     environments:
+      - name: LOGGING_LEVEL
+        value: "WARNING"
       - name: XMPP_SERVER
         value: prosody
       - name: XMPP_DOMAIN
@@ -281,7 +283,7 @@ spec:
         value: UTC
 
   jvb:
-    replicas: 2
+    replicas: 1
     image: jitsi/jvb:stable-5390-3
     exporter:
       type: "telegraf"
@@ -302,6 +304,8 @@ spec:
     custom_sip:
       - org.jitsi.videobridge.ENABLE_STATISTICS=true
     environments:
+      - name: LOGGING_LEVEL
+        value: "WARNING"
       - name: XMPP_SERVER
         value: prosody
       - name: XMPP_DOMAIN

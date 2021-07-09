@@ -79,6 +79,9 @@ func (j *JVB) Create() error {
 	if err := j.createCustomSIPCM(); err != nil {
 		j.log.Info("can't create custom sip config map", "error", err)
 	}
+	if err := j.createCustomLoggingCM(); err != nil {
+		j.log.Info("can't create jvb logging config map", "error", err)
+	}
 	if err := j.servicePerInstance(); err != nil {
 		j.log.Info("failed to create service", "error", err, "namespace", j.namespace)
 	}
@@ -109,6 +112,15 @@ func (j *JVB) createCustomSIPCM() error {
 	return err
 }
 
+func (j *JVB) createCustomLoggingCM() error {
+	logging := j.prepareLoggingCM()
+	err := j.Client.Create(j.ctx, logging)
+	if apierrors.IsAlreadyExists(err) {
+		return nil
+	}
+	return err
+}
+
 func (j *JVB) prepareSIPCM() *v1.ConfigMap {
 	tpl, err := template.New("sip").Parse(jvbCustomSIP)
 	if err != nil {
@@ -124,6 +136,29 @@ func (j *JVB) prepareSIPCM() *v1.ConfigMap {
 	return &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "jvb-custom-sip", Namespace: j.namespace,
 		Labels: map[string]string{"app": "jvb"}},
 		Data: map[string]string{"custom-sip-communicator.properties": b.String()}}
+}
+
+func (j *JVB) prepareLoggingCM() *v1.ConfigMap {
+	tpl, err := template.New("sip").Parse(jvbCustomLogging)
+	if err != nil {
+		j.log.Info("can't template logging config", "error", err)
+		return nil
+	}
+	var level = "INFO"
+	for k := range j.envs {
+		if j.envs[k].Name != loggingLevel {
+			continue
+		}
+		level = j.envs[k].Value
+	}
+	var b bytes.Buffer
+	if executeErr := tpl.Execute(&b, level); executeErr != nil {
+		j.log.Info("can't template logging config", "error", err)
+		return nil
+	}
+	return &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "jvb-custom-logging", Namespace: j.namespace,
+		Labels: map[string]string{"app": "jvb"}},
+		Data: map[string]string{"custom-logging.properties": b.String()}}
 }
 
 func (j *JVB) servicePerInstance() error {
@@ -232,7 +267,8 @@ func (j *JVB) prepareJVBContainer() v1.Container {
 		SecurityContext: &j.SecurityContext,
 		VolumeMounts: []v1.VolumeMount{
 			{Name: "shutdown", MountPath: "/shutdown"},
-			{Name: "custom-sip", MountPath: "/defaults/sip-communicator.properties", SubPath: "sip-communicator.properties"}},
+			{Name: "custom-sip", MountPath: "/defaults/sip-communicator.properties", SubPath: "sip-communicator.properties"},
+			{Name: "custom-logging", MountPath: "/defaults/logging.properties", SubPath: "logging.properties"}},
 		Lifecycle: &v1.Lifecycle{
 			PreStop: &v1.Handler{
 				Exec: &v1.ExecAction{
@@ -277,12 +313,15 @@ func (j *JVB) prepareVolumesForJVB() []v1.Volume {
 	sipConfig := v1.Volume{Name: "custom-sip", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
 		Items:                []v1.KeyToPath{{Key: "custom-sip-communicator.properties", Path: "sip-communicator.properties"}},
 		LocalObjectReference: v1.LocalObjectReference{Name: "jvb-custom-sip"}}}}
+	loggingConfig := v1.Volume{Name: "custom-logging", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
+		Items:                []v1.KeyToPath{{Key: "custom-logging.properties", Path: "logging.properties"}},
+		LocalObjectReference: v1.LocalObjectReference{Name: "jvb-custom-logging"}}}}
 	if j.Exporter.Type == telegrafExporter {
 		telegrafCM := v1.Volume{Name: "telegraf", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
 			LocalObjectReference: v1.LocalObjectReference{Name: j.Exporter.ConfigMapName}}}}
-		return append(volume, shutdown, sipConfig, telegrafCM)
+		return append(volume, shutdown, sipConfig, telegrafCM, loggingConfig)
 	}
-	return append(volume, shutdown, sipConfig)
+	return append(volume, shutdown, sipConfig, loggingConfig)
 }
 
 func (j *JVB) additionalEnvironments() []v1.EnvVar {
@@ -418,7 +457,10 @@ func (j *JVB) Update() error {
 		j.log.Info("can't create jvb cm", "error", err)
 	}
 	if err := j.updateCustomSIPCM(); err != nil {
-		j.log.Info("can't create jvb cm", "error", err)
+		j.log.Info("can't update jvb sip cm", "error", err)
+	}
+	if err := j.updateCustomLoggingCM(); err != nil {
+		j.log.Info("can't update jvb logging cm", "error", err)
 	}
 	instance, err := j.getInstance()
 	if err != nil {
@@ -438,6 +480,11 @@ func (j *JVB) updateCustomSIPCM() error {
 	return j.Client.Update(j.ctx, sip)
 }
 
+func (j *JVB) updateCustomLoggingCM() error {
+	logging := j.prepareLoggingCM()
+	return j.Client.Update(j.ctx, logging)
+}
+
 func (j *JVB) Delete() error {
 	if err := j.deleteInstance(); client.IgnoreNotFound(err) != nil {
 		j.log.Info("failed to delete instance", "error", err, "namespace", j.namespace)
@@ -447,7 +494,7 @@ func (j *JVB) Delete() error {
 	}
 	if j.deleted {
 		if err := j.deleteCMs(); client.IgnoreNotFound(err) != nil {
-			j.log.Info("failed to delete service", "error", err, "namespace", j.namespace)
+			j.log.Info("failed to delete jvb cm", "error", err, "namespace", j.namespace)
 		}
 	}
 	return nil
@@ -524,7 +571,7 @@ func (j *JVB) deleteCMs() error {
 	}
 	for cm := range cms.Items {
 		if err := j.Client.Delete(j.ctx, &cms.Items[cm]); err != nil {
-			j.log.Info("can't delete config map", "error", err)
+			j.log.Info("can't delete config map", "name", cms.Items[cm].Name, "error", err)
 		}
 	}
 	return nil

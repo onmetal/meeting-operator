@@ -4,6 +4,8 @@ type SIP struct {
 	Options []string
 }
 
+const loggingLevel = "LOGGING_LEVEL"
+
 const jvbGracefulShutdown = `
 	#!/bin/bash
     #
@@ -149,11 +151,44 @@ const jvbGracefulShutdown = `
     fi
 `
 
-const jvbCustomSIP = `
-	{{"{{ if .Env.DOCKER_HOST_ADDRESS }}"}}
-	org.ice4j.ice.harvest.NAT_HARVESTER_LOCAL_ADDRESS={{"{{ .Env.LOCAL_ADDRESS }}"}}
-	org.ice4j.ice.harvest.NAT_HARVESTER_PUBLIC_ADDRESS={{"{{ .Env.DOCKER_HOST_ADDRESS }}"}}
-	org.jitsi.videobridge.ENABLE_REST_SHUTDOWN=true
-	{{"{{ end }}"}}
-	{{ range $s := .Options }}{{ printf "%s\n" $s }} {{ end }}
-	`
+const jvbCustomSIP = `{{"{{ if .Env.DOCKER_HOST_ADDRESS }}"}}
+org.ice4j.ice.harvest.NAT_HARVESTER_LOCAL_ADDRESS={{"{{ .Env.LOCAL_ADDRESS }}"}}
+org.ice4j.ice.harvest.NAT_HARVESTER_PUBLIC_ADDRESS={{"{{ .Env.DOCKER_HOST_ADDRESS }}"}}
+org.jitsi.videobridge.ENABLE_REST_SHUTDOWN=true
+{{"{{ end }}"}}
+{{ range $s := .Options }}{{ printf "%s\n" $s }} {{ end }}`
+
+const jvbCustomLogging = `handlers= java.util.logging.ConsoleHandler
+
+java.util.logging.ConsoleHandler.level = ALL
+java.util.logging.ConsoleHandler.formatter = net.java.sip.communicator.util.ScLogFormatter
+
+net.java.sip.communicator.util.ScLogFormatter.programname=JVB
+
+.level={{ . }}
+
+org.jitsi.videobridge.xmpp.ComponentImpl.level=FINE
+
+# All of the INFO level logs from MediaStreamImpl are unnecessary in the context of jitsi-videobridge.
+org.jitsi.impl.neomedia.MediaStreamImpl.level=WARNING`
+
+const jicofoCustomLogging = `handlers= java.util.logging.ConsoleHandler
+
+java.util.logging.ConsoleHandler.level = ALL
+java.util.logging.ConsoleHandler.formatter = net.java.sip.communicator.util.ScLogFormatter
+
+net.java.sip.communicator.util.ScLogFormatter.programname=Jicofo
+
+.level={{ . }}
+net.sf.level=SEVERE
+net.java.sip.communicator.plugin.reconnectplugin.level=FINE
+org.ice4j.level=SEVERE
+org.jitsi.impl.neomedia.level=SEVERE
+
+# Do not worry about missing strings
+net.java.sip.communicator.service.resources.AbstractResourcesService.level=SEVERE
+
+#net.java.sip.communicator.service.protocol.level=ALL
+
+# Enable debug packets logging
+#org.jitsi.impl.protocol.xmpp.level=FINE`

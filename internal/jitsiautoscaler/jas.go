@@ -82,9 +82,10 @@ type influx struct {
 	client.Client
 	*v1alpha1.AutoScaler
 
-	ctx     context.Context
-	log     logr.Logger
-	iclient influxdb2.Client
+	ctx         context.Context
+	log         logr.Logger
+	iclient     influxdb2.Client
+	org, bucket string
 }
 
 func New(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) (AutoScaler, error) {
@@ -121,6 +122,18 @@ func New(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) 
 		}
 		return p, nil
 	case "influxdb":
+		var org, bucket string
+		var ok bool
+		org, ok = jas.Annotations["jas.influxdb/org"]
+		if !ok {
+			l.Info("influx org not provided, setting default to `influxdata`")
+			org = "influxdata"
+		}
+		bucket, ok = jas.Annotations["jas.influxdb/bucket"]
+		if !ok {
+			l.Info("influx bucket not provided, setting default to `jitsi`")
+			bucket = "jitsi"
+		}
 		token, ok := jas.Annotations["jas.influxdb/token"]
 		if !ok {
 			return nil, errors.New("token not exist")
@@ -132,6 +145,8 @@ func New(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) 
 			ctx:        ctx,
 			log:        l,
 			iclient:    influxClient,
+			org:        org,
+			bucket:     bucket,
 		}
 		return influxdb, nil
 	default:
@@ -234,21 +249,10 @@ func (i *influx) metricsCounting(resource v1alpha1.ResourceName) float64 {
 }
 
 func (i *influx) countAvg(field string) float64 {
-	var org, bucket string
 	var sum, count, value float64
 	var ok bool
-	org, ok = i.Annotations["jas.influxdb/org"]
-	if !ok {
-		i.log.Info("influx org not provided, setting default to `influxdata`")
-		org = "influxdata"
-	}
-	bucket, ok = i.Annotations["jas.influxdb/bucket"]
-	if !ok {
-		i.log.Info("influx bucket not provided, setting default to `jitsi`")
-		bucket = "jitsi"
-	}
-	query := fmt.Sprintf(influxQuery, bucket, field)
-	result, err := i.iclient.QueryAPI(org).Query(i.ctx, query)
+	query := fmt.Sprintf(influxQuery, i.bucket, field)
+	result, err := i.iclient.QueryAPI(i.org).Query(i.ctx, query)
 	if err != nil {
 		i.log.Info("can't query influx database", "error", err)
 		return 0
@@ -258,7 +262,6 @@ func (i *influx) countAvg(field string) float64 {
 			i.log.Info("can't close connection to influx properly", "error", err)
 		}
 	}(result)
-
 	for result.Next() {
 		values := result.Record().Values()
 		value, ok = values["_value"].(float64)
