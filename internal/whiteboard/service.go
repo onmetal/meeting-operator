@@ -50,25 +50,14 @@ func (s *Service) prepareServiceSpec() v1.ServiceSpec {
 }
 
 func (s *Service) Update() error {
-	service, err := s.Get()
+	svc, err := s.Get()
 	if err != nil {
 		return err
 	}
-	switch {
-	case service.Spec.Type != s.serviceType:
-		// You can't change spec.type on existing service
-		if delErr := s.Client.Delete(s.ctx, service); delErr != nil {
-			s.log.Error(delErr, "failed to delete ServiceTemplate")
-		}
-		preparedService := s.prepareService()
-		return s.Client.Create(s.ctx, preparedService)
-	default:
-		updatedServiceSpec := s.prepareServiceSpec()
-		service.Annotations = s.annotations
-		service.Spec.Ports = updatedServiceSpec.Ports
-		service.Spec.Selector = updatedServiceSpec.Selector
-		return s.Client.Update(s.ctx, service)
-	}
+	updatedServiceSpec := s.prepareServiceSpec()
+	svc.Spec.Ports = updatedServiceSpec.Ports
+	svc.Spec.Selector = updatedServiceSpec.Selector
+	return s.Client.Update(s.ctx, svc)
 }
 
 func (s *Service) Get() (*v1.Service, error) {

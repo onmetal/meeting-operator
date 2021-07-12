@@ -4,7 +4,10 @@ type SIP struct {
 	Options []string
 }
 
-const loggingLevel = "LOGGING_LEVEL"
+const (
+	loggingLevel     = "LOGGING_LEVEL"
+	loggingLevelInfo = "INFO"
+)
 
 const jvbGracefulShutdown = `
 	#!/bin/bash

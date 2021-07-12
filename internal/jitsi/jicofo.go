@@ -48,12 +48,12 @@ func (j *Jicofo) createCustomLoggingCM() error {
 }
 
 func (j *Jicofo) prepareLoggingCM() *v1.ConfigMap {
-	tpl, err := template.New("sip").Parse(jicofoCustomLogging)
+	tpl, err := template.New("log").Parse(jicofoCustomLogging)
 	if err != nil {
 		j.log.Info("can't template logging config", "error", err)
 		return nil
 	}
-	var level = "INFO"
+	var level = loggingLevelInfo
 	for k := range j.Environments {
 		if j.Environments[k].Name != loggingLevel {
 			continue
@@ -177,7 +177,11 @@ func (j *Jicofo) prepareExporterContainer() v1.Container {
 
 func (j *Jicofo) Update() error {
 	if err := j.updateCustomLoggingCM(); err != nil {
-		j.log.Info("can't update jicofo logging cm", "error", err)
+		if apierrors.IsNotFound(err) {
+			if createErr := j.createCustomLoggingCM(); createErr != nil {
+				j.log.Info("can't create jicofo logging cm", "error", createErr)
+			}
+		} else { j.log.Info("can't update jicofo logging cm", "error", err) }
 	}
 	updatedDeployment := j.prepareDeployment()
 	return j.Client.Update(j.ctx, updatedDeployment)

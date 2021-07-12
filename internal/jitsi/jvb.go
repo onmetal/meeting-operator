@@ -93,32 +93,24 @@ func (j *JVB) Create() error {
 }
 
 func (j *JVB) createShutdownCM() error {
-	shutdown := &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "jvb-graceful-shutdown", Namespace: j.namespace,
-		Labels: map[string]string{"app": "jvb"}},
-		Data: map[string]string{"graceful_shutdown.sh": jvbGracefulShutdown}}
-	err := j.Client.Create(j.ctx, shutdown)
-	if apierrors.IsAlreadyExists(err) {
-		return nil
-	}
-	return err
+	shutdown := j.prepareShutdownCM()
+	return j.Client.Create(j.ctx, shutdown)
 }
 
 func (j *JVB) createCustomSIPCM() error {
 	sip := j.prepareSIPCM()
-	err := j.Client.Create(j.ctx, sip)
-	if apierrors.IsAlreadyExists(err) {
-		return nil
-	}
-	return err
+	return j.Client.Create(j.ctx, sip)
 }
 
 func (j *JVB) createCustomLoggingCM() error {
 	logging := j.prepareLoggingCM()
-	err := j.Client.Create(j.ctx, logging)
-	if apierrors.IsAlreadyExists(err) {
-		return nil
-	}
-	return err
+	return j.Client.Create(j.ctx, logging)
+}
+
+func (j *JVB) prepareShutdownCM() *v1.ConfigMap {
+	return &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "jvb-graceful-shutdown", Namespace: j.namespace,
+		Labels: map[string]string{"app": "jvb"}},
+		Data: map[string]string{"graceful_shutdown.sh": jvbGracefulShutdown}}
 }
 
 func (j *JVB) prepareSIPCM() *v1.ConfigMap {
@@ -139,12 +131,12 @@ func (j *JVB) prepareSIPCM() *v1.ConfigMap {
 }
 
 func (j *JVB) prepareLoggingCM() *v1.ConfigMap {
-	tpl, err := template.New("sip").Parse(jvbCustomLogging)
+	tpl, err := template.New("log").Parse(jvbCustomLogging)
 	if err != nil {
 		j.log.Info("can't template logging config", "error", err)
 		return nil
 	}
-	var level = "INFO"
+	var level = loggingLevelInfo
 	for k := range j.envs {
 		if j.envs[k].Name != loggingLevel {
 			continue
@@ -453,14 +445,27 @@ func (j *JVB) prepareExporterContainer() v1.Container {
 }
 
 func (j *JVB) Update() error {
-	if err := j.createShutdownCM(); err != nil {
-		j.log.Info("can't create jvb cm", "error", err)
+	if err := j.updateShutdownCM(); err != nil {
+		if apierrors.IsNotFound(err) {
+			if createErr := j.createShutdownCM(); createErr != nil {
+				j.log.Info("can't create jvb shutdown cm", "error", createErr)
+			}
+		} else { j.log.Info("can't update jvb shutdown cm", "error", err) }
 	}
 	if err := j.updateCustomSIPCM(); err != nil {
-		j.log.Info("can't update jvb sip cm", "error", err)
+		if apierrors.IsNotFound(err) {
+			if createErr := j.createCustomSIPCM(); createErr != nil {
+				j.log.Info("can't create jvb sip cm", "error", createErr)
+			}
+		} else { j.log.Info("can't update jvb sip cm", "error", err) }
+
 	}
 	if err := j.updateCustomLoggingCM(); err != nil {
-		j.log.Info("can't update jvb logging cm", "error", err)
+		if apierrors.IsNotFound(err) {
+			if createErr := j.createCustomLoggingCM(); createErr != nil {
+				j.log.Info("can't create jvb logging cm", "error", createErr)
+			}
+		} else { j.log.Info("can't update jvb logging cm", "error", err) }
 	}
 	instance, err := j.getInstance()
 	if err != nil {
@@ -473,6 +478,11 @@ func (j *JVB) Update() error {
 	prepared := j.prepareInstance()
 	instance.Spec.Template.Spec = prepared.Spec.Template.Spec
 	return j.Client.Update(j.ctx, instance)
+}
+
+func (j *JVB) updateShutdownCM() error {
+	s := j.prepareShutdownCM()
+	return j.Client.Update(j.ctx, s)
 }
 
 func (j *JVB) updateCustomSIPCM() error {
