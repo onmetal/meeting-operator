@@ -1,6 +1,7 @@
 Resource name could be:
 1. jitsi_conference - Metrics based on active JVB conference count for 15m.
-2. cpu - Metrics based on "Container_Cpu_Usage" (not working with influx right now).
+2. jitsi_participants - Metrics based on active JVB participants count for 15m. 
+3. cpu - Metrics based on "Container_Cpu_Usage" (not working with influx right now).
 
 Prometheus example:
 ```
