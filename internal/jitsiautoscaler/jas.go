@@ -294,7 +294,7 @@ func scaleUp(ctx context.Context, c client.Client, name, namespace string, desir
 	}
 	jitsi.Spec.JVB.Replicas *= desiredReplicas
 	if jitsi.Spec.JVB.Replicas > maxReplicas {
-		return nil
+		jitsi.Spec.JVB.Replicas = maxReplicas
 	}
 	return c.Update(ctx, jitsi)
 }
