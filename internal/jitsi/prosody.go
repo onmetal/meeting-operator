@@ -23,45 +23,46 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func (j *Prosody) Create() error {
-	preparedDeployment := j.prepareDeployment()
-	return j.Client.Create(j.ctx, preparedDeployment)
+func (p *Prosody) Create() error {
+	preparedDeployment := p.prepareDeployment()
+	return p.Client.Create(p.ctx, preparedDeployment)
 }
 
-func (j *Prosody) prepareDeployment() *appsv1.Deployment {
-	spec := j.prepareDeploymentSpec()
+func (p *Prosody) prepareDeployment() *appsv1.Deployment {
+	spec := p.prepareDeploymentSpec()
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        j.name,
-			Namespace:   j.namespace,
-			Labels:      j.labels,
-			Annotations: j.Annotations,
+			Name:        p.name,
+			Namespace:   p.namespace,
+			Labels:      p.labels,
+			Annotations: p.Annotations,
 		},
 		Spec: spec,
 	}
 }
 
-func (j *Prosody) prepareDeploymentSpec() appsv1.DeploymentSpec {
+func (p *Prosody) prepareDeploymentSpec() appsv1.DeploymentSpec {
 	return appsv1.DeploymentSpec{
 		Selector: &metav1.LabelSelector{
-			MatchLabels: j.labels,
+			MatchLabels: p.labels,
 		},
-		Replicas: &j.Replicas,
+		Replicas: &p.Replicas,
 		Template: v1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
-				Labels: j.labels,
+				Labels: p.labels,
 			},
 			Spec: v1.PodSpec{
-				ImagePullSecrets: j.ImagePullSecrets,
+				TerminationGracePeriodSeconds: &p.TerminationGracePeriodSeconds,
+				ImagePullSecrets:              p.ImagePullSecrets,
 				Containers: []v1.Container{
 					{
 						Name:            JicofoName,
-						Image:           j.Image,
-						ImagePullPolicy: j.ImagePullPolicy,
-						Env:             j.Environments,
-						Ports:           getContainerPorts(j.Ports),
-						Resources:       j.Resources,
-						SecurityContext: &j.SecurityContext,
+						Image:           p.Image,
+						ImagePullPolicy: p.ImagePullPolicy,
+						Env:             p.Environments,
+						Ports:           getContainerPorts(p.Ports),
+						Resources:       p.Resources,
+						SecurityContext: &p.SecurityContext,
 					},
 				},
 			},
@@ -69,24 +70,24 @@ func (j *Prosody) prepareDeploymentSpec() appsv1.DeploymentSpec {
 	}
 }
 
-func (j *Prosody) Update() error {
-	updatedDeployment := j.prepareDeployment()
-	return j.Client.Update(j.ctx, updatedDeployment)
+func (p *Prosody) Update() error {
+	updatedDeployment := p.prepareDeployment()
+	return p.Client.Update(p.ctx, updatedDeployment)
 }
 
-func (j *Prosody) Delete() error {
-	deployment, err := j.Get()
+func (p *Prosody) Delete() error {
+	deployment, err := p.Get()
 	if err != nil {
 		return err
 	}
-	return j.Client.Delete(j.ctx, deployment)
+	return p.Client.Delete(p.ctx, deployment)
 }
 
-func (j *Prosody) Get() (*appsv1.Deployment, error) {
+func (p *Prosody) Get() (*appsv1.Deployment, error) {
 	deployment := &appsv1.Deployment{}
-	err := j.Client.Get(j.ctx, types.NamespacedName{
-		Namespace: j.namespace,
-		Name:      j.name,
+	err := p.Client.Get(p.ctx, types.NamespacedName{
+		Namespace: p.namespace,
+		Name:      p.name,
 	}, deployment)
 	return deployment, err
 }

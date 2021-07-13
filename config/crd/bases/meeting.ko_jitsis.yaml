@@ -430,6 +430,10 @@ spec:
                             type: object
                         type: object
                     type: object
+                  terminationGracePeriodSeconds:
+                    default: 60
+                    format: int64
+                    type: integer
                 type: object
               jicofo:
                 properties:
@@ -876,6 +880,10 @@ spec:
                     default: ClusterIP
                     description: Service Type string describes ingress methods for a service
                     type: string
+                  terminationGracePeriodSeconds:
+                    default: 60
+                    format: int64
+                    type: integer
                 type: object
               jigasi:
                 properties:
@@ -1276,6 +1284,10 @@ spec:
                             type: object
                         type: object
                     type: object
+                  terminationGracePeriodSeconds:
+                    default: 60
+                    format: int64
+                    type: integer
                 type: object
               jvb:
                 properties:
@@ -1724,6 +1736,10 @@ spec:
                     default: ClusterIP
                     description: Service Type string describes ingress methods for a service
                     type: string
+                  terminationGracePeriodSeconds:
+                    default: 60
+                    format: int64
+                    type: integer
                 type: object
               prosody:
                 properties:
@@ -1958,6 +1974,10 @@ spec:
                     default: ClusterIP
                     description: Service Type string describes ingress methods for a service
                     type: string
+                  terminationGracePeriodSeconds:
+                    default: 60
+                    format: int64
+                    type: integer
                 type: object
               web:
                 properties:
@@ -2192,6 +2212,10 @@ spec:
                     default: ClusterIP
                     description: Service Type string describes ingress methods for a service
                     type: string
+                  terminationGracePeriodSeconds:
+                    default: 60
+                    format: int64
+                    type: integer
                 type: object
             required:
             - jicofo
