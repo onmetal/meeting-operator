@@ -1,20 +1,34 @@
+# /*
+# Copyright 2021.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# */
+
 apiVersion: meeting.ko/v1alpha1
 kind: AutoScaler
 metadata:
   name: jas-sample
 spec:
-  type: "prometheus"
+  monitoringType: "prometheus"
   host: "http://172.28.174.90:9090/"
   interval: "60s"
   scaleTargetRef:
     name: jitsi-sample
   minReplicas: 1
   maxReplicas: 3
-  metrics:
-    - type: "Resource"
-      resource:
-        name: jitsi_conference
-        targetAverageUtilization: 40
+  metric:
+    name: jitsi_participants
+    targetAverageUtilization: 40
 ---
 apiVersion: meeting.ko/v1alpha1
 kind: AutoScaler
@@ -22,19 +36,16 @@ metadata:
   name: jas-influx-sample
   annotations:
     jas.influxdb/token: "e9XEamUiqMeoa0HmsXiZ8zIe5BDr2p8D"
-#    # This could be either the organization name or the ID.
-    jas.influxdb/org: "influxdata"
+    jas.influxdb/org: "influxdata" # This could be either the organization name or the ID.
     jas.influxdb/bucket: "jitsi"
 spec:
-  type: "influxdb"
+  monitoringType: "influxdb"
   host: "http://influx-influxdb2:80/"
   interval: "60s"
   scaleTargetRef:
     name: jitsi-sample
   minReplicas: 1
   maxReplicas: 3
-  metrics:
-  - type: "Resource"
-    resource:
-      name: jitsi_conference
-      targetAverageUtilization: 40
+  metric:
+    name: jitsi_participants
+    targetAverageUtilization: 40

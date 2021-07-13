@@ -20,25 +20,25 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type ResourceName string
+type MetricName string
 
 const (
-	ResourceCPU          ResourceName = "cpu"
-	ResourceConference   ResourceName = "jitsi_conference"
-	ResourceParticipants ResourceName = "jitsi_participants"
+	ResourceCPU          MetricName = "cpu"
+	ResourceConference   MetricName = "jitsi_conference"
+	ResourceParticipants MetricName = "jitsi_participants"
 )
 
 // AutoScalerSpec defines the desired state of AutoScaler
 type AutoScalerSpec struct {
 	Labels         map[string]string `json:"labels,omitempty"`
-	Type           string            `json:"type,omitempty"`
+	MonitoringType string            `json:"monitoringType,omitempty"`
 	Host           string            `json:"host"`
 	Interval       string            `json:"interval,omitempty"`
 	Auth           Auth              `json:"auth,omitempty"`
 	ScaleTargetRef ScaleTargetRef    `json:"scaleTargetRef,omitempty"`
 	MinReplicas    int32             `json:"minReplicas,omitempty"`
 	MaxReplicas    int32             `json:"maxReplicas,omitempty"`
-	Metrics        []Metric          `json:"metrics,omitempty"`
+	Metric         Metric            `json:"metric,omitempty"`
 }
 
 // ScaleTargetRef contains enough information to let you identify the referred resource.
@@ -47,13 +47,8 @@ type ScaleTargetRef struct {
 }
 
 type Metric struct {
-	Type     string   `json:"type"`
-	Resource Resource `json:"resource"`
-}
-
-type Resource struct {
-	Name                     ResourceName `json:"name"`
-	TargetAverageUtilization int32        `json:"targetAverageUtilization"`
+	Name                     MetricName `json:"name"`
+	TargetAverageUtilization int32      `json:"targetAverageUtilization"`
 }
 
 type Auth struct {

@@ -91,7 +91,7 @@ const jvbGracefulShutdown = `
       echo "$@" 1>&2
     }
     
-    shutdownStatus=` + "`curl -s -o /dev/null -H \"Content-Type: application/json\"" +
+    shutdownStatus=` + "`curl -s -o /dev/null -H \"Content-MonitoringType: application/json\"" +
 	" -d '{ \"graceful-shutdown\": \"true\" }' -w \"%{http_code}\" \"$hostUrl/colibri/shutdown\"`\n" +
 	`	
 	if [ "$shutdownStatus" == "200" ]

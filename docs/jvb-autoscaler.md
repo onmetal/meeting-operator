@@ -10,18 +10,16 @@ kind: AutoScaler
 metadata:
   name: jas-sample
 spec:
-  type: "prometheus"
+  monitoringType: "prometheus"
   host: "http://172.28.174.90:9090/"
   interval: "60s"
   scaleTargetRef:
     name: jitsi-sample
   minReplicas: 1
   maxReplicas: 3
-  metrics:
-    - type: "Resource"
-      resource:
-        name: jitsi_conference
-        targetAverageUtilization: 40
+  metric:
+    name: jitsi_participants
+    targetAverageUtilization: 40
 ```
 
 InfluxDB example:
@@ -32,23 +30,19 @@ metadata:
   name: jas-influx-sample
   annotations:
     jas.influxdb/token: "e9XEamUiqMeoa0HmsXiZ8zIe5BDr2p8D"
-#    # This could be either the organization name or the ID.
-    jas.influxdb/org: "influxdata"
+    jas.influxdb/org: "influxdata" # This could be either the organization name or the ID.
     jas.influxdb/bucket: "jitsi"
 spec:
-  type: "influxdb"
+  monitoringType: "influxdb"
   host: "http://influx-influxdb2:80/"
   interval: "60s"
   scaleTargetRef:
     name: jitsi-sample
   minReplicas: 1
   maxReplicas: 3
-  metrics:
-  - type: "Resource"
-    resource:
-      name: jitsi_conference
-      targetAverageUtilization: 40
-
+  metric:
+    name: jitsi_participants
+    targetAverageUtilization: 40
 ```
 
 For InfluxDB, you can set up next fields in annotations:

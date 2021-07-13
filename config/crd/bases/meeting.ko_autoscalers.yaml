@@ -52,30 +52,22 @@ spec:
               maxReplicas:
                 format: int32
                 type: integer
-              metrics:
-                items:
-                  properties:
-                    resource:
-                      properties:
-                        name:
-                          type: string
-                        targetAverageUtilization:
-                          format: int32
-                          type: integer
-                      required:
-                      - name
-                      - targetAverageUtilization
-                      type: object
-                    type:
-                      type: string
-                  required:
-                  - resource
-                  - type
-                  type: object
-                type: array
+              metric:
+                properties:
+                  name:
+                    type: string
+                  targetAverageUtilization:
+                    format: int32
+                    type: integer
+                required:
+                - name
+                - targetAverageUtilization
+                type: object
               minReplicas:
                 format: int32
                 type: integer
+              monitoringType:
+                type: string
               scaleTargetRef:
                 description: ScaleTargetRef contains enough information to let you identify the referred resource.
                 properties:
@@ -84,8 +76,6 @@ spec:
                 required:
                 - name
                 type: object
-              type:
-                type: string
             required:
             - host
             type: object
