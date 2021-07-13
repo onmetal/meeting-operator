@@ -52,7 +52,8 @@ func (j *Jigasi) prepareDeploymentSpec() appsv1.DeploymentSpec {
 				Labels: j.labels,
 			},
 			Spec: v1.PodSpec{
-				ImagePullSecrets: j.ImagePullSecrets,
+				TerminationGracePeriodSeconds: &j.TerminationGracePeriodSeconds,
+				ImagePullSecrets:              j.ImagePullSecrets,
 				Containers: []v1.Container{
 					{
 						Name:            JigasiName,

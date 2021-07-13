@@ -97,8 +97,9 @@ func (j *Jicofo) prepareDeploymentSpec() appsv1.DeploymentSpec {
 				Labels: j.labels,
 			},
 			Spec: v1.PodSpec{
-				ImagePullSecrets: j.ImagePullSecrets,
-				Volumes:          volumes,
+				TerminationGracePeriodSeconds: &j.TerminationGracePeriodSeconds,
+				ImagePullSecrets:              j.ImagePullSecrets,
+				Volumes:                       volumes,
 				Containers: []v1.Container{
 					jicofo,
 					exporter,
@@ -181,7 +182,9 @@ func (j *Jicofo) Update() error {
 			if createErr := j.createCustomLoggingCM(); createErr != nil {
 				j.log.Info("can't create jicofo logging cm", "error", createErr)
 			}
-		} else { j.log.Info("can't update jicofo logging cm", "error", err) }
+		} else {
+			j.log.Info("can't update jicofo logging cm", "error", err)
+		}
 	}
 	updatedDeployment := j.prepareDeployment()
 	return j.Client.Update(j.ctx, updatedDeployment)

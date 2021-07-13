@@ -36,6 +36,8 @@ type Web struct {
 	Replicas int32 `json:"replicas,omitempty"`
 	//+kubebuilder:default="jitsi/web:stable-5390-3"
 	Image string `json:"image,omitempty"`
+	//+kubebuilder:default:=60
+	TerminationGracePeriodSeconds int64 `json:"terminationGracePeriodSeconds,omitempty"`
 	//+kubebuilder:default="IfNotPresent"
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
@@ -54,6 +56,8 @@ type Prosody struct {
 	Replicas int32 `json:"replicas,omitempty"`
 	//+kubebuilder:default="jitsi/prosody:stable-5390-3"
 	Image string `json:"image,omitempty"`
+	//+kubebuilder:default:=60
+	TerminationGracePeriodSeconds int64 `json:"terminationGracePeriodSeconds,omitempty"`
 	//+kubebuilder:default="IfNotPresent"
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
@@ -73,6 +77,8 @@ type Jicofo struct {
 	Replicas int32 `json:"replicas,omitempty"`
 	//+kubebuilder:default="jitsi/jicofo:stable-5390-3"
 	Image string `json:"image,omitempty"`
+	//+kubebuilder:default:=60
+	TerminationGracePeriodSeconds int64 `json:"terminationGracePeriodSeconds,omitempty"`
 	//+kubebuilder:default="IfNotPresent"
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
@@ -91,6 +97,8 @@ type Jibri struct {
 	Replicas int32 `json:"replicas,omitempty"`
 	//+kubebuilder:default="jitsi/jibri:stable-5390-3"
 	Image string `json:"image,omitempty"`
+	//+kubebuilder:default:=60
+	TerminationGracePeriodSeconds int64 `json:"terminationGracePeriodSeconds,omitempty"`
 	//+kubebuilder:default="IfNotPresent"
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
@@ -110,6 +118,8 @@ type Jigasi struct {
 	Replicas int32 `json:"replicas,omitempty"`
 	//+kubebuilder:default="jitsi/jigasi:stable-5390-3"
 	Image string `json:"image,omitempty"`
+	//+kubebuilder:default:=60
+	TerminationGracePeriodSeconds int64 `json:"terminationGracePeriodSeconds,omitempty"`
 	//+kubebuilder:default="IfNotPresent"
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
@@ -130,6 +140,8 @@ type JVB struct {
 	Replicas int32 `json:"replicas,omitempty"`
 	//+kubebuilder:default="jitsi/jvb:stable-5390-3"
 	Image string `json:"image,omitempty"`
+	//+kubebuilder:default:=60
+	TerminationGracePeriodSeconds int64 `json:"terminationGracePeriodSeconds,omitempty"`
 	//+kubebuilder:default="IfNotPresent"
 	ImagePullPolicy    v1.PullPolicy             `json:"image_pull_policy,omitempty"`
 	ImagePullSecrets   []v1.LocalObjectReference `json:"image_pull_secrets,omitempty"`

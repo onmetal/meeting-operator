@@ -237,8 +237,9 @@ func (j *JVB) prepareDeploymentSpec(l map[string]string) appsv1.DeploymentSpec {
 				Labels: l,
 			},
 			Spec: v1.PodSpec{
-				ImagePullSecrets: j.ImagePullSecrets,
-				Volumes:          volumes,
+				TerminationGracePeriodSeconds: &j.TerminationGracePeriodSeconds,
+				ImagePullSecrets:              j.ImagePullSecrets,
+				Volumes:                       volumes,
 				Containers: []v1.Container{
 					jvb,
 					exporter,
@@ -450,22 +451,27 @@ func (j *JVB) Update() error {
 			if createErr := j.createShutdownCM(); createErr != nil {
 				j.log.Info("can't create jvb shutdown cm", "error", createErr)
 			}
-		} else { j.log.Info("can't update jvb shutdown cm", "error", err) }
+		} else {
+			j.log.Info("can't update jvb shutdown cm", "error", err)
+		}
 	}
 	if err := j.updateCustomSIPCM(); err != nil {
 		if apierrors.IsNotFound(err) {
 			if createErr := j.createCustomSIPCM(); createErr != nil {
 				j.log.Info("can't create jvb sip cm", "error", createErr)
 			}
-		} else { j.log.Info("can't update jvb sip cm", "error", err) }
-
+		} else {
+			j.log.Info("can't update jvb sip cm", "error", err)
+		}
 	}
 	if err := j.updateCustomLoggingCM(); err != nil {
 		if apierrors.IsNotFound(err) {
 			if createErr := j.createCustomLoggingCM(); createErr != nil {
 				j.log.Info("can't create jvb logging cm", "error", createErr)
 			}
-		} else { j.log.Info("can't update jvb logging cm", "error", err) }
+		} else {
+			j.log.Info("can't update jvb logging cm", "error", err)
+		}
 	}
 	instance, err := j.getInstance()
 	if err != nil {

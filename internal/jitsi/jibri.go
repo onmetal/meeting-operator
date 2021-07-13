@@ -56,7 +56,8 @@ func (j *Jibri) prepareSTSSpec() appsv1.StatefulSetSpec {
 				Labels: j.labels,
 			},
 			Spec: v1.PodSpec{
-				ImagePullSecrets: j.ImagePullSecrets,
+				TerminationGracePeriodSeconds: &j.TerminationGracePeriodSeconds,
+				ImagePullSecrets:              j.ImagePullSecrets,
 				Containers: []v1.Container{
 					{
 						Name:            JibriName,
