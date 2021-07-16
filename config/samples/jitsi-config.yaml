@@ -23,6 +23,7 @@ data:
   JIBRI_XMPP_PASSWORD: dG90bw==
   JIGASI_XMPP_PASSWORD: dG90bw==
   JIBRI_RECORDER_PASSWORD: dG90bw==
+  TURNCREDENTIALS_SECRET: dG90bw==
 kind: Secret
 metadata:
   name: jitsi-config

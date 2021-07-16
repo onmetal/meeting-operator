@@ -165,6 +165,20 @@ spec:
         value: "1"
       - name: PUBLIC_URL
         value: https://<<your public url here>>
+      - name: TURNCREDENTIALS_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: jitsi-config
+            key: TURNCREDENTIALS_SECRET
+      - name: TURN_HOST
+        value: https://<<your public turn url here>>
+      - name: STUN_PORT
+        value: "443"
+      - name: TURN_PORT
+        value: "443"
+      - name: TURNS_PORT
+        value: "443"
+
 
   jibri:
     replicas: 0

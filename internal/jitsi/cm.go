@@ -4,6 +4,14 @@ type SIP struct {
 	Options []string
 }
 
+type TurnCredentialsConfig struct {
+	XMPPDomain, TurnCredentials, TurnHost, StunHost, TurnPort, StunPort, TurnsPort string
+	StunEnabled, TurnUDPEnabled                                                    bool
+}
+
+type TurnConfig struct {
+}
+
 const (
 	loggingLevel     = "LOGGING_LEVEL"
 	loggingLevelInfo = "INFO"
@@ -195,3 +203,42 @@ net.java.sip.communicator.service.resources.AbstractResourcesService.level=SEVER
 
 # Enable debug packets logging
 #org.jitsi.impl.protocol.xmpp.level=FINE`
+
+const prosodyTurnCredentialsConfig = `muc_mapper_domain_base = "{{ .XMPPDomain }}"
+
+turncredentials_secret = "{{ .TurnCredentials }}";
+
+turncredentials = {
+	{{ if .StunEnabled }}
+    { type = "stun", host = "{{ .StunHost }}", port = "{{ .StunPort }}" },
+	{{ end }}
+	{{ if .TurnUDPEnabled }}
+    { type = "turn", host = "{{ .TurnHost }}", port = "{{ .TurnPort }}", transport = "udp"},
+	{{ end }}
+    { type = "turns", host = "{{ .TurnHost }}", port = "{{ .TurnsPort }}", transport = "tcp" }
+}
+external_services = {
+	{{ if .StunEnabled }}
+    {
+        type = "stun",
+        transport = "udp",
+        host = "{{ .StunHost }}",
+        port = {{ .StunPort }}
+    }, 
+	{{ end }}
+	{{ if .TurnUDPEnabled }}
+    {
+        type = "stun",
+        transport = "udp",
+        host = "{{ .StunHost }}",
+        port = {{ .StunPort }}
+    }, 
+	{{ end }}
+	{
+        type = "turn",
+        transport = "tcp",
+        host = "{{ .TurnHost }}",
+        port = {{ .TurnsPort }},
+        secret = "{{ .TurnCredentials }}"
+    }
+}`
