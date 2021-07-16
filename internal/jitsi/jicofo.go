@@ -66,7 +66,7 @@ func (j *Jicofo) prepareLoggingCM() *v1.ConfigMap {
 		return nil
 	}
 	return &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "jicofo-custom-logging", Namespace: j.namespace,
-		Labels: map[string]string{"app": "jicofo"}},
+		Labels: map[string]string{"app": JicofoName}},
 		Data: map[string]string{"custom-logging.properties": b.String()}}
 }
 
@@ -209,7 +209,7 @@ func (j *Jicofo) Delete() error {
 func (j *Jicofo) deleteCMs() error {
 	var cms v1.ConfigMapList
 	filter := &client.ListOptions{
-		LabelSelector: client.MatchingLabelsSelector{Selector: labels.SelectorFromSet(map[string]string{"app": "jicofo"})}}
+		LabelSelector: client.MatchingLabelsSelector{Selector: labels.SelectorFromSet(map[string]string{"app": JicofoName})}}
 	if err := j.Client.List(j.ctx, &cms, filter); err != nil {
 		return err
 	}
