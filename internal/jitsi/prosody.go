@@ -49,7 +49,7 @@ func (p *Prosody) createTurnCM() error {
 }
 
 func (p *Prosody) prepareTurnCredentialsCM() *v1.ConfigMap {
-	tpl, err := template.New("log").Parse(prosodyTurnCredentialsConfig)
+	tpl, err := template.New("log").Parse(prosodyTurnConfig)
 	if err != nil {
 		p.log.Info("can't template turn config", "error", err)
 		return nil
@@ -65,8 +65,8 @@ func (p *Prosody) prepareTurnCredentialsCM() *v1.ConfigMap {
 		Data: map[string]string{"turn.cfg.lua": b.String()}}
 }
 
-func (p *Prosody) getTurnCredentialsConfig() TurnCredentialsConfig {
-	var config TurnCredentialsConfig
+func (p *Prosody) getTurnCredentialsConfig() TurnConfig {
+	var config TurnConfig
 	for env := range p.Environments {
 		switch p.Environments[env].Name {
 		case "XMPP_DOMAIN":

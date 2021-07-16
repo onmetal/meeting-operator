@@ -36,7 +36,7 @@ Add this to your `Chart.yaml`
 ```yaml
 dependencies:
   - name: meeting-operator
-    version: '0.11.0'
+    version: '0.11.1'
     repository: 'https://onmetal.github.io/meeting-operator'
 ```
 

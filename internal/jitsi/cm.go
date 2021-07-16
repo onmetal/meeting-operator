@@ -4,12 +4,9 @@ type SIP struct {
 	Options []string
 }
 
-type TurnCredentialsConfig struct {
+type TurnConfig struct {
 	XMPPDomain, TurnCredentials, TurnHost, StunHost, TurnPort, StunPort, TurnsPort string
 	StunEnabled, TurnUDPEnabled                                                    bool
-}
-
-type TurnConfig struct {
 }
 
 const (
@@ -204,7 +201,7 @@ net.java.sip.communicator.service.resources.AbstractResourcesService.level=SEVER
 # Enable debug packets logging
 #org.jitsi.impl.protocol.xmpp.level=FINE`
 
-const prosodyTurnCredentialsConfig = `muc_mapper_domain_base = "{{ .XMPPDomain }}"
+const prosodyTurnConfig = `muc_mapper_domain_base = "{{ .XMPPDomain }}"
 
 turncredentials_secret = "{{ .TurnCredentials }}";
 
@@ -228,10 +225,10 @@ external_services = {
 	{{ end }}
 	{{ if .TurnUDPEnabled }}
     {
-        type = "stun",
+        type = "turn",
         transport = "udp",
-        host = "{{ .StunHost }}",
-        port = {{ .StunPort }}
+        host = "{{ .TurnHost }}",
+        port = {{ .TurnPort }}
     }, 
 	{{ end }}
 	{
