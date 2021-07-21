@@ -27,7 +27,8 @@ helm install meeting-operator ./deploy/helm/meeting-operator
 or
 ```
 helm repo add onmetal https://onmetal.github.io/meeting-operator/
-helm repo update
+# OR
+helm repo add onmetal --username username --password password https://artifactory.devops.telekom.de/artifactory/jitsi-helm
 helm install meeting-operator onmetal/meeting-operator
 ```
 ### Use the published chart
