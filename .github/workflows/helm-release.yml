@@ -37,4 +37,5 @@ jobs:
           JF_ARTIFACTORY_1: ${{ secrets.JF_ARTIFACTORY_SECRET }}
       - name: Deploy to Artifactory 
         run: | 
-          jfrog rt u "deploy/helm/*.tgz" helm-local
+          helm package deploy/helm/meeting-operator/
+          jfrog rt u "*.tgz" jitsi-helm
