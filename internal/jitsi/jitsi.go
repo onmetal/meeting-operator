@@ -18,15 +18,9 @@ package jitsi
 
 import (
 	"context"
-
-	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
-
-	v1 "k8s.io/api/core/v1"
-
-	"github.com/onmetal/meeting-operator/internal/utils"
-
 	"github.com/go-logr/logr"
-	"github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
+	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
+	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -46,7 +40,8 @@ type Jitsi interface {
 
 type Web struct {
 	client.Client
-	*v1alpha1.Web
+	*v1beta1.Web
+	*service
 
 	ctx             context.Context
 	log             logr.Logger
@@ -54,49 +49,49 @@ type Web struct {
 	labels          map[string]string
 }
 
-type Prosody struct {
-	client.Client
-	*v1alpha1.Prosody
+//type Prosody struct {
+//	client.Client
+//	*v1alpha1.Prosody
+//
+//	ctx             context.Context
+//	log             logr.Logger
+//	name, namespace string
+//	labels          map[string]string
+//}
 
-	ctx             context.Context
-	log             logr.Logger
-	name, namespace string
-	labels          map[string]string
-}
+//type Jicofo struct {
+//	client.Client
+//	*v1alpha1.Jicofo
+//
+//	ctx             context.Context
+//	log             logr.Logger
+//	name, namespace string
+//	labels          map[string]string
+//}
 
-type Jicofo struct {
-	client.Client
-	*v1alpha1.Jicofo
+//type Jibri struct {
+//	client.Client
+//	*v1alpha1.Jibri
+//
+//	ctx             context.Context
+//	log             logr.Logger
+//	name, namespace string
+//	labels          map[string]string
+//}
 
-	ctx             context.Context
-	log             logr.Logger
-	name, namespace string
-	labels          map[string]string
-}
-
-type Jibri struct {
-	client.Client
-	*v1alpha1.Jibri
-
-	ctx             context.Context
-	log             logr.Logger
-	name, namespace string
-	labels          map[string]string
-}
-
-type Jigasi struct {
-	client.Client
-	*v1alpha1.Jigasi
-
-	ctx             context.Context
-	log             logr.Logger
-	name, namespace string
-	labels          map[string]string
-}
+//type Jigasi struct {
+//	client.Client
+//	*v1alpha1.Jigasi
+//
+//	ctx             context.Context
+//	log             logr.Logger
+//	name, namespace string
+//	labels          map[string]string
+//}
 
 type JVB struct {
 	client.Client
-	v1alpha1.JVB
+	*v1beta1.JVB
 
 	ctx                          context.Context
 	log                          logr.Logger
@@ -106,81 +101,9 @@ type JVB struct {
 	deleted                      bool
 }
 
-func New(ctx context.Context, appName string,
-	j *v1alpha1.Jitsi, c client.Client, l logr.Logger) (Jitsi, error) {
-	if err := addFinalizer(ctx, c, j); err != nil {
-		l.Info("can't add finalizer to etherpad", "error", err)
-	}
-	switch appName {
-	case WebName:
-		labels := utils.GetDefaultLabels(WebName)
-		return &Web{
-			Client:    c,
-			Web:       &j.Spec.Web,
-			name:      WebName,
-			namespace: j.Namespace,
-			ctx:       ctx,
-			log:       l,
-			labels:    labels,
-		}, nil
-	case ProsodyName:
-		labels := utils.GetDefaultLabels(ProsodyName)
-		return &Prosody{
-			Client:    c,
-			Prosody:   &j.Spec.Prosody,
-			name:      ProsodyName,
-			namespace: j.Namespace,
-			ctx:       ctx,
-			log:       l,
-			labels:    labels,
-		}, nil
-	case JicofoName:
-		labels := utils.GetDefaultLabels(JicofoName)
-		return &Jicofo{
-			Client:    c,
-			Jicofo:    &j.Spec.Jicofo,
-			name:      JicofoName,
-			namespace: j.Namespace,
-			ctx:       ctx,
-			log:       l,
-			labels:    labels,
-		}, nil
-	case JibriName:
-		labels := utils.GetDefaultLabels(JibriName)
-		return &Jibri{
-			Client:    c,
-			Jibri:     &j.Spec.Jibri,
-			name:      JibriName,
-			namespace: j.Namespace,
-			ctx:       ctx,
-			log:       l,
-			labels:    labels,
-		}, nil
-	case JigasiName:
-		labels := utils.GetDefaultLabels(JigasiName)
-		return &Jigasi{
-			Client:    c,
-			Jigasi:    &j.Spec.Jigasi,
-			name:      JigasiName,
-			namespace: j.Namespace,
-			ctx:       ctx,
-			log:       l,
-			labels:    labels,
-		}, nil
-	default:
-		return nil, meetingerr.NotExist(appName)
-	}
-}
 
-func addFinalizer(ctx context.Context, c client.Client, j *v1alpha1.Jitsi) error {
-	if !utils.ContainsString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
-		j.ObjectMeta.Finalizers = append(j.ObjectMeta.Finalizers, utils.MeetingFinalizer)
-		return c.Update(ctx, j)
-	}
-	return nil
-}
 
-func getContainerPorts(ports []v1alpha1.Port) []v1.ContainerPort {
+func getContainerPorts(ports []v1beta1.Port) []v1.ContainerPort {
 	var containerPorts []v1.ContainerPort
 	if len(ports) < 1 {
 		return nil

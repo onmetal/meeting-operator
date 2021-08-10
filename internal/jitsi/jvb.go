@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	jvbv1beta1 "github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 	"html/template"
 	"time"
 
@@ -27,7 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/go-logr/logr"
-	"github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -52,13 +52,14 @@ const (
 const telegrafExporter = "telegraf"
 
 func NewJVB(ctx context.Context, replica int32,
-	j *v1alpha1.Jitsi, c client.Client, l logr.Logger) Jitsi {
+	j *jvbv1beta1.JVB, c client.Client, l logr.Logger) Jitsi {
 	name := fmt.Sprintf("%s-%d", JvbName, replica)
 	deleted := !j.DeletionTimestamp.IsZero()
+
 	return &JVB{
 		Client:      c,
-		JVB:         j.Spec.JVB,
-		envs:        j.Spec.JVB.Environments,
+		JVB:        j,
+		envs:        j.Spec.Environments,
 		ctx:         ctx,
 		log:         l,
 		name:        name,
@@ -120,7 +121,7 @@ func (j *JVB) prepareSIPCM() *v1.ConfigMap {
 		return nil
 	}
 	var b bytes.Buffer
-	d := SIP{Options: j.CustomSIP}
+	d := SIP{Options: j.Spec.CustomSIP}
 	if executeErr := tpl.Execute(&b, d); executeErr != nil {
 		j.log.Info("can't template sip config", "error", err)
 		return nil
@@ -156,7 +157,7 @@ func (j *JVB) prepareLoggingCM() *v1.ConfigMap {
 func (j *JVB) servicePerInstance() error {
 	service, getErr := j.getService()
 	preparedService := j.prepareServiceForInstance()
-	if j.Exporter.Type == "" {
+	if j.Spec.Exporter.Type == "" {
 		if exporterErr := j.Client.Create(j.ctx, j.serviceForExporter()); exporterErr != nil && !apierrors.IsAlreadyExists(exporterErr) {
 			j.log.Info("can't create exporter service", "error", exporterErr)
 		}
@@ -167,7 +168,7 @@ func (j *JVB) servicePerInstance() error {
 	default:
 		service.ObjectMeta.Annotations = preparedService.Annotations
 		service.Spec.Ports = preparedService.Spec.Ports
-		service.Spec.Type = j.ServiceType
+		service.Spec.Type = j.Spec.ServiceType
 		return j.Client.Update(j.ctx, service)
 	}
 }
@@ -178,11 +179,11 @@ func (j *JVB) prepareServiceForInstance() *v1.Service {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        j.serviceName,
 			Namespace:   j.namespace,
-			Annotations: j.ServiceAnnotations,
+			Annotations: j.Spec.ServiceAnnotations,
 		},
 		Spec: v1.ServiceSpec{
-			Type:     j.ServiceType,
-			Ports:    []v1.ServicePort{{Name: JvbName, Protocol: j.Port.Protocol, Port: port, TargetPort: intstr.IntOrString{IntVal: port}}},
+			Type:     j.Spec.ServiceType,
+			Ports:    []v1.ServicePort{{Name: JvbName, Protocol: j.Spec.Port.Protocol, Port: port, TargetPort: intstr.IntOrString{IntVal: port}}},
 			Selector: map[string]string{"jitsi-jvb": j.name},
 		},
 	}
@@ -199,7 +200,7 @@ func (j *JVB) serviceForExporter() *v1.Service {
 		Spec: v1.ServiceSpec{
 			Type: v1.ServiceTypeClusterIP,
 			Ports: []v1.ServicePort{{Name: "exporter", Protocol: v1.ProtocolTCP,
-				Port: j.Exporter.Port, TargetPort: intstr.IntOrString{IntVal: j.Exporter.Port}}},
+				Port: j.Spec.Exporter.Port, TargetPort: intstr.IntOrString{IntVal: j.Spec.Exporter.Port}}},
 			Selector: map[string]string{"jitsi-jvb": j.name},
 		},
 	}
@@ -237,8 +238,8 @@ func (j *JVB) prepareDeploymentSpec(l map[string]string) appsv1.DeploymentSpec {
 				Labels: l,
 			},
 			Spec: v1.PodSpec{
-				TerminationGracePeriodSeconds: &j.TerminationGracePeriodSeconds,
-				ImagePullSecrets:              j.ImagePullSecrets,
+				TerminationGracePeriodSeconds: &j.Spec.TerminationGracePeriodSeconds,
+				ImagePullSecrets:              j.Spec.ImagePullSecrets,
 				Volumes:                       volumes,
 				Containers: []v1.Container{
 					jvb,
@@ -253,11 +254,11 @@ func (j *JVB) prepareJVBContainer() v1.Container {
 	port := externalPort + j.replica
 	return v1.Container{
 		Name:            JvbName,
-		Image:           j.Image,
-		ImagePullPolicy: j.ImagePullPolicy,
+		Image:           j.Spec.Image,
+		ImagePullPolicy: j.Spec.ImagePullPolicy,
 		Env:             j.additionalEnvironments(),
-		Resources:       j.Resources,
-		SecurityContext: &j.SecurityContext,
+		Resources:       j.Spec.Resources,
+		SecurityContext: &j.Spec.SecurityContext,
 		VolumeMounts: []v1.VolumeMount{
 			{Name: "shutdown", MountPath: "/shutdown"},
 			{Name: "custom-sip", MountPath: "/defaults/sip-communicator.properties", SubPath: "sip-communicator.properties"},
@@ -286,7 +287,7 @@ func (j *JVB) prepareJVBContainer() v1.Container {
 		Ports: []v1.ContainerPort{
 			{
 				Name:          JvbName,
-				Protocol:      j.Port.Protocol,
+				Protocol:      j.Spec.Port.Protocol,
 				ContainerPort: port,
 			},
 			{
@@ -309,9 +310,9 @@ func (j *JVB) prepareVolumesForJVB() []v1.Volume {
 	loggingConfig := v1.Volume{Name: "custom-logging", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
 		Items:                []v1.KeyToPath{{Key: "custom-logging.properties", Path: "logging.properties"}},
 		LocalObjectReference: v1.LocalObjectReference{Name: "jvb-custom-logging"}}}}
-	if j.Exporter.Type == telegrafExporter {
+	if j.Spec.Exporter.Type == telegrafExporter {
 		telegrafCM := v1.Volume{Name: "telegraf", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
-			LocalObjectReference: v1.LocalObjectReference{Name: j.Exporter.ConfigMapName}}}}
+			LocalObjectReference: v1.LocalObjectReference{Name: j.Spec.Exporter.ConfigMapName}}}}
 		return append(volume, shutdown, sipConfig, telegrafCM, loggingConfig)
 	}
 	return append(volume, shutdown, sipConfig, loggingConfig)
@@ -320,7 +321,7 @@ func (j *JVB) prepareVolumesForJVB() []v1.Volume {
 func (j *JVB) additionalEnvironments() []v1.EnvVar {
 	port := fmt.Sprint(externalPort + j.replica)
 	switch {
-	case j.Port.Protocol == v1.ProtocolTCP:
+	case j.Spec.Port.Protocol == v1.ProtocolTCP:
 		additionalEnvs := make([]v1.EnvVar, 0, 6)
 		if !isHostAddressExist(j.envs) {
 			additionalEnvs = append(additionalEnvs, j.getDockerHostAddr())
@@ -350,7 +351,7 @@ func (j *JVB) additionalEnvironments() []v1.EnvVar {
 			j.envs = append(j.envs, additionalEnvs[index])
 		}
 		return j.envs
-	case j.Port.Protocol == v1.ProtocolUDP:
+	case j.Spec.Port.Protocol == v1.ProtocolUDP:
 		additionalEnvs := make([]v1.EnvVar, 0, 2)
 		if !isHostAddressExist(j.envs) {
 			additionalEnvs = append(additionalEnvs, j.getDockerHostAddr())
@@ -370,7 +371,7 @@ func (j *JVB) additionalEnvironments() []v1.EnvVar {
 }
 
 func (j *JVB) getDockerHostAddr() v1.EnvVar {
-	if j.ServiceType != v1.ServiceTypeLoadBalancer {
+	if j.Spec.ServiceType != v1.ServiceTypeLoadBalancer {
 		return v1.EnvVar{
 			Name:  "DOCKER_HOST_ADDRESS",
 			Value: "",
@@ -420,27 +421,27 @@ func (j *JVB) getService() (*v1.Service, error) {
 }
 
 func (j *JVB) prepareExporterContainer() v1.Container {
-	switch j.Exporter.Type {
+	switch j.Spec.Exporter.Type {
 	case "telegraf":
 		return v1.Container{
 			Name:            "exporter",
-			Image:           j.Exporter.Image,
-			Env:             j.Exporter.Environments,
-			Resources:       j.Exporter.Resources,
+			Image:           j.Spec.Exporter.Image,
+			Env:             j.Spec.Exporter.Environments,
+			Resources:       j.Spec.Exporter.Resources,
 			VolumeMounts:    []v1.VolumeMount{{Name: "telegraf", MountPath: "/etc/telegraf/"}},
-			ImagePullPolicy: j.Exporter.ImagePullPolicy,
-			SecurityContext: &j.Exporter.SecurityContext,
+			ImagePullPolicy: j.Spec.Exporter.ImagePullPolicy,
+			SecurityContext: &j.Spec.Exporter.SecurityContext,
 		}
 	default:
 		return v1.Container{
 			Name:            "exporter",
-			Image:           j.Exporter.Image,
+			Image:           j.Spec.Exporter.Image,
 			Args:            []string{"-videobridge-url", "http://localhost:8080/colibri/stats"},
-			Ports:           []v1.ContainerPort{{Name: "http", ContainerPort: j.Exporter.Port, Protocol: v1.ProtocolTCP}},
-			Env:             j.Exporter.Environments,
-			Resources:       j.Exporter.Resources,
-			ImagePullPolicy: j.Exporter.ImagePullPolicy,
-			SecurityContext: &j.Exporter.SecurityContext,
+			Ports:           []v1.ContainerPort{{Name: "http", ContainerPort: j.Spec.Exporter.Port, Protocol: v1.ProtocolTCP}},
+			Env:             j.Spec.Exporter.Environments,
+			Resources:       j.Spec.Exporter.Resources,
+			ImagePullPolicy: j.Spec.Exporter.ImagePullPolicy,
+			SecurityContext: &j.Spec.Exporter.SecurityContext,
 		}
 	}
 }

@@ -19,9 +19,10 @@
 # It should be run by config/default
 resources:
 - bases/meeting.ko_etherpads.yaml
-- bases/meeting.ko_jitsis.yaml
 - bases/meeting.ko_whiteboards.yaml
 - bases/meeting.ko_autoscalers.yaml
+- bases/jitsi.meeting.ko_jvbs.yaml
+- bases/jitsi.meeting.ko_webs.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:

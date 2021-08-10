@@ -24,7 +24,7 @@ import (
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	jitsiv1alpha "github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
+	jitsiv1alpha "github.com/onmetal/meeting-operator/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
 
 	meetingerr "github.com/onmetal/meeting-operator/internal/errors"

@@ -18,12 +18,8 @@ package jitsi
 
 import (
 	"context"
-
-	"github.com/onmetal/meeting-operator/internal/utils"
-
 	"github.com/go-logr/logr"
-	"github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
-	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
+	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,75 +28,74 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type Service struct {
+type service struct {
 	client.Client
 
 	ctx             context.Context
 	log             logr.Logger
 	name, namespace string
+	annotations     map[string]string
 	serviceType     v1.ServiceType
 	ports           []v1.ServicePort
-	annotations     map[string]string
 	labels          map[string]string
 }
 
-func NewService(ctx context.Context, appName string,
-	j *v1alpha1.Jitsi, c client.Client, l logr.Logger) (Jitsi, error) {
+func newService(ctx context.Context, c client.Client, l logr.Logger,
+	appName, namespace string,
+	annotations, labels map[string]string,
+	serviceType v1.ServiceType, ports []v1beta1.Port) *service {
 	switch appName {
 	case WebName:
-		labels := utils.GetDefaultLabels(WebName)
-		return &Service{
+		return &service{
 			Client:      c,
-			ports:       getPorts(WebName, j.Spec.Web.Ports),
-			serviceType: j.Spec.Web.ServiceType,
+			ports:       getPorts(WebName, ports),
+			serviceType: serviceType,
 			name:        WebName,
-			namespace:   j.Namespace,
+			namespace:   namespace,
 			ctx:         ctx,
 			log:         l,
-			annotations: j.Spec.Web.ServiceAnnotations,
+			annotations: annotations,
 			labels:      labels,
-		}, nil
+		}
 	case ProsodyName:
-		labels := utils.GetDefaultLabels(ProsodyName)
-		return &Service{
+		return &service{
 			Client:      c,
-			ports:       getPorts(ProsodyName, j.Spec.Prosody.Ports),
-			serviceType: j.Spec.Prosody.ServiceType,
-			name:        ProsodyName,
-			namespace:   j.Namespace,
+			ports:       getPorts(ProsodyName, ports),
+			serviceType: serviceType,
+			name:        WebName,
+			namespace:   namespace,
 			ctx:         ctx,
 			log:         l,
-			annotations: j.Spec.Prosody.ServiceAnnotations,
+			annotations: annotations,
 			labels:      labels,
-		}, nil
-	case JicofoName:
-		return &Service{}, meetingerr.NotRequired()
+		}
 	case JibriName:
-		labels := utils.GetDefaultLabels(JibriName)
-		return &Service{
+		return &service{
 			Client:      c,
-			ports:       getPorts(JibriName, j.Spec.Jibri.Ports),
-			serviceType: j.Spec.Jibri.ServiceType,
-			name:        JibriName,
-			namespace:   j.Namespace,
+			ports:       getPorts(JibriName, ports),
+			serviceType: serviceType,
+			name:        WebName,
+			namespace:   namespace,
 			ctx:         ctx,
 			log:         l,
-			annotations: j.Spec.Jibri.ServiceAnnotations,
+			annotations: annotations,
 			labels:      labels,
-		}, nil
-	case JigasiName:
-		return &Service{}, meetingerr.NotRequired()
+		}
+		//case JigasiName:
+		//	return &service{}, meetingerr.NotRequired()
+		//case JicofoName:
+	//	return &service{}, meetingerr.NotRequired()
 	default:
-		return &Service{}, meetingerr.NotRequired()
+		return nil
 	}
 }
 
-func (s *Service) Create() error {
+func (s *service) Create() error {
 	preparedService := s.prepareService()
 	return s.Client.Create(s.ctx, preparedService)
 }
 
-func (s *Service) prepareService() *v1.Service {
+func (s *service) prepareService() *v1.Service {
 	return &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        s.name,
@@ -111,7 +106,7 @@ func (s *Service) prepareService() *v1.Service {
 	}
 }
 
-func (s *Service) prepareServiceSpec() v1.ServiceSpec {
+func (s *service) prepareServiceSpec() v1.ServiceSpec {
 	return v1.ServiceSpec{
 		Type:     s.serviceType,
 		Ports:    s.ports,
@@ -119,7 +114,7 @@ func (s *Service) prepareServiceSpec() v1.ServiceSpec {
 	}
 }
 
-func (s *Service) Update() error {
+func (s *service) Update() error {
 	service, err := s.Get()
 	if err != nil {
 		return err
@@ -132,7 +127,7 @@ func (s *Service) Update() error {
 	return s.Client.Update(s.ctx, service)
 }
 
-func (s *Service) Get() (*v1.Service, error) {
+func (s *service) Get() (*v1.Service, error) {
 	service := &v1.Service{}
 	err := s.Client.Get(s.ctx, types.NamespacedName{
 		Name:      s.name,
@@ -141,7 +136,7 @@ func (s *Service) Get() (*v1.Service, error) {
 	return service, err
 }
 
-func (s *Service) Delete() error {
+func (s *service) Delete() error {
 	service, err := s.Get()
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -154,7 +149,7 @@ func (s *Service) Delete() error {
 	return s.Client.Delete(s.ctx, service)
 }
 
-func getPorts(appName string, s []v1alpha1.Port) []v1.ServicePort {
+func getPorts(appName string, s []v1beta1.Port) []v1.ServicePort {
 	switch appName {
 	case WebName:
 		ports := make([]v1.ServicePort, 0, 1)
@@ -223,7 +218,7 @@ func getPorts(appName string, s []v1alpha1.Port) []v1.ServicePort {
 	}
 }
 
-func getAdditionalPorts(servicePorts []v1.ServicePort, ports []v1alpha1.Port) []v1.ServicePort {
+func getAdditionalPorts(servicePorts []v1.ServicePort, ports []v1beta1.Port) []v1.ServicePort {
 	for port := range ports {
 		servicePorts = append(servicePorts, v1.ServicePort{
 			Name:       ports[port].Name,

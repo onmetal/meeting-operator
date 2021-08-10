@@ -214,6 +214,7 @@ turncredentials = {
 	{{ end }}
     { type = "turns", host = "{{ .TurnHost }}", port = "{{ .TurnsPort }}", transport = "tcp" }
 }
+
 external_services = {
 	{{ if .StunEnabled }}
     {

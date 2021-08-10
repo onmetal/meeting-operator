@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	jitsiv1beta1 "github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 	"os"
 
 	jascontroller "github.com/onmetal/meeting-operator/controllers/jitsiautoscaler"
@@ -25,13 +26,13 @@ import (
 	ethv1alpha2 "github.com/onmetal/meeting-operator/apis/etherpad/v1alpha2"
 	jasv1alpha1 "github.com/onmetal/meeting-operator/apis/jitsiautoscaler/v1alpha1"
 
-	jitsiv1alpha "github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
+	//jitsiv1alpha "github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
 	boardv1alpha1 "github.com/onmetal/meeting-operator/apis/whiteboard/v1alpha2"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
 	etherpadcontroller "github.com/onmetal/meeting-operator/controllers/etherpad"
-	jitsicontroller "github.com/onmetal/meeting-operator/controllers/jitsi"
+	jitsi "github.com/onmetal/meeting-operator/controllers/jitsi"
 	boardcontroller "github.com/onmetal/meeting-operator/controllers/whiteboard"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -88,7 +89,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Etherpad", "version", "v1alpha2")
 		os.Exit(1)
 	}
-	if err = (&jitsicontroller.Reconciler{
+	if err = (&jitsi.WebReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Jitsi"),
 		Scheme: mgr.GetScheme(),
@@ -131,7 +132,7 @@ func main() {
 
 func addToScheme() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(jitsiv1alpha.AddToScheme(scheme))
+	utilruntime.Must(jitsiv1beta1.AddToScheme(scheme))
 	utilruntime.Must(ethv1alpha2.AddToScheme(scheme))
 	utilruntime.Must(boardv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(jasv1alpha1.AddToScheme(scheme))
