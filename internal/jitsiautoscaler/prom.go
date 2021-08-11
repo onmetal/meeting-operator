@@ -71,9 +71,9 @@ func (p *prom) scaleUp(desiredReplicas int32) error {
 	if getErr != nil {
 		return getErr
 	}
-	jitsi.Spec.JVB.Replicas *= desiredReplicas
-	if jitsi.Spec.JVB.Replicas > p.Spec.MaxReplicas {
-		jitsi.Spec.JVB.Replicas = p.Spec.MaxReplicas
+	jitsi.Spec.Replicas *= desiredReplicas
+	if jitsi.Spec.Replicas > p.Spec.MaxReplicas {
+		jitsi.Spec.Replicas = p.Spec.MaxReplicas
 	}
 	return p.Update(p.ctx, jitsi)
 }
@@ -83,9 +83,9 @@ func (p *prom) scaleDown(desiredReplicas int32) error {
 	if getErr != nil {
 		return getErr
 	}
-	jitsi.Spec.JVB.Replicas = desiredReplicas
-	if jitsi.Spec.JVB.Replicas < p.Spec.MinReplicas {
-		jitsi.Spec.JVB.Replicas = p.Spec.MinReplicas
+	jitsi.Spec.Replicas = desiredReplicas
+	if jitsi.Spec.Replicas < p.Spec.MinReplicas {
+		jitsi.Spec.Replicas = p.Spec.MinReplicas
 	}
 	return p.Update(p.ctx, jitsi)
 }

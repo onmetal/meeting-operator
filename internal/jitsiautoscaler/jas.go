@@ -19,12 +19,12 @@ package jitsiautoscaler
 import (
 	"context"
 	"errors"
+	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 	"time"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	jitsiv1alpha "github.com/onmetal/meeting-operator/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
 
 	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
@@ -130,8 +130,8 @@ func New(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) 
 	}
 }
 
-func getJitsiCR(ctx context.Context, c client.Client, name, namespace string) (*jitsiv1alpha.Jitsi, error) {
-	jitsi := &jitsiv1alpha.Jitsi{}
+func getJitsiCR(ctx context.Context, c client.Client, name, namespace string) (*v1beta1.JVB, error) {
+	jitsi := &v1beta1.JVB{}
 	keyObj := ctrl.Request{NamespacedName: types.NamespacedName{
 		Namespace: namespace,
 		Name:      name,

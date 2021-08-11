@@ -20,6 +20,7 @@ import (
 	"context"
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
+	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -83,8 +84,8 @@ func newService(ctx context.Context, c client.Client, l logr.Logger,
 		}
 		//case JigasiName:
 		//	return &service{}, meetingerr.NotRequired()
-		//case JicofoName:
-	//	return &service{}, meetingerr.NotRequired()
+		//	case JicofoName:
+		return &service{}, meetingerr.NotRequired()
 	default:
 		return nil
 	}

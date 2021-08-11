@@ -22,7 +22,7 @@ import (
 )
 
 type JicofoSpec struct {
-	DeploymentSpec `json:"deployment_spec"`
+	DeploymentSpec `json:",inline"`
 	Exporter           Exporter          `json:"exporter,omitempty"`
 	ServiceAnnotations map[string]string `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"

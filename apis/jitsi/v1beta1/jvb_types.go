@@ -22,7 +22,7 @@ import (
 )
 
 type JVBSpec struct {
-	DeploymentSpec `json:"deployment_spec"`
+	DeploymentSpec `json:",inline"`
 	Exporter           Exporter          `json:"exporter,omitempty"`
 	CustomSIP          []string          `json:"custom_sip,omitempty"`
 	ServiceAnnotations map[string]string `json:"service_annotations,omitempty"`

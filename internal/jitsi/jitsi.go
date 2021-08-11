@@ -38,36 +38,11 @@ type Jitsi interface {
 	Delete() error
 }
 
-type Web struct {
-	client.Client
-	*v1beta1.Web
-	*service
 
-	ctx             context.Context
-	log             logr.Logger
-	name, namespace string
-	labels          map[string]string
-}
 
-//type Prosody struct {
-//	client.Client
-//	*v1alpha1.Prosody
-//
-//	ctx             context.Context
-//	log             logr.Logger
-//	name, namespace string
-//	labels          map[string]string
-//}
 
-//type Jicofo struct {
-//	client.Client
-//	*v1alpha1.Jicofo
-//
-//	ctx             context.Context
-//	log             logr.Logger
-//	name, namespace string
-//	labels          map[string]string
-//}
+
+
 
 //type Jibri struct {
 //	client.Client

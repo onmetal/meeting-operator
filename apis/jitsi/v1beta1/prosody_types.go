@@ -22,7 +22,7 @@ import (
 )
 
 type ProsodySpec struct {
-	DeploymentSpec `json:"deployment_spec"`
+	DeploymentSpec `json:",inline"`
 	ServiceAnnotations map[string]string `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`

@@ -24,19 +24,31 @@ import (
 	"github.com/onmetal/meeting-operator/internal/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+type Web struct {
+	client.Client
+	*v1beta1.Web
+	*service
+
+	ctx             context.Context
+	log             logr.Logger
+	name, namespace string
+	labels          map[string]string
+}
+
 func NewWeb(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) (Jitsi, error) {
 	w := &v1beta1.Web{}
 	if err := c.Get(ctx, req.NamespacedName, w); err != nil {
 		return nil, err
 	}
-	labels := utils.GetDefaultLabels(WebName)
-	s := newService(ctx, c, l, WebName, w.Namespace, w.Spec.ServiceAnnotations, labels, w.Spec.ServiceType, w.Spec.Ports)
+	defaultLabels := utils.GetDefaultLabels(WebName)
+	s := newService(ctx, c, l, WebName, w.Namespace, w.Spec.ServiceAnnotations, defaultLabels, w.Spec.ServiceType, w.Spec.Ports)
 	if !w.DeletionTimestamp.IsZero() {
 		return &Web{
 			Client:    c,
@@ -46,7 +58,7 @@ func NewWeb(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Reques
 			log:       l,
 			name:      WebName,
 			namespace: w.Namespace,
-			labels:    labels,
+			labels:    defaultLabels,
 		}, meeterr.UnderDeletion()
 	}
 	if err := addFinalizerToWeb(ctx, c, w); err != nil {
@@ -60,21 +72,10 @@ func NewWeb(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Reques
 		log:       l,
 		name:      WebName,
 		namespace: w.Namespace,
-		labels:    labels,
+		labels:    defaultLabels,
 	}, nil
-	//case ProsodyName:
-	//	labels := utils.GetDefaultLabels(ProsodyName)
-	//	return &Prosody{
-	//		Client:    c,
-	//		Prosody:   &w.Spec.Prosody,
-	//		name:      ProsodyName,
-	//		namespace: w.Namespace,
-	//		ctx:       ctx,
-	//		log:       l,
-	//		labels:    labels,
-	//	}, nil
 	//case JicofoName:
-	//	labels := utils.GetDefaultLabels(JicofoName)
+	//	defaultLabels := utils.GetDefaultLabels(JicofoName)
 	//	return &Jicofo{
 	//		Client:    c,
 	//		Jicofo:    &w.Spec.Jicofo,
@@ -82,10 +83,10 @@ func NewWeb(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Reques
 	//		namespace: w.Namespace,
 	//		ctx:       ctx,
 	//		log:       l,
-	//		labels:    labels,
+	//		defaultLabels:    defaultLabels,
 	//	}, nil
 	//case JibriName:
-	//	labels := utils.GetDefaultLabels(JibriName)
+	//	defaultLabels := utils.GetDefaultLabels(JibriName)
 	//	return &Jibri{
 	//		Client:    c,
 	//		Jibri:     &w.Spec.Jibri,
@@ -93,10 +94,10 @@ func NewWeb(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Reques
 	//		namespace: w.Namespace,
 	//		ctx:       ctx,
 	//		log:       l,
-	//		labels:    labels,
+	//		defaultLabels:    defaultLabels,
 	//	}, nil
 	//case JigasiName:
-	//	labels := utils.GetDefaultLabels(JigasiName)
+	//	defaultLabels := utils.GetDefaultLabels(JigasiName)
 	//	return &Jigasi{
 	//		Client:    c,
 	//		Jigasi:    &w.Spec.Jigasi,
@@ -104,7 +105,7 @@ func NewWeb(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Reques
 	//		namespace: w.Namespace,
 	//		ctx:       ctx,
 	//		log:       l,
-	//		labels:    labels,
+	//		defaultLabels:    defaultLabels,
 	//	}, nil
 }
 
@@ -175,6 +176,12 @@ func (w *Web) Update() error {
 }
 
 func (w *Web) Delete() error {
+	if utils.ContainsString(w.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
+		w.ObjectMeta.Finalizers = utils.RemoveString(w.ObjectMeta.Finalizers, utils.MeetingFinalizer)
+		if err := w.Client.Update(w.ctx, w.Web); err != nil {
+			w.log.Info("can't update web cr", "error", err)
+		}
+	}
 	if err := w.service.Delete(); err != nil {
 		return err
 	}
@@ -182,13 +189,11 @@ func (w *Web) Delete() error {
 	if err != nil {
 		return err
 	}
-	if utils.ContainsString(w.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
-		w.ObjectMeta.Finalizers = utils.RemoveString(w.ObjectMeta.Finalizers, utils.MeetingFinalizer)
-		if err := w.Client.Update(w.ctx, w); err != nil {
-			w.log.Info("can't update web cr", "error", err)
-		}
+	err = w.Client.Delete(w.ctx, deployment)
+	if apierrors.IsNotFound(err) {
+		return nil
 	}
-	return w.Client.Delete(w.ctx, deployment)
+	return err
 }
 
 func (w *Web) Get() (*appsv1.Deployment, error) {

@@ -3,20 +3,19 @@ kind: Web
 metadata:
   name: web-sample
 spec:
-  deployment_spec:
-    replicas: 1
-    image: jitsi/web:stable-5390-3
-    security_context:
-      runAsNonRoot: false
-      allowPrivilegeEscalation: false
-      readOnlyRootFilesystem: false
-    image_pull_secrets:
-      - name: docker
-    resources:
-      requests:
-        cpu: "0.1"
-        memory: "128Mi"
-    environments:
+  replicas: 1
+  image: jitsi/web:stable-5390-3
+  security_context:
+    runAsNonRoot: false
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+  image_pull_secrets:
+  - name: docker
+  resources:
+    requests:
+      cpu: "0.1"
+      memory: "128Mi"
+  environments:
     - name: ENABLE_LETSENCRYPT
       value: "0"
     - name: XMPP_SERVER

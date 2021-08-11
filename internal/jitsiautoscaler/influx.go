@@ -77,9 +77,9 @@ func (i *influx) scaleUp(desiredReplicas int32) error {
 	if getErr != nil {
 		return getErr
 	}
-	jitsi.Spec.JVB.Replicas *= desiredReplicas
-	if jitsi.Spec.JVB.Replicas > i.Spec.MaxReplicas {
-		jitsi.Spec.JVB.Replicas = i.Spec.MaxReplicas
+	jitsi.Spec.Replicas *= desiredReplicas
+	if jitsi.Spec.Replicas > i.Spec.MaxReplicas {
+		jitsi.Spec.Replicas = i.Spec.MaxReplicas
 	}
 	return i.Update(i.ctx, jitsi)
 }
@@ -89,9 +89,9 @@ func (i *influx) scaleDown(desiredReplicas int32) error {
 	if getErr != nil {
 		return getErr
 	}
-	jitsi.Spec.JVB.Replicas = desiredReplicas
-	if jitsi.Spec.JVB.Replicas < i.Spec.MinReplicas {
-		jitsi.Spec.JVB.Replicas = i.Spec.MinReplicas
+	jitsi.Spec.Replicas = desiredReplicas
+	if jitsi.Spec.Replicas < i.Spec.MinReplicas {
+		jitsi.Spec.Replicas = i.Spec.MinReplicas
 	}
 	return i.Update(i.ctx, jitsi)
 }

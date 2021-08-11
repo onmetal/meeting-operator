@@ -22,7 +22,7 @@ import (
 )
 
 type JibriSpec struct {
-	DeploymentSpec `json:"deployment_spec"`
+	DeploymentSpec `json:",inline"`
 	Storage            *StorageSpec      `json:"storage,omitempty"`
 	ServiceAnnotations map[string]string `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"

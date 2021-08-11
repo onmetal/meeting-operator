@@ -29,16 +29,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type WebReconciler struct {
+type ProsodyReconciler struct {
 	client.Client
 
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
 
-func (r *WebReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *ProsodyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1beta1.Web{}).
+		For(&v1beta1.Prosody{}).
 		Complete(r)
 }
 
@@ -53,24 +53,22 @@ func (r *WebReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=webs/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=webs/finalizers,verbs=update
 
-func (r *WebReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	reqLogger := r.Log.WithValues("jitsi", req.NamespacedName, "component", "web")
-	web, err := jitsi.NewWeb(ctx, r.Client, reqLogger, req)
+func (r *ProsodyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	reqLogger := r.Log.WithValues("jitsi", req.NamespacedName, "component", "prosody")
+	prosody, err := jitsi.NewProsody(ctx, r.Client, reqLogger, req)
 	if err != nil {
 		if meeterr.IsUnderDeletion(err) {
-			if delErr := web.Delete(); delErr != nil {
+			if delErr := prosody.Delete(); delErr != nil {
 				reqLogger.Info("deletion failed")
 				return ctrl.Result{}, delErr
 			}
-			reqLogger.Info("reconciliation finished")
-			return ctrl.Result{}, nil
 		}
-		reqLogger.Error(err, "can't create new instance of web")
+		reqLogger.Error(err, "can't create new instance of prosody")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	if createErr := web.Create(); createErr != nil {
+	if createErr := prosody.Create(); createErr != nil {
 		if apierrors.IsAlreadyExists(createErr) {
-			if updErr := web.Update(); updErr != nil {
+			if updErr := prosody.Update(); updErr != nil {
 				return ctrl.Result{}, updErr
 			}
 			reqLogger.Info("reconciliation finished")
