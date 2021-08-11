@@ -18,6 +18,7 @@ package jitsi
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 	meeterr "github.com/onmetal/meeting-operator/internal/errors"
@@ -30,6 +31,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+const WebName = "web"
 
 type Web struct {
 	client.Client
@@ -74,39 +77,6 @@ func NewWeb(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Reques
 		namespace: w.Namespace,
 		labels:    defaultLabels,
 	}, nil
-	//case JicofoName:
-	//	defaultLabels := utils.GetDefaultLabels(JicofoName)
-	//	return &Jicofo{
-	//		Client:    c,
-	//		Jicofo:    &w.Spec.Jicofo,
-	//		name:      JicofoName,
-	//		namespace: w.Namespace,
-	//		ctx:       ctx,
-	//		log:       l,
-	//		defaultLabels:    defaultLabels,
-	//	}, nil
-	//case JibriName:
-	//	defaultLabels := utils.GetDefaultLabels(JibriName)
-	//	return &Jibri{
-	//		Client:    c,
-	//		Jibri:     &w.Spec.Jibri,
-	//		name:      JibriName,
-	//		namespace: w.Namespace,
-	//		ctx:       ctx,
-	//		log:       l,
-	//		defaultLabels:    defaultLabels,
-	//	}, nil
-	//case JigasiName:
-	//	defaultLabels := utils.GetDefaultLabels(JigasiName)
-	//	return &Jigasi{
-	//		Client:    c,
-	//		Jigasi:    &w.Spec.Jigasi,
-	//		name:      JigasiName,
-	//		namespace: w.Namespace,
-	//		ctx:       ctx,
-	//		log:       l,
-	//		defaultLabels:    defaultLabels,
-	//	}, nil
 }
 
 func addFinalizerToWeb(ctx context.Context, c client.Client, j *v1beta1.Web) error {

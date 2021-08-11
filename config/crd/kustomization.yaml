@@ -23,6 +23,10 @@ resources:
 - bases/meeting.ko_autoscalers.yaml
 - bases/jitsi.meeting.ko_jvbs.yaml
 - bases/jitsi.meeting.ko_webs.yaml
+- bases/jitsi.meeting.ko_jibris.yaml
+- bases/jitsi.meeting.ko_jicofoes.yaml
+- bases/jitsi.meeting.ko_jigasis.yaml
+- bases/jitsi.meeting.ko_prosodies.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:

@@ -22,7 +22,7 @@ import (
 )
 
 type JibriSpec struct {
-	DeploymentSpec `json:",inline"`
+	DeploymentSpec     `json:",inline"`
 	Storage            *StorageSpec      `json:"storage,omitempty"`
 	ServiceAnnotations map[string]string `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
@@ -43,8 +43,8 @@ type Jibri struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   JicofoSpec   `json:"spec,omitempty"`
-	Status JicofoStatus `json:"status,omitempty"`
+	Spec   JibriSpec   `json:"spec,omitempty"`
+	Status JibriStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true

@@ -19,11 +19,12 @@ package jitsi
 import (
 	"bytes"
 	"context"
+	"html/template"
+
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 	meeterr "github.com/onmetal/meeting-operator/internal/errors"
 	"github.com/onmetal/meeting-operator/internal/utils"
-	"html/template"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -36,6 +37,8 @@ import (
 )
 
 const enabled = "true"
+
+const ProsodyName = "prosody"
 
 type Prosody struct {
 	client.Client
@@ -54,7 +57,7 @@ func NewProsody(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Re
 		return nil, err
 	}
 	defaultLabels := utils.GetDefaultLabels(ProsodyName)
-	s := newService(ctx, c, l, WebName, p.Namespace, p.Spec.ServiceAnnotations, defaultLabels, p.Spec.ServiceType, p.Spec.Ports)
+	s := newService(ctx, c, l, ProsodyName, p.Namespace, p.Spec.ServiceAnnotations, defaultLabels, p.Spec.ServiceType, p.Spec.Ports)
 	if !p.DeletionTimestamp.IsZero() {
 		return &Prosody{
 			Client:    c,
@@ -73,6 +76,7 @@ func NewProsody(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Re
 	return &Prosody{
 		Client:    c,
 		Prosody:   p,
+		service:   s,
 		name:      ProsodyName,
 		namespace: p.Namespace,
 		ctx:       ctx,

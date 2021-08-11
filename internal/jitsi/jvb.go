@@ -20,9 +20,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	jvbv1beta1 "github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 	"html/template"
 	"time"
+
+	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 
 	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
 	"k8s.io/apimachinery/pkg/labels"
@@ -51,14 +52,26 @@ const (
 
 const telegrafExporter = "telegraf"
 
+type JVB struct {
+	client.Client
+	*v1beta1.JVB
+
+	ctx                          context.Context
+	log                          logr.Logger
+	envs                         []v1.EnvVar
+	name, serviceName, namespace string
+	replica                      int32
+	deleted                      bool
+}
+
 func NewJVB(ctx context.Context, replica int32,
-	j *jvbv1beta1.JVB, c client.Client, l logr.Logger) Jitsi {
+	j *v1beta1.JVB, c client.Client, l logr.Logger) Jitsi {
 	name := fmt.Sprintf("%s-%d", JvbName, replica)
 	deleted := !j.DeletionTimestamp.IsZero()
 
 	return &JVB{
 		Client:      c,
-		JVB:        j,
+		JVB:         j,
 		envs:        j.Spec.Environments,
 		ctx:         ctx,
 		log:         l,

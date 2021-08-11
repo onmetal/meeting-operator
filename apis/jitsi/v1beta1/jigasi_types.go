@@ -22,8 +22,9 @@ import (
 )
 
 type JigasiSpec struct {
-	DeploymentSpec `json:",inline"`
-	Storage *StorageSpec `json:"storage,omitempty"`
+	DeploymentSpec     `json:",inline"`
+	Storage            *StorageSpec      `json:"storage,omitempty"`
+	ServiceAnnotations map[string]string `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`
 	Ports       []Port         `json:"ports,omitempty"`

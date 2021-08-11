@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 	meeterr "github.com/onmetal/meeting-operator/internal/errors"
 	"github.com/onmetal/meeting-operator/internal/jitsi"
@@ -54,7 +55,7 @@ func (r *WebReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=webs/finalizers,verbs=update
 
 func (r *WebReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	reqLogger := r.Log.WithValues("jitsi", req.NamespacedName, "component", "web")
+	reqLogger := r.Log.WithValues("name", req.Name, "namespace", req.Namespace)
 	web, err := jitsi.NewWeb(ctx, r.Client, reqLogger, req)
 	if err != nil {
 		if meeterr.IsUnderDeletion(err) {

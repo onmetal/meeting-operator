@@ -19,8 +19,9 @@ package jitsiautoscaler
 import (
 	"context"
 	"errors"
-	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 	"time"
+
+	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

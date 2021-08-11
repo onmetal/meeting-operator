@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
@@ -54,7 +55,7 @@ func (r *JVBReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:rbac:groups=meeting.ko,resources=jitsis/finalizers,verbs=update
 
 func (r *JVBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	reqLogger := r.Log.WithValues("jitsi", req.NamespacedName)
+	reqLogger := r.Log.WithValues("name", req.Name, "namespace", req.Namespace)
 
 	j := &v1beta1.JVB{}
 	if err := r.Get(ctx, req.NamespacedName, j); err != nil {

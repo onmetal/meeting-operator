@@ -18,9 +18,9 @@ package jitsi
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
-	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -63,7 +63,7 @@ func newService(ctx context.Context, c client.Client, l logr.Logger,
 			Client:      c,
 			ports:       getPorts(ProsodyName, ports),
 			serviceType: serviceType,
-			name:        WebName,
+			name:        ProsodyName,
 			namespace:   namespace,
 			ctx:         ctx,
 			log:         l,
@@ -75,17 +75,13 @@ func newService(ctx context.Context, c client.Client, l logr.Logger,
 			Client:      c,
 			ports:       getPorts(JibriName, ports),
 			serviceType: serviceType,
-			name:        WebName,
+			name:        JibriName,
 			namespace:   namespace,
 			ctx:         ctx,
 			log:         l,
 			annotations: annotations,
 			labels:      labels,
 		}
-		//case JigasiName:
-		//	return &service{}, meetingerr.NotRequired()
-		//	case JicofoName:
-		return &service{}, meetingerr.NotRequired()
 	default:
 		return nil
 	}
@@ -192,12 +188,6 @@ func getPorts(appName string, s []v1beta1.Port) []v1.ServicePort {
 				TargetPort: intstr.IntOrString{IntVal: 5347},
 			},
 		)
-		if len(s) != 0 {
-			return getAdditionalPorts(ports, s)
-		}
-		return ports
-	case JicofoName:
-		ports := make([]v1.ServicePort, 0, 1)
 		if len(s) != 0 {
 			return getAdditionalPorts(ports, s)
 		}

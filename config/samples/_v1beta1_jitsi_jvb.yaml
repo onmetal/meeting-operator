@@ -1,0 +1,83 @@
+apiVersion: jitsi.meeting.ko/v1beta1
+kind: JVB
+metadata:
+  name: jvb-sample
+spec:
+  exporter:
+    type: "prometheus"
+    image: "telegraf:latest"
+    security_context:
+      runAsNonRoot: false
+    resources:
+      requests:
+        cpu: "0.1"
+        memory: "128Mi"
+  service_type: "ClusterIP"
+  service_annotations:
+    sample: "yes"
+  replicas: 1
+  image: jitsi/jvb:stable-5390-3
+  security_context:
+    runAsNonRoot: false
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+  image_pull_secrets:
+  - name: docker
+  resources:
+    requests:
+      cpu: "0.1"
+      memory: "128Mi"
+  environments:
+    - name: LOGGING_LEVEL
+      value: "WARNING"
+    - name: XMPP_SERVER
+      value: prosody
+    - name: XMPP_DOMAIN
+      value: prosody
+    - name: XMPP_AUTH_DOMAIN
+      value: auth.jitsi.jitsi
+    - name: XMPP_INTERNAL_MUC_DOMAIN
+      value: internal-muc.jitsi.jitsi
+    - name: JVB_STUN_SERVERS
+      value: "meet-jit-si-turnrelay.jitsi.net:443"
+    - name: JVB_ENABLE_APIS
+      value: rest,colibri
+    - name: JICOFO_AUTH_USER
+      value: focus
+    - name: JVB_TCP_HARVESTER_DISABLED
+      value: "true"
+    - name: JVB_AUTH_USER
+      value: jvb
+    - name: JVB_BREWERY_MUC
+      value: jvbbrewery
+    - name: TZ
+      value: UTC
+    - name: PUBLIC_URL
+      value: https://<<your public url here>>
+    - name: DISABLE_AWS_HARVESTER
+      value: "true"
+    - name: JVB_AUTH_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JVB_AUTH_PASSWORD
+    - name: JICOFO_AUTH_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JICOFO_AUTH_PASSWORD
+    # by default operator get ip from "type: LoadBalancer" service
+    - name: DOCKER_HOST_ADDRESS
+      value: <your public ip here>
+    #        valueFrom:
+    #          fieldRef:
+    #            fieldPath: status.hostIP
+    - name: NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: HOSTNAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+

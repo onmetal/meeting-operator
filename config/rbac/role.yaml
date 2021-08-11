@@ -94,6 +94,32 @@ rules:
 - apiGroups:
   - jitsi.meeting.ko
   resources:
+  - jicofos
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - jitsi.meeting.ko
+  resources:
+  - jicofos/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - jitsi.meeting.ko
+  resources:
+  - jicofos/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - jitsi.meeting.ko
+  resources:
   - webs
   verbs:
   - create

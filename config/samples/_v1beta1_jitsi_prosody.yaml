@@ -1,0 +1,84 @@
+apiVersion: jitsi.meeting.ko/v1beta1
+kind: Prosody
+metadata:
+  name: prosody-sample
+spec:
+  service_type: "ClusterIP"
+  service_annotations:
+    sample: "yes"
+  replicas: 1
+  image: jitsi/prosody:stable-5390-3
+  security_context:
+    runAsNonRoot: false
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+  image_pull_secrets:
+  - name: docker
+  resources:
+    requests:
+      cpu: "0.1"
+      memory: "128Mi"
+  environments:
+    - name: XMPP_DOMAIN
+      value: prosody
+    - name: XMPP_AUTH_DOMAIN
+      value: auth.jitsi.jitsi
+    - name: XMPP_MUC_DOMAIN
+      value: muc.jitsi.jitsi
+    - name: XMPP_INTERNAL_MUC_DOMAIN
+      value: internal-muc.jitsi.jitsi
+    - name: JICOFO_COMPONENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JICOFO_COMPONENT_SECRET
+    - name: JVB_AUTH_USER
+      value: jvb
+    - name: JVB_AUTH_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JVB_AUTH_PASSWORD
+    - name: JICOFO_AUTH_USER
+      value: focus
+    - name: JICOFO_AUTH_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JICOFO_AUTH_PASSWORD
+    - name: JIBRI_XMPP_USER
+      value: jibri
+    - name: JIBRI_XMPP_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JIBRI_XMPP_PASSWORD
+    - name: JIBRI_RECORDER_USER
+      value: jibri
+    - name: JIBRI_RECORDER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JIBRI_RECORDER_PASSWORD
+    - name: TZ
+      value: UTC
+    - name: JVB_TCP_HARVESTER_DISABLED
+      value: "true"
+    - name: DISABLE_HTTPS
+      value: "1"
+    - name: PUBLIC_URL
+      value: https://<<your public url here>>
+    - name: TURNCREDENTIALS_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: TURNCREDENTIALS_SECRET
+    - name: TURN_HOST
+      value: https://<<your public turn url here>>
+    - name: STUN_PORT
+      value: "443"
+    - name: TURN_PORT
+      value: "443"
+    - name: TURNS_PORT
+      value: "443"
+

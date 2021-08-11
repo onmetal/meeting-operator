@@ -17,19 +17,8 @@ limitations under the License.
 package jitsi
 
 import (
-	"context"
-	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 	v1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-)
-
-const (
-	WebName     = "web"
-	ProsodyName = "prosody"
-	JicofoName  = "jicofo"
-	JibriName   = "jibri"
-	JigasiName  = "jigasi"
 )
 
 type Jitsi interface {
@@ -37,46 +26,6 @@ type Jitsi interface {
 	Update() error
 	Delete() error
 }
-
-
-
-
-
-
-
-//type Jibri struct {
-//	client.Client
-//	*v1alpha1.Jibri
-//
-//	ctx             context.Context
-//	log             logr.Logger
-//	name, namespace string
-//	labels          map[string]string
-//}
-
-//type Jigasi struct {
-//	client.Client
-//	*v1alpha1.Jigasi
-//
-//	ctx             context.Context
-//	log             logr.Logger
-//	name, namespace string
-//	labels          map[string]string
-//}
-
-type JVB struct {
-	client.Client
-	*v1beta1.JVB
-
-	ctx                          context.Context
-	log                          logr.Logger
-	envs                         []v1.EnvVar
-	name, serviceName, namespace string
-	replica                      int32
-	deleted                      bool
-}
-
-
 
 func getContainerPorts(ports []v1beta1.Port) []v1.ContainerPort {
 	var containerPorts []v1.ContainerPort

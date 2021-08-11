@@ -254,6 +254,10 @@ spec:
                         type: string
                     type: object
                 type: object
+              service_annotations:
+                additionalProperties:
+                  type: string
+                type: object
               service_type:
                 default: ClusterIP
                 description: Service Type string describes ingress methods for a service

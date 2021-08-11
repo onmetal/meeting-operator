@@ -17,17 +17,12 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type JicofoSpec struct {
 	DeploymentSpec `json:",inline"`
-	Exporter           Exporter          `json:"exporter,omitempty"`
-	ServiceAnnotations map[string]string `json:"service_annotations,omitempty"`
-	//+kubebuilder:default:="ClusterIP"
-	ServiceType v1.ServiceType `json:"service_type,omitempty"`
-	Ports       []Port         `json:"ports,omitempty"`
+	Exporter       Exporter `json:"exporter,omitempty"`
 }
 
 // JicofoStatus defines the observed state of Jicofo

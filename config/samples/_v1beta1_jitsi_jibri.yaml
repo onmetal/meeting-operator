@@ -1,0 +1,69 @@
+apiVersion: jitsi.meeting.ko/v1beta1
+kind: Jibri
+metadata:
+  name: jibri-sample
+spec:
+  service_type: "ClusterIP"
+  service_annotations:
+    sample: "yes"
+  replicas: 1
+  image: jitsi/jibri:stable-5390-3
+  security_context:
+    runAsNonRoot: false
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+  image_pull_secrets:
+  - name: docker
+  resources:
+    requests:
+      cpu: "0.1"
+      memory: "128Mi"
+  storage:
+    empty_dir: {}
+    #        sizeLimit:
+    #          "1Gi"
+    #      pvc: {}
+    ##        apiVersion: v1
+    ##        kind: PersistentVolumeClaim
+    ##        spec:
+    ##          accessModes: ["ReadWriteOnce"]
+    ##          resources:
+    ##            requests:
+    ##              storage: "1Gi"
+    #    service_type: "ClusterIP"
+  environments:
+    - name: JIBRI_RECORDING_DIR
+      value: /config/recordings
+    - name: DISPLAY
+      value: ":0"
+    - name: XMPP_SERVER
+      value: prosody
+    - name: XMPP_DOMAIN
+      value: prosody
+    - name: XMPP_AUTH_DOMAIN
+      value: auth.jitsi.jitsi
+    - name: XMPP_INTERNAL_MUC_DOMAIN
+      value: internal-muc.jitsi.jitsi
+    - name: XMPP_RECORDER_DOMAIN
+      value: recorder.meet.jitsi
+    - name: JIBRI_BREWERY_MUC
+      value: jibribrewery
+    - name: JIBRI_RECORDER_USER
+      value: recorder
+    - name: JIBRI_RECORDER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JIBRI_RECORDER_PASSWORD
+    - name: JIBRI_XMPP_USER
+      value: jibri
+    - name: JIBRI_XMPP_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JIBRI_XMPP_PASSWORD
+    - name: JIBRI_STRIP_DOMAIN_JID
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+

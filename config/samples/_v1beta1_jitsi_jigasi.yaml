@@ -1,0 +1,78 @@
+apiVersion: jitsi.meeting.ko/v1beta1
+kind: Jigasi
+metadata:
+  name: jigasi-sample
+spec:
+  service_type: "ClusterIP"
+  ports: []
+  replicas: 1
+  image: jitsi/jigasi:stable-5390-3
+  security_context:
+    runAsNonRoot: false
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+  image_pull_secrets:
+  - name: docker
+  resources:
+    requests:
+      cpu: "0.1"
+      memory: "128Mi"
+  environments:
+    - name: ENABLE_AUTH
+      value: "0"
+    - name: XMPP_AUTH_DOMAIN
+      value: "auth.jitsi.jitsi"
+    - name: XMPP_MUC_DOMAIN
+      value: "muc.jitsi.jitsi"
+    - name: XMPP_INTERNAL_MUC_DOMAIN
+      value: "internal-muc.jitsi.jitsi"
+    - name: XMPP_SERVER
+      value: prosody
+    - name: XMPP_DOMAIN
+      value: prosody
+    - name: PUBLIC_URL
+      value: https://<<your public url here>>
+    - name: JIGASI_SIP_URI
+      value: "<<your sip config here>>"
+    - name: JIGASI_SIP_PASSWORD
+      value: "<<your sip config here>>"
+    - name: JIGASI_SIP_SERVER
+      value: "<<your sip config here>>"
+    - name: JIGASI_SIP_PORT
+      value: "<<your sip config here>>"
+    - name: JIGASI_SIP_TRANSPORT
+      value: "<<your sip config here>>"
+    - name: JIGASI_SIP_DEFAULT_ROOM
+      value: "<<your sip config here>>"
+    - name: JIGASI_XMPP_USER
+      value: jigasi
+    - name: JIGASI_XMPP_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JIGASI_XMPP_PASSWORD
+    - name: JIGASI_BREWERY_MUC
+      value: jigasibrewery
+    - name: JIGASI_PORT_MIN
+      value: "20000"
+    - name: JIGASI_PORT_MAX
+      value: "20050"
+    - name: JIGASI_HEALTH_CHECK_SIP_URI
+      value: "keepalive"
+    - name: JIGASI_HEALTH_CHECK_INTERVAL
+      value: "300000"
+    - name: JIGASI_SIP_KEEP_ALIVE_METHOD
+      value: "OPTIONS"
+    - name: JIGASI_ENABLE_SDES_SRTP
+      value: "1"
+    - name: ENABLE_TRANSCRIPTIONS
+      value: "0"
+    - name: JIGASI_TRANSCRIBER_ADVERTISE_URL
+      value: "false"
+    - name: JIGASI_TRANSCRIBER_RECORD_AUDIO
+      value: "false"
+    - name: JIGASI_TRANSCRIBER_SEND_TXT
+      value: "false"
+    - name: TZ
+      value: UTC
+

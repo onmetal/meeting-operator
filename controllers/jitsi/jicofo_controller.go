@@ -30,46 +30,44 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type ProsodyReconciler struct {
+type JicofoReconciler struct {
 	client.Client
 
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
 
-func (r *ProsodyReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *JicofoReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1beta1.Prosody{}).
+		For(&v1beta1.Jicofo{}).
 		Complete(r)
 }
 
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;delete
-// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=endpoints,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
-// +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=webs,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=configmaps,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=webs/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=webs/finalizers,verbs=update
+// +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=jicofos,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=jicofos/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=jicofos/finalizers,verbs=update
 
-func (r *ProsodyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *JicofoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	reqLogger := r.Log.WithValues("name", req.Name, "namespace", req.Namespace)
-	prosody, err := jitsi.NewProsody(ctx, r.Client, reqLogger, req)
+	jicofo, err := jitsi.NewJicofo(ctx, r.Client, reqLogger, req)
 	if err != nil {
 		if meeterr.IsUnderDeletion(err) {
-			if delErr := prosody.Delete(); delErr != nil {
+			if delErr := jicofo.Delete(); delErr != nil {
 				reqLogger.Info("deletion failed")
 				return ctrl.Result{}, delErr
 			}
 		}
-		reqLogger.Error(err, "can't create new instance of prosody")
+		reqLogger.Error(err, "can't create new instance of jicofo")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	if createErr := prosody.Create(); createErr != nil {
+	if createErr := jicofo.Create(); createErr != nil {
 		if apierrors.IsAlreadyExists(createErr) {
-			if updErr := prosody.Update(); updErr != nil {
+			if updErr := jicofo.Update(); updErr != nil {
 				return ctrl.Result{}, updErr
 			}
 			reqLogger.Info("reconciliation finished")

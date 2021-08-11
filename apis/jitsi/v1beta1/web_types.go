@@ -22,7 +22,7 @@ import (
 )
 
 type WebSpec struct {
-	DeploymentSpec `json:",inline"`
+	DeploymentSpec     `json:",inline"`
 	ServiceAnnotations map[string]string `json:"service_annotations,omitempty"`
 	//+kubebuilder:default:="ClusterIP"
 	ServiceType v1.ServiceType `json:"service_type,omitempty"`

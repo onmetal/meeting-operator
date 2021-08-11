@@ -1,0 +1,60 @@
+apiVersion: jitsi.meeting.ko/v1beta1
+kind: Jicofo
+metadata:
+  name: jicofo-sample
+spec:
+  exporter:
+    type: "prometheus"
+    image: "systemli/prometheus-jitsi-meet-exporter:latest"
+    security_context:
+      runAsNonRoot: false
+    resources:
+      requests:
+        cpu: "0.1"
+        memory: "10Mi"
+  replicas: 1
+  image: jitsi/jicofo:stable-5390-3
+  security_context:
+    runAsNonRoot: false
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+  image_pull_secrets:
+  - name: docker
+  resources:
+    requests:
+      cpu: "0.1"
+      memory: "128Mi"
+  environments:
+    - name: LOGGING_LEVEL
+      value: "WARNING"
+    - name: XMPP_SERVER
+      value: prosody
+    - name: XMPP_DOMAIN
+      value: prosody
+    - name: XMPP_AUTH_DOMAIN
+      value: auth.jitsi.jitsi
+    - name: XMPP_MUC_DOMAIN
+      value: muc.jitsi.jitsi
+    - name: XMPP_INTERNAL_MUC_DOMAIN
+      value: internal-muc.jitsi.jitsi
+    - name: TZ
+      value: UTC
+    - name: JVB_BREWERY_MUC
+      value: jvbbrewery
+    - name: PUBLIC_URL
+      value: https://<<your public url here>>
+    - name: JICOFO_ENABLE_HEALTH_CHECKS
+      value: "true"
+    - name: JICOFO_COMPONENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JICOFO_COMPONENT_SECRET
+    - name: JICOFO_AUTH_USER
+      value: focus
+    - name: JICOFO_AUTH_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: jitsi-config
+          key: JICOFO_AUTH_PASSWORD
+

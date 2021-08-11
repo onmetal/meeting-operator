@@ -16,15 +16,15 @@ limitations under the License.
 
 package jitsi
 
-
 import (
 	"bytes"
 	"context"
+	"html/template"
+
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 	meeterr "github.com/onmetal/meeting-operator/internal/errors"
 	"github.com/onmetal/meeting-operator/internal/utils"
-	"html/template"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -37,10 +37,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const JicofoName = "jicofo"
+
 type Jicofo struct {
 	client.Client
 	*v1beta1.Jicofo
-	*service
 
 	ctx             context.Context
 	log             logr.Logger
@@ -54,12 +55,10 @@ func NewJicofo(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Req
 		return nil, err
 	}
 	defaultLabels := utils.GetDefaultLabels(JicofoName)
-	s := newService(ctx, c, l, JicofoName, j.Namespace, j.Spec.ServiceAnnotations, defaultLabels, j.Spec.ServiceType, j.Spec.Ports)
 	if !j.DeletionTimestamp.IsZero() {
 		return &Jicofo{
 			Client:    c,
 			Jicofo:    j,
-			service:   s,
 			name:      JicofoName,
 			namespace: j.Namespace,
 			ctx:       ctx,
@@ -73,10 +72,10 @@ func NewJicofo(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Req
 	return &Jicofo{
 		Client:    c,
 		Jicofo:    j,
-		name:      JicofoName,
-		namespace: j.Namespace,
 		ctx:       ctx,
 		log:       l,
+		name:      JicofoName,
+		namespace: j.Namespace,
 		labels:    defaultLabels,
 	}, nil
 }
@@ -187,7 +186,6 @@ func (j *Jicofo) prepareJicofoContainer() v1.Container {
 		Image:           j.Spec.Image,
 		ImagePullPolicy: j.Spec.ImagePullPolicy,
 		Env:             j.Spec.Environments,
-		Ports:           getContainerPorts(j.Spec.Ports),
 		Resources:       j.Spec.Resources,
 		SecurityContext: &j.Spec.SecurityContext,
 		VolumeMounts: []v1.VolumeMount{

@@ -2,8 +2,8 @@ package v1beta1
 
 type Exporter struct {
 	DeploymentSpec `json:",inline"`
-	Type          string `json:"type,omitempty"`
-	ConfigMapName string `json:"config_map_name,omitempty"`
+	Type           string `json:"type,omitempty"`
+	ConfigMapName  string `json:"config_map_name,omitempty"`
 	//+kubebuilder:default:=9888
 	Port int32 `json:"port,omitempty"`
 }

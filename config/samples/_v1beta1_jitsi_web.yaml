@@ -3,6 +3,10 @@ kind: Web
 metadata:
   name: web-sample
 spec:
+  service_type: "ClusterIP"
+  service_annotations:
+    sample: "yes"
+  ports: []
   replicas: 1
   image: jitsi/web:stable-5390-3
   security_context:
@@ -44,10 +48,4 @@ spec:
     #   value: http://etherpad:9001/p/
     # - name: ETHERPAD_PUBLIC_URL
     #   value: https://<<your ehterpad public url here>>/p/
-  service_type: "ClusterIP"
-  service_annotations:
-    sample: "yes"
-  ports:
-    - name: https
-      protocol: "TCP"
-      port: 443
+
