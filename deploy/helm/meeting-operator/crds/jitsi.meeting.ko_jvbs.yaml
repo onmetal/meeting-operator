@@ -16,7 +16,11 @@ spec:
     singular: jvb
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - jsonPath: .status.replicas
+      name: Replicas
+      type: integer
+    name: v1beta1
     schema:
       openAPIV3Schema:
         description: JVB is the Schema for the JVB API

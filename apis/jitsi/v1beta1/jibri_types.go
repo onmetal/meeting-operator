@@ -30,7 +30,7 @@ type JibriSpec struct {
 	Ports       []Port         `json:"ports,omitempty"`
 }
 
-// JibriStatus defines the observed state of Jibri
+// JibriStatus defines the observed state of JibriSpec
 type JibriStatus struct {
 	Replicas int32 `json:"replicas,omitempty"`
 }

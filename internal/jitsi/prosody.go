@@ -277,6 +277,8 @@ func (p *Prosody) updateTurnCM() error {
 	return p.Client.Update(p.ctx, logging)
 }
 
+func (p *Prosody) UpdateStatus() error { return nil }
+
 func (p *Prosody) Delete() error {
 	if utils.ContainsString(p.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
 		p.ObjectMeta.Finalizers = utils.RemoveString(p.ObjectMeta.Finalizers, utils.MeetingFinalizer)

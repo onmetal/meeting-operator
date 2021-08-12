@@ -281,6 +281,8 @@ func (j *Jibri) isSTSExist() bool {
 	return true
 }
 
+func (j *Jibri) UpdateStatus() error { return nil }
+
 func (j *Jibri) Delete() error {
 	sts, err := j.Get()
 	if err != nil {

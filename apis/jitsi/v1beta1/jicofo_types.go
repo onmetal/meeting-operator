@@ -25,7 +25,7 @@ type JicofoSpec struct {
 	Exporter       Exporter `json:"exporter,omitempty"`
 }
 
-// JicofoStatus defines the observed state of Jicofo
+// JicofoStatus defines the observed state of JicofoSpec
 type JicofoStatus struct {
 	Replicas int32 `json:"replicas,omitempty"`
 }

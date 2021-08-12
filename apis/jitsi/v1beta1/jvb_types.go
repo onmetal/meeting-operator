@@ -31,13 +31,14 @@ type JVBSpec struct {
 	Port        Port           `json:"port,omitempty"`
 }
 
-// JVBStatus defines the observed state of JVB
+// JVBStatus defines the observed state of JVBSpec
 type JVBStatus struct {
 	Replicas int32 `json:"replicas,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Replicas",type=integer,JSONPath=".status.replicas"
 
 // JVB is the Schema for the JVB API
 type JVB struct {

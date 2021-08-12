@@ -4,15 +4,18 @@ metadata:
   name: jvb-sample
 spec:
   exporter:
-    type: "prometheus"
-    image: "telegraf:latest"
+    image: "systemli/prometheus-jitsi-meet-exporter:latest"
     security_context:
       runAsNonRoot: false
     resources:
       requests:
         cpu: "0.1"
-        memory: "128Mi"
+        memory: "10Mi"
+  custom_sip: [ ]
   service_type: "ClusterIP"
+  port:
+    name: jvb
+    protocol: "UDP"
   service_annotations:
     sample: "yes"
   replicas: 1
@@ -22,7 +25,7 @@ spec:
     allowPrivilegeEscalation: false
     readOnlyRootFilesystem: false
   image_pull_secrets:
-  - name: docker
+    - name: docker
   resources:
     requests:
       cpu: "0.1"

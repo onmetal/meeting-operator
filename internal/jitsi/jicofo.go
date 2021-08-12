@@ -252,6 +252,8 @@ func (j *Jicofo) updateCustomLoggingCM() error {
 	return j.Client.Update(j.ctx, logging)
 }
 
+func (j *Jicofo) UpdateStatus() error { return nil }
+
 func (j *Jicofo) Delete() error {
 	if err := j.deleteCMs(); client.IgnoreNotFound(err) != nil {
 		j.log.Info("failed to delete jicofo logging cm", "error", err, "namespace", j.namespace)

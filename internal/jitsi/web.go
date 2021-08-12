@@ -145,6 +145,8 @@ func (w *Web) Update() error {
 	return w.Client.Update(w.ctx, updatedDeployment)
 }
 
+func (w *Web) UpdateStatus() error { return nil }
+
 func (w *Web) Delete() error {
 	if utils.ContainsString(w.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
 		w.ObjectMeta.Finalizers = utils.RemoveString(w.ObjectMeta.Finalizers, utils.MeetingFinalizer)

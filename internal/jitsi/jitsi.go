@@ -24,6 +24,7 @@ import (
 type Jitsi interface {
 	Create() error
 	Update() error
+	UpdateStatus() error
 	Delete() error
 }
 

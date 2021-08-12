@@ -103,14 +103,6 @@ func addToScheme() {
 
 func createReconciles(mgr ctrl.Manager) {
 	var err error
-	if err = (&etherpadcontroller.Reconcile{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Etherpad"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Etherpad")
-		os.Exit(1)
-	}
 	if err = (&jitsi.WebReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Web"),
@@ -149,6 +141,22 @@ func createReconciles(mgr ctrl.Manager) {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Jibri")
+		os.Exit(1)
+	}
+	if err = (&jitsi.JVBReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("JVB"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "JVB")
+		os.Exit(1)
+	}
+	if err = (&etherpadcontroller.Reconcile{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("Etherpad"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Etherpad")
 		os.Exit(1)
 	}
 	if err = (&boardcontroller.Reconciler{

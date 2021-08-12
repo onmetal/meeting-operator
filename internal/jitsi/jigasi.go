@@ -134,6 +134,8 @@ func (j *Jigasi) Update() error {
 	return j.Client.Update(j.ctx, updatedDeployment)
 }
 
+func (j *Jigasi) UpdateStatus() error { return nil }
+
 func (j *Jigasi) Delete() error {
 	deployment, err := j.Get()
 	if err != nil {

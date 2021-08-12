@@ -23,9 +23,13 @@ import (
 	"html/template"
 	"time"
 
+	ctrl "sigs.k8s.io/controller-runtime"
+
+	"github.com/onmetal/meeting-operator/internal/utils"
+
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 
-	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
+	meeterr "github.com/onmetal/meeting-operator/internal/errors"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/go-logr/logr"
@@ -41,8 +45,8 @@ import (
 )
 
 const (
-	JvbName      = "jvb"
-	externalPort = 10000
+	JvbName         = "jvb"
+	externalPortUDP = 10000
 )
 
 const (
@@ -50,60 +54,89 @@ const (
 	tickTimerSecond = 15 * time.Second
 )
 
-const telegrafExporter = "telegraf"
+const (
+	telegrafExporter = "telegraf"
+)
 
 type JVB struct {
 	client.Client
 	*v1beta1.JVB
 
-	ctx                          context.Context
-	log                          logr.Logger
-	envs                         []v1.EnvVar
-	name, serviceName, namespace string
-	replica                      int32
-	deleted                      bool
+	ctx         context.Context
+	log         logr.Logger
+	envs        []v1.EnvVar
+	replicaName string
+	replica     int32
 }
 
-func NewJVB(ctx context.Context, replica int32,
-	j *v1beta1.JVB, c client.Client, l logr.Logger) Jitsi {
-	name := fmt.Sprintf("%s-%d", JvbName, replica)
-	deleted := !j.DeletionTimestamp.IsZero()
-
-	return &JVB{
-		Client:      c,
-		JVB:         j,
-		envs:        j.Spec.Environments,
-		ctx:         ctx,
-		log:         l,
-		name:        name,
-		serviceName: name,
-		namespace:   j.Namespace,
-		replica:     replica,
-		deleted:     deleted,
+func NewJVB(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) (Jitsi, error) {
+	j := &v1beta1.JVB{}
+	if err := c.Get(ctx, req.NamespacedName, j); err != nil {
+		return nil, err
 	}
+	if !j.DeletionTimestamp.IsZero() {
+		return &JVB{
+			Client: c,
+			JVB:    j,
+			ctx:    ctx,
+			log:    l,
+		}, meeterr.UnderDeletion()
+	}
+	if err := addFinalizerToJVB(ctx, c, j); err != nil {
+		l.Info("finalizer cannot be added", "error", err)
+	}
+	return &JVB{
+		Client: c,
+		JVB:    j,
+		envs:   j.Spec.Environments,
+		ctx:    ctx,
+		log:    l,
+	}, nil
+}
+
+func addFinalizerToJVB(ctx context.Context, c client.Client, j *v1beta1.JVB) error {
+	if utils.ContainsString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
+		return nil
+	}
+	j.ObjectMeta.Finalizers = append(j.ObjectMeta.Finalizers, utils.MeetingFinalizer)
+	return c.Update(ctx, j)
 }
 
 func (j *JVB) Create() error {
-	if j.exist() {
-		return meetingerr.AlreadyExist(j.name)
-	}
-	if err := j.createShutdownCM(); err != nil {
-		j.log.Info("can't create graceful shutdown config map", "error", err)
-	}
-	if err := j.createCustomSIPCM(); err != nil {
-		j.log.Info("can't create custom sip config map", "error", err)
-	}
-	if err := j.createCustomLoggingCM(); err != nil {
-		j.log.Info("can't create jvb logging config map", "error", err)
-	}
-	if err := j.servicePerInstance(); err != nil {
-		j.log.Info("failed to create service", "error", err, "namespace", j.namespace)
-	}
-	err := j.createInstance()
-	if err != nil {
-		j.log.Info("failed to create sts", "error", err, "namespace", j.namespace)
+	j.createConfigMaps()
+	for replica := int32(1); replica <= j.Spec.Replicas; replica++ {
+		j.replicaName = fmt.Sprintf("%s-%d", JvbName, replica)
+		if j.isExist() {
+			continue
+		}
+		if err := j.servicePerInstance(); err != nil {
+			j.log.Info("failed to create service", "error", err)
+		}
+		if err := j.createCustomSIPCM(); err != nil {
+			j.log.Info("can't create custom sip config map", "error", err)
+		}
+		if err := j.createInstance(); err != nil {
+			j.log.Info("failed to create jvb", "error", err)
+		}
 	}
 	return nil
+}
+
+func (j *JVB) createConfigMaps() {
+	if err := j.createShutdownCM(); err != nil && !apierrors.IsAlreadyExists(err) {
+		j.log.Info("can't create graceful shutdown config map", "error", err)
+	}
+	if err := j.createCustomLoggingCM(); err != nil && !apierrors.IsAlreadyExists(err) {
+		j.log.Info("can't create jvb logging config map", "error", err)
+	}
+}
+
+func (j *JVB) isExist() bool {
+	_, err := j.getInstance()
+	if err != nil && apierrors.IsNotFound(err) {
+		return false
+	}
+	return true
 }
 
 func (j *JVB) createShutdownCM() error {
@@ -113,7 +146,11 @@ func (j *JVB) createShutdownCM() error {
 
 func (j *JVB) createCustomSIPCM() error {
 	sip := j.prepareSIPCM()
-	return j.Client.Create(j.ctx, sip)
+	err := j.Client.Create(j.ctx, sip)
+	if apierrors.IsAlreadyExists(err) {
+		return nil
+	}
+	return err
 }
 
 func (j *JVB) createCustomLoggingCM() error {
@@ -122,7 +159,7 @@ func (j *JVB) createCustomLoggingCM() error {
 }
 
 func (j *JVB) prepareShutdownCM() *v1.ConfigMap {
-	return &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "jvb-graceful-shutdown", Namespace: j.namespace,
+	return &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "jvb-graceful-shutdown", Namespace: j.Namespace,
 		Labels: map[string]string{"app": "jvb"}},
 		Data: map[string]string{"graceful_shutdown.sh": jvbGracefulShutdown}}
 }
@@ -139,7 +176,8 @@ func (j *JVB) prepareSIPCM() *v1.ConfigMap {
 		j.log.Info("can't template sip config", "error", err)
 		return nil
 	}
-	return &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "jvb-custom-sip", Namespace: j.namespace,
+	return &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{
+		Name: fmt.Sprintf("%s-custom-sip", j.replicaName), Namespace: j.Namespace,
 		Labels: map[string]string{"app": "jvb"}},
 		Data: map[string]string{"custom-sip-communicator.properties": b.String()}}
 }
@@ -162,7 +200,7 @@ func (j *JVB) prepareLoggingCM() *v1.ConfigMap {
 		j.log.Info("can't template logging config", "error", err)
 		return nil
 	}
-	return &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "jvb-custom-logging", Namespace: j.namespace,
+	return &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "jvb-custom-logging", Namespace: j.Namespace,
 		Labels: map[string]string{"app": "jvb"}},
 		Data: map[string]string{"custom-logging.properties": b.String()}}
 }
@@ -187,17 +225,17 @@ func (j *JVB) servicePerInstance() error {
 }
 
 func (j *JVB) prepareServiceForInstance() *v1.Service {
-	port := externalPort + j.replica
+	port := externalPortUDP + j.replica
 	return &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        j.serviceName,
-			Namespace:   j.namespace,
+			Name:        j.replicaName,
+			Namespace:   j.Namespace,
 			Annotations: j.Spec.ServiceAnnotations,
 		},
 		Spec: v1.ServiceSpec{
 			Type:     j.Spec.ServiceType,
 			Ports:    []v1.ServicePort{{Name: JvbName, Protocol: j.Spec.Port.Protocol, Port: port, TargetPort: intstr.IntOrString{IntVal: port}}},
-			Selector: map[string]string{"jitsi-jvb": j.name},
+			Selector: map[string]string{"jitsi-jvb": j.replicaName},
 		},
 	}
 }
@@ -205,8 +243,8 @@ func (j *JVB) prepareServiceForInstance() *v1.Service {
 func (j *JVB) serviceForExporter() *v1.Service {
 	return &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("exporter-%s", j.serviceName),
-			Namespace: j.namespace,
+			Name:      fmt.Sprintf("exporter-%s", j.replicaName),
+			Namespace: j.Namespace,
 			Labels: map[string]string{
 				"app":                   "jvb",
 				"kubernetes.io/part-of": "jitsi"}},
@@ -214,7 +252,7 @@ func (j *JVB) serviceForExporter() *v1.Service {
 			Type: v1.ServiceTypeClusterIP,
 			Ports: []v1.ServicePort{{Name: "exporter", Protocol: v1.ProtocolTCP,
 				Port: j.Spec.Exporter.Port, TargetPort: intstr.IntOrString{IntVal: j.Spec.Exporter.Port}}},
-			Selector: map[string]string{"jitsi-jvb": j.name},
+			Selector: map[string]string{"jitsi-jvb": j.replicaName},
 		},
 	}
 }
@@ -225,12 +263,12 @@ func (j *JVB) createInstance() error {
 }
 
 func (j *JVB) prepareInstance() *appsv1.Deployment {
-	l := map[string]string{"jitsi-jvb": j.name}
-	spec := j.prepareDeploymentSpec(l)
+	l := map[string]string{"jitsi-jvb": j.replicaName}
+	spec := j.prepareDeploymentSpecWithLabels(l)
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        j.name,
-			Namespace:   j.namespace,
+			Name:        j.replicaName,
+			Namespace:   j.Namespace,
 			Labels:      l,
 			Annotations: j.Annotations,
 		},
@@ -238,7 +276,7 @@ func (j *JVB) prepareInstance() *appsv1.Deployment {
 	}
 }
 
-func (j *JVB) prepareDeploymentSpec(l map[string]string) appsv1.DeploymentSpec {
+func (j *JVB) prepareDeploymentSpecWithLabels(l map[string]string) appsv1.DeploymentSpec {
 	jvb := j.prepareJVBContainer()
 	exporter := j.prepareExporterContainer()
 	volumes := j.prepareVolumesForJVB()
@@ -264,7 +302,7 @@ func (j *JVB) prepareDeploymentSpec(l map[string]string) appsv1.DeploymentSpec {
 }
 
 func (j *JVB) prepareJVBContainer() v1.Container {
-	port := externalPort + j.replica
+	port := externalPortUDP + j.replica
 	return v1.Container{
 		Name:            JvbName,
 		Image:           j.Spec.Image,
@@ -319,7 +357,7 @@ func (j *JVB) prepareVolumesForJVB() []v1.Volume {
 		DefaultMode: &permissions, LocalObjectReference: v1.LocalObjectReference{Name: "jvb-graceful-shutdown"}}}}
 	sipConfig := v1.Volume{Name: "custom-sip", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
 		Items:                []v1.KeyToPath{{Key: "custom-sip-communicator.properties", Path: "sip-communicator.properties"}},
-		LocalObjectReference: v1.LocalObjectReference{Name: "jvb-custom-sip"}}}}
+		LocalObjectReference: v1.LocalObjectReference{Name: fmt.Sprintf("%s-custom-sip", j.replicaName)}}}}
 	loggingConfig := v1.Volume{Name: "custom-logging", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
 		Items:                []v1.KeyToPath{{Key: "custom-logging.properties", Path: "logging.properties"}},
 		LocalObjectReference: v1.LocalObjectReference{Name: "jvb-custom-logging"}}}}
@@ -332,48 +370,36 @@ func (j *JVB) prepareVolumesForJVB() []v1.Volume {
 }
 
 func (j *JVB) additionalEnvironments() []v1.EnvVar {
-	port := fmt.Sprint(externalPort + j.replica)
+	port := fmt.Sprint(externalPortUDP + j.replica)
 	switch {
 	case j.Spec.Port.Protocol == v1.ProtocolTCP:
+		if isEnvAlreadyExist(j.envs) {
+			return j.envs
+		}
 		additionalEnvs := make([]v1.EnvVar, 0, 6)
 		if !isHostAddressExist(j.envs) {
 			additionalEnvs = append(additionalEnvs, j.getDockerHostAddr())
 		}
 		additionalEnvs = append(additionalEnvs,
-			v1.EnvVar{
-				Name:  "JVB_PORT",
-				Value: "30300",
-			},
-			v1.EnvVar{
-				Name:  "JVB_TCP_PORT",
-				Value: port,
-			},
-			v1.EnvVar{
-				Name:  "JVB_TCP_MAPPED_PORT",
-				Value: port,
-			},
-			v1.EnvVar{
-				Name:  "TCP_HARVESTER_PORT",
-				Value: port,
-			},
-			v1.EnvVar{
-				Name:  "TCP_HARVESTER_MAPPED_PORT",
-				Value: port,
-			})
-		for index := range additionalEnvs {
-			j.envs = append(j.envs, additionalEnvs[index])
+			v1.EnvVar{Name: "JVB_PORT", Value: "30300"},
+			v1.EnvVar{Name: "JVB_TCP_PORT", Value: port},
+			v1.EnvVar{Name: "JVB_TCP_MAPPED_PORT", Value: port},
+			v1.EnvVar{Name: "TCP_HARVESTER_PORT", Value: port},
+			v1.EnvVar{Name: "TCP_HARVESTER_MAPPED_PORT", Value: port})
+		for env := range additionalEnvs {
+			j.envs = append(j.envs, additionalEnvs[env])
 		}
 		return j.envs
 	case j.Spec.Port.Protocol == v1.ProtocolUDP:
+		if isEnvAlreadyExist(j.envs) {
+			return j.envs
+		}
 		additionalEnvs := make([]v1.EnvVar, 0, 2)
 		if !isHostAddressExist(j.envs) {
 			additionalEnvs = append(additionalEnvs, j.getDockerHostAddr())
 		}
 		additionalEnvs = append(additionalEnvs,
-			v1.EnvVar{
-				Name:  "JVB_PORT",
-				Value: port,
-			})
+			v1.EnvVar{Name: "JVB_PORT", Value: port})
 		for env := range additionalEnvs {
 			j.envs = append(j.envs, additionalEnvs[env])
 		}
@@ -406,7 +432,7 @@ func (j *JVB) getExternalIP() string {
 		case <-tick.C:
 			svc, err := j.getService()
 			if apierrors.IsNotFound(err) {
-				j.log.Info("can't get svc by name", "error", err)
+				j.log.Info("can't get svc by replica", "error", err)
 				return ""
 			}
 			if svc.Spec.Type != v1.ServiceTypeLoadBalancer {
@@ -425,8 +451,8 @@ func (j *JVB) getExternalIP() string {
 func (j *JVB) getService() (*v1.Service, error) {
 	svc := &v1.Service{}
 	if err := j.Client.Get(context.TODO(), types.NamespacedName{
-		Namespace: j.namespace,
-		Name:      j.serviceName,
+		Namespace: j.Namespace,
+		Name:      j.replicaName,
 	}, svc); err != nil {
 		return &v1.Service{}, err
 	}
@@ -460,44 +486,71 @@ func (j *JVB) prepareExporterContainer() v1.Container {
 }
 
 func (j *JVB) Update() error {
+	j.updateReplicaCount()
+	j.updateOrRecreateConfigMaps()
+	for replica := int32(1); replica <= j.Spec.Replicas; replica++ {
+		j.replicaName = fmt.Sprintf("%s-%d", JvbName, replica)
+		if err := j.updateCustomSIPCM(); err != nil {
+			if apierrors.IsNotFound(err) {
+				if createErr := j.createCustomSIPCM(); createErr != nil && !apierrors.IsAlreadyExists(createErr) {
+					j.log.Info("can't create jvb sip cm", "error", createErr)
+				}
+			} else {
+				j.log.Info("can't update jvb sip cm", "error", err)
+			}
+		}
+		instance, err := j.getInstance()
+		if err != nil {
+			j.log.Info("failed to get jvb instance", "error", err)
+			return err
+		}
+		if svcCreationErr := j.servicePerInstance(); svcCreationErr != nil {
+			j.log.Info("failed to create service", "error", svcCreationErr)
+		}
+		prepared := j.prepareDeploymentSpecWithLabels(nil)
+		instance.Spec.Template.Spec = prepared.Template.Spec
+		if err := j.Client.Update(j.ctx, instance); err != nil {
+			j.log.Info("can't update jvb instance", "error", err)
+		}
+	}
+	return nil
+}
+
+func (j *JVB) updateReplicaCount() {
+	if j.JVB.Status.Replicas > j.Spec.Replicas {
+		currentReplicaCount := j.JVB.Status.Replicas
+		for currentReplicaCount != j.Spec.Replicas && currentReplicaCount != 1 {
+			j.replicaName = fmt.Sprintf("%s-%d", JvbName, currentReplicaCount)
+			if err := j.deleteService(); client.IgnoreNotFound(err) != nil {
+				j.log.Info("failed to delete service", "error", err)
+			}
+			if err := j.deleteInstance(); client.IgnoreNotFound(err) != nil {
+				j.log.Info("failed to delete instance", "error", err)
+			}
+			currentReplicaCount--
+		}
+	}
+}
+
+func (j *JVB) updateOrRecreateConfigMaps() {
 	if err := j.updateShutdownCM(); err != nil {
 		if apierrors.IsNotFound(err) {
-			if createErr := j.createShutdownCM(); createErr != nil {
-				j.log.Info("can't create jvb shutdown cm", "error", createErr)
+			if createErr := j.createShutdownCM(); createErr != nil && !apierrors.IsAlreadyExists(createErr) {
+				j.log.Info("can't recreate jvb shutdown cm", "error", createErr)
 			}
 		} else {
 			j.log.Info("can't update jvb shutdown cm", "error", err)
 		}
 	}
-	if err := j.updateCustomSIPCM(); err != nil {
-		if apierrors.IsNotFound(err) {
-			if createErr := j.createCustomSIPCM(); createErr != nil {
-				j.log.Info("can't create jvb sip cm", "error", createErr)
-			}
-		} else {
-			j.log.Info("can't update jvb sip cm", "error", err)
-		}
-	}
 	if err := j.updateCustomLoggingCM(); err != nil {
 		if apierrors.IsNotFound(err) {
-			if createErr := j.createCustomLoggingCM(); createErr != nil {
-				j.log.Info("can't create jvb logging cm", "error", createErr)
+			if createErr := j.createCustomLoggingCM(); createErr != nil && !apierrors.IsAlreadyExists(createErr) {
+				j.log.Info("can't recreate jvb logging cm", "error", createErr)
 			}
 		} else {
 			j.log.Info("can't update jvb logging cm", "error", err)
 		}
 	}
-	instance, err := j.getInstance()
-	if err != nil {
-		j.log.Info("failed to get jvb instance", "error", err)
-		return err
-	}
-	if svcCreationErr := j.servicePerInstance(); svcCreationErr != nil {
-		j.log.Info("failed to create service", "error", svcCreationErr, "namespace", j.namespace)
-	}
-	prepared := j.prepareInstance()
-	instance.Spec.Template.Spec = prepared.Spec.Template.Spec
-	return j.Client.Update(j.ctx, instance)
 }
 
 func (j *JVB) updateShutdownCM() error {
@@ -515,43 +568,48 @@ func (j *JVB) updateCustomLoggingCM() error {
 	return j.Client.Update(j.ctx, logging)
 }
 
+func (j *JVB) getInstance() (*appsv1.Deployment, error) {
+	d := &appsv1.Deployment{}
+	err := j.Client.Get(context.TODO(), types.NamespacedName{Namespace: j.Namespace, Name: j.replicaName}, d)
+	return d, err
+}
+
+func (j *JVB) UpdateStatus() error {
+	jvb := &v1beta1.JVB{}
+	if err := j.Client.Get(j.ctx, types.NamespacedName{Name: j.Name, Namespace: j.Namespace}, jvb); err != nil {
+		return err
+	}
+	jvb.Status.Replicas = j.Spec.Replicas
+	return j.Client.Status().Update(j.ctx, jvb)
+}
+
 func (j *JVB) Delete() error {
-	if err := j.deleteInstance(); client.IgnoreNotFound(err) != nil {
-		j.log.Info("failed to delete instance", "error", err, "namespace", j.namespace)
-	}
-	if err := j.deleteService(); client.IgnoreNotFound(err) != nil {
-		j.log.Info("failed to delete service", "error", err, "namespace", j.namespace)
-	}
-	if j.deleted {
-		if err := j.deleteCMs(); client.IgnoreNotFound(err) != nil {
-			j.log.Info("failed to delete jvb cm", "error", err, "namespace", j.namespace)
+	for replica := int32(1); replica <= j.Spec.Replicas; replica++ {
+		j.replicaName = fmt.Sprintf("%s-%d", JvbName, replica)
+		if err := j.deleteService(); client.IgnoreNotFound(err) != nil {
+			j.log.Info("failed to delete service", "error", err)
 		}
+		if err := j.deleteInstance(); client.IgnoreNotFound(err) != nil {
+			j.log.Info("failed to delete instance", "error", err)
+		}
+	}
+	if err := j.deleteCMs(); client.IgnoreNotFound(err) != nil {
+		j.log.Info("failed to delete jvb cm", "error", err)
+	}
+	if err := removeFinalizerFromJVB(j.ctx, j.Client, j.JVB); err != nil {
+		j.log.Info("")
 	}
 	return nil
 }
 
-func (j *JVB) exist() bool {
-	_, err := j.getInstance()
-	if err != nil && apierrors.IsNotFound(err) {
-		return false
-	}
-	return true
-}
-
-func (j *JVB) getInstance() (*appsv1.Deployment, error) {
-	d := &appsv1.Deployment{}
-	err := j.Client.Get(context.TODO(), types.NamespacedName{Namespace: j.namespace, Name: j.name}, d)
-	return d, err
-}
-
 func (j *JVB) deleteInstance() error {
 	d := &appsv1.Deployment{}
-	err := j.Client.Get(j.ctx, types.NamespacedName{Namespace: j.namespace, Name: j.name}, d)
+	err := j.Client.Get(j.ctx, types.NamespacedName{Namespace: j.Namespace, Name: j.replicaName}, d)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil
 		}
-		j.log.Info("can't get instance by name", "error", err)
+		j.log.Info("can't get instance by replica", "error", err)
 		return err
 	}
 	return j.Client.Delete(j.ctx, d)
@@ -563,7 +621,7 @@ func (j *JVB) deleteService() error {
 		if apierrors.IsNotFound(err) {
 			return nil
 		}
-		j.log.Info("can't get svc by name", "error", err)
+		j.log.Info("can't get svc by replica", "error", err)
 		return err
 	}
 	if deleteErr := j.Client.Delete(j.ctx, svc); deleteErr != nil {
@@ -574,7 +632,7 @@ func (j *JVB) deleteService() error {
 		if apierrors.IsNotFound(err) {
 			return nil
 		}
-		j.log.Info("can't get svc by name", "error", err)
+		j.log.Info("can't get svc by replica", "error", err)
 		return err
 	}
 	return j.Client.Delete(j.ctx, exporterSvc)
@@ -583,8 +641,8 @@ func (j *JVB) deleteService() error {
 func (j *JVB) getExporterService() (*v1.Service, error) {
 	svc := &v1.Service{}
 	if err := j.Client.Get(context.TODO(), types.NamespacedName{
-		Namespace: j.namespace,
-		Name:      fmt.Sprintf("exporter-%s", j.serviceName),
+		Namespace: j.Namespace,
+		Name:      fmt.Sprintf("exporter-%s", j.replicaName),
 	}, svc); err != nil {
 		return &v1.Service{}, err
 	}
@@ -601,15 +659,33 @@ func (j *JVB) deleteCMs() error {
 	}
 	for cm := range cms.Items {
 		if err := j.Client.Delete(j.ctx, &cms.Items[cm]); err != nil {
-			j.log.Info("can't delete config map", "name", cms.Items[cm].Name, "error", err)
+			j.log.Info("can't delete config map", "replica", cms.Items[cm].Name, "error", err)
 		}
 	}
 	return nil
 }
 
+func removeFinalizerFromJVB(ctx context.Context, c client.Client, j *v1beta1.JVB) error {
+	if !utils.ContainsString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
+		return nil
+	}
+	j.ObjectMeta.Finalizers = utils.RemoveString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer)
+	return c.Update(ctx, j)
+}
+
 func isHostAddressExist(envs []v1.EnvVar) bool {
 	for env := range envs {
 		if envs[env].Name != "DOCKER_HOST_ADDRESS" {
+			continue
+		}
+		return true
+	}
+	return false
+}
+
+func isEnvAlreadyExist(envs []v1.EnvVar) bool {
+	for env := range envs {
+		if envs[env].Name != "JVB_PORT" {
 			continue
 		}
 		return true

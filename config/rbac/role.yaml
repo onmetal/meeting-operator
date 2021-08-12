@@ -38,17 +38,6 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - pods
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
   - services
   verbs:
   - create
@@ -120,6 +109,32 @@ rules:
 - apiGroups:
   - jitsi.meeting.ko
   resources:
+  - jvbs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - jitsi.meeting.ko
+  resources:
+  - jvbs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - jitsi.meeting.ko
+  resources:
+  - jvbs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - jitsi.meeting.ko
+  resources:
   - webs
   verbs:
   - create
@@ -174,32 +189,6 @@ rules:
   - meeting.ko
   resources:
   - etherpads/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - meeting.ko
-  resources:
-  - jitsis
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - meeting.ko
-  resources:
-  - jitsis/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - meeting.ko
-  resources:
-  - jitsis/status
   verbs:
   - get
   - patch

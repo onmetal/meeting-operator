@@ -4,7 +4,6 @@ metadata:
   name: jicofo-sample
 spec:
   exporter:
-    type: "prometheus"
     image: "systemli/prometheus-jitsi-meet-exporter:latest"
     security_context:
       runAsNonRoot: false
