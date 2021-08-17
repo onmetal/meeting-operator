@@ -18,12 +18,13 @@ package controller
 
 import (
 	"context"
+	"reflect"
+
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 	meeterr "github.com/onmetal/meeting-operator/internal/errors"
 	"github.com/onmetal/meeting-operator/internal/jitsi"
 	"k8s.io/apimachinery/pkg/runtime"
-	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -47,7 +48,6 @@ func (r *JVBReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *JVBReconciler) constructPredicates() predicate.Predicate {
 	return predicate.Funcs{
 		UpdateFunc: onUpdate,
-		DeleteFunc: onDelete,
 	}
 }
 
@@ -58,10 +58,6 @@ func onUpdate(e event.UpdateEvent) bool {
 		return false
 	}
 	return !reflect.DeepEqual(oldJVBObj.Spec, newJVBObj.Spec) || !newJVBObj.DeletionTimestamp.IsZero()
-}
-
-func onDelete(e event.DeleteEvent) bool {
-	return true
 }
 
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;delete

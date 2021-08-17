@@ -18,11 +18,13 @@ spec:
     allowPrivilegeEscalation: false
     readOnlyRootFilesystem: false
   image_pull_secrets:
-  - name: docker
+    - name: docker
   resources:
     requests:
       cpu: "0.1"
-      memory: "128Mi"
+      memory: "256Mi"
+    limits:
+      memory: "1Gi"
   environments:
     - name: LOGGING_LEVEL
       value: "WARNING"

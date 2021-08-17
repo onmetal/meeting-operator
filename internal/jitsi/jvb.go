@@ -23,6 +23,8 @@ import (
 	"html/template"
 	"time"
 
+	"k8s.io/utils/pointer"
+
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/onmetal/meeting-operator/internal/utils"
@@ -55,7 +57,9 @@ const (
 )
 
 const (
-	telegrafExporter = "telegraf"
+	telegrafExporter      = "telegraf"
+	exporterContainerName = "exporter"
+	defaultExporterUser   = 10001
 )
 
 type JVB struct {
@@ -463,24 +467,29 @@ func (j *JVB) prepareExporterContainer() v1.Container {
 	switch j.Spec.Exporter.Type {
 	case "telegraf":
 		return v1.Container{
-			Name:            "exporter",
+			Name:            exporterContainerName,
 			Image:           j.Spec.Exporter.Image,
 			Env:             j.Spec.Exporter.Environments,
-			Resources:       j.Spec.Exporter.Resources,
 			VolumeMounts:    []v1.VolumeMount{{Name: "telegraf", MountPath: "/etc/telegraf/"}},
-			ImagePullPolicy: j.Spec.Exporter.ImagePullPolicy,
+			Resources:       j.Spec.Exporter.Resources,
+			ImagePullPolicy: j.Spec.ImagePullPolicy,
 			SecurityContext: &j.Spec.Exporter.SecurityContext,
 		}
 	default:
 		return v1.Container{
-			Name:            "exporter",
+			Name:            exporterContainerName,
 			Image:           j.Spec.Exporter.Image,
 			Args:            []string{"-videobridge-url", "http://localhost:8080/colibri/stats"},
 			Ports:           []v1.ContainerPort{{Name: "http", ContainerPort: j.Spec.Exporter.Port, Protocol: v1.ProtocolTCP}},
-			Env:             j.Spec.Exporter.Environments,
 			Resources:       j.Spec.Exporter.Resources,
-			ImagePullPolicy: j.Spec.Exporter.ImagePullPolicy,
-			SecurityContext: &j.Spec.Exporter.SecurityContext,
+			ImagePullPolicy: j.Spec.ImagePullPolicy,
+			SecurityContext: &v1.SecurityContext{
+				RunAsUser:                pointer.Int64Ptr(defaultExporterUser),
+				Privileged:               pointer.BoolPtr(false),
+				RunAsNonRoot:             pointer.BoolPtr(true),
+				ReadOnlyRootFilesystem:   pointer.BoolPtr(true),
+				AllowPrivilegeEscalation: pointer.BoolPtr(false),
+			},
 		}
 	}
 }

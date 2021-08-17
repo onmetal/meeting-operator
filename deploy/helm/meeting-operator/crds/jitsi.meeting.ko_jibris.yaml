@@ -436,7 +436,7 @@ spec:
             - image
             type: object
           status:
-            description: JibriStatus defines the observed state of Jibri
+            description: JibriStatus defines the observed state of JibriSpec
             properties:
               replicas:
                 format: int32

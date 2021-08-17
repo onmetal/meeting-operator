@@ -151,11 +151,8 @@ func getPorts(appName string, s []v1beta1.Port) []v1.ServicePort {
 	case WebName:
 		ports := make([]v1.ServicePort, 0, 1)
 		ports = append(ports, v1.ServicePort{
-			Name:       "http",
-			Protocol:   v1.ProtocolTCP,
-			Port:       80,
-			TargetPort: intstr.IntOrString{IntVal: 80},
-		})
+			Name: "http", Protocol: v1.ProtocolTCP,
+			Port: 80, TargetPort: intstr.IntOrString{IntVal: 80}})
 		if len(s) != 0 {
 			return getAdditionalPorts(ports, s)
 		}
@@ -164,29 +161,17 @@ func getPorts(appName string, s []v1beta1.Port) []v1.ServicePort {
 		ports := make([]v1.ServicePort, 0, 4)
 		ports = append(ports,
 			v1.ServicePort{
-				Name:       "http",
-				Protocol:   v1.ProtocolTCP,
-				Port:       5280,
-				TargetPort: intstr.IntOrString{IntVal: 5280},
-			},
+				Name: "http", Protocol: v1.ProtocolTCP,
+				Port: 5280, TargetPort: intstr.IntOrString{IntVal: 5280}},
 			v1.ServicePort{
-				Name:       "c2s",
-				Protocol:   v1.ProtocolTCP,
-				Port:       5282,
-				TargetPort: intstr.IntOrString{IntVal: 5282},
-			},
+				Name: "c2s", Protocol: v1.ProtocolTCP,
+				Port: 5282, TargetPort: intstr.IntOrString{IntVal: 5282}},
 			v1.ServicePort{
-				Name:       "xmpp",
-				Protocol:   v1.ProtocolTCP,
-				Port:       5222,
-				TargetPort: intstr.IntOrString{IntVal: 5222},
-			},
+				Name: "xmpp", Protocol: v1.ProtocolTCP,
+				Port: 5222, TargetPort: intstr.IntOrString{IntVal: 5222}},
 			v1.ServicePort{
-				Name:       "external",
-				Protocol:   v1.ProtocolTCP,
-				Port:       5347,
-				TargetPort: intstr.IntOrString{IntVal: 5347},
-			},
+				Name: "external", Protocol: v1.ProtocolTCP,
+				Port: 5347, TargetPort: intstr.IntOrString{IntVal: 5347}},
 		)
 		if len(s) != 0 {
 			return getAdditionalPorts(ports, s)
@@ -195,11 +180,8 @@ func getPorts(appName string, s []v1beta1.Port) []v1.ServicePort {
 	case JibriName:
 		ports := make([]v1.ServicePort, 0, 1)
 		ports = append(ports, v1.ServicePort{
-			Name:       "http",
-			Protocol:   v1.ProtocolTCP,
-			Port:       5282,
-			TargetPort: intstr.IntOrString{IntVal: 5282},
-		})
+			Name: "http", Protocol: v1.ProtocolTCP,
+			Port: 5282, TargetPort: intstr.IntOrString{IntVal: 5282}})
 		if len(s) != 0 {
 			return getAdditionalPorts(ports, s)
 		}
@@ -212,11 +194,23 @@ func getPorts(appName string, s []v1beta1.Port) []v1.ServicePort {
 func getAdditionalPorts(servicePorts []v1.ServicePort, ports []v1beta1.Port) []v1.ServicePort {
 	for port := range ports {
 		servicePorts = append(servicePorts, v1.ServicePort{
-			Name:       ports[port].Name,
-			TargetPort: intstr.IntOrString{IntVal: ports[port].Port},
-			Port:       ports[port].Port,
-			Protocol:   ports[port].Protocol,
-		})
+			Name: ports[port].Name, TargetPort: intstr.IntOrString{IntVal: ports[port].Port},
+			Port: ports[port].Port, Protocol: ports[port].Protocol})
 	}
 	return servicePorts
+}
+
+func getContainerPorts(ports []v1beta1.Port) []v1.ContainerPort {
+	var containerPorts []v1.ContainerPort
+	if len(ports) < 1 {
+		return nil
+	}
+	for svc := range ports {
+		containerPorts = append(containerPorts, v1.ContainerPort{
+			Name:          ports[svc].Name,
+			ContainerPort: ports[svc].Port,
+			Protocol:      ports[svc].Protocol,
+		})
+	}
+	return containerPorts
 }

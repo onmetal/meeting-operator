@@ -5,12 +5,6 @@ metadata:
 spec:
   exporter:
     image: "systemli/prometheus-jitsi-meet-exporter:latest"
-    security_context:
-      runAsNonRoot: false
-    resources:
-      requests:
-        cpu: "0.1"
-        memory: "10Mi"
   custom_sip: [ ]
   service_type: "ClusterIP"
   port:

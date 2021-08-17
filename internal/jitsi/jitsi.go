@@ -16,29 +16,9 @@ limitations under the License.
 
 package jitsi
 
-import (
-	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
-	v1 "k8s.io/api/core/v1"
-)
-
 type Jitsi interface {
 	Create() error
 	Update() error
 	UpdateStatus() error
 	Delete() error
-}
-
-func getContainerPorts(ports []v1beta1.Port) []v1.ContainerPort {
-	var containerPorts []v1.ContainerPort
-	if len(ports) < 1 {
-		return nil
-	}
-	for svc := range ports {
-		containerPorts = append(containerPorts, v1.ContainerPort{
-			Name:          ports[svc].Name,
-			ContainerPort: ports[svc].Port,
-			Protocol:      ports[svc].Protocol,
-		})
-	}
-	return containerPorts
 }

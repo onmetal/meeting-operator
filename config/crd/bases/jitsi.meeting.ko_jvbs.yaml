@@ -124,10 +124,6 @@ spec:
                 type: array
               exporter:
                 properties:
-                  annotations:
-                    additionalProperties:
-                      type: string
-                    type: object
                   config_map_name:
                     type: string
                   environments:
@@ -210,26 +206,10 @@ spec:
                       type: object
                     type: array
                   image:
+                    default: systemli/prometheus-jitsi-meet-exporter:latest
                     type: string
-                  image_pull_policy:
-                    default: IfNotPresent
-                    description: PullPolicy describes a policy for if/when to pull a container image
-                    type: string
-                  image_pull_secrets:
-                    items:
-                      description: LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.
-                      properties:
-                        name:
-                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
-                          type: string
-                      type: object
-                    type: array
                   port:
                     default: 9888
-                    format: int32
-                    type: integer
-                  replicas:
-                    default: 1
                     format: int32
                     type: integer
                   resources:
@@ -338,14 +318,9 @@ spec:
                             type: string
                         type: object
                     type: object
-                  terminationGracePeriodSeconds:
-                    default: 60
-                    format: int64
-                    type: integer
                   type:
+                    description: DeploymentSpec `json:",inline"`
                     type: string
-                required:
-                - image
                 type: object
               image:
                 type: string
@@ -501,7 +476,7 @@ spec:
             - image
             type: object
           status:
-            description: JVBStatus defines the observed state of JVB
+            description: JVBStatus defines the observed state of JVBSpec
             properties:
               replicas:
                 format: int32
