@@ -593,6 +593,9 @@ func (j *JVB) UpdateStatus() error {
 }
 
 func (j *JVB) Delete() error {
+	if err := j.removeFinalizerFromJVB(); err != nil {
+		j.log.Info("can't remove finalizer", "error", err)
+	}
 	for replica := int32(1); replica <= j.Spec.Replicas; replica++ {
 		j.replicaName = fmt.Sprintf("%s-%d", JvbName, replica)
 		if err := j.deleteService(); client.IgnoreNotFound(err) != nil {
@@ -605,10 +608,16 @@ func (j *JVB) Delete() error {
 	if err := j.deleteCMs(); client.IgnoreNotFound(err) != nil {
 		j.log.Info("failed to delete jvb cm", "error", err)
 	}
-	if err := removeFinalizerFromJVB(j.ctx, j.Client, j.JVB); err != nil {
-		j.log.Info("")
-	}
+
 	return nil
+}
+
+func (j *JVB) removeFinalizerFromJVB() error {
+	if !utils.ContainsString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
+		return nil
+	}
+	j.ObjectMeta.Finalizers = utils.RemoveString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer)
+	return j.Client.Update(j.ctx, j.JVB)
 }
 
 func (j *JVB) deleteInstance() error {
@@ -672,14 +681,6 @@ func (j *JVB) deleteCMs() error {
 		}
 	}
 	return nil
-}
-
-func removeFinalizerFromJVB(ctx context.Context, c client.Client, j *v1beta1.JVB) error {
-	if !utils.ContainsString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
-		return nil
-	}
-	j.ObjectMeta.Finalizers = utils.RemoveString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer)
-	return c.Update(ctx, j)
 }
 
 func isHostAddressExist(envs []v1.EnvVar) bool {

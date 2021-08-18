@@ -148,11 +148,8 @@ func (w *Web) Update() error {
 func (w *Web) UpdateStatus() error { return nil }
 
 func (w *Web) Delete() error {
-	if utils.ContainsString(w.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
-		w.ObjectMeta.Finalizers = utils.RemoveString(w.ObjectMeta.Finalizers, utils.MeetingFinalizer)
-		if err := w.Client.Update(w.ctx, w.Web); err != nil {
-			w.log.Info("can't update web cr", "error", err)
-		}
+	if err := w.removeFinalizerFromWeb(); err != nil {
+		w.log.Info("can't remove finalizer", "error", err)
 	}
 	if err := w.service.Delete(); err != nil {
 		return err
@@ -166,6 +163,14 @@ func (w *Web) Delete() error {
 		return nil
 	}
 	return err
+}
+
+func (w *Web) removeFinalizerFromWeb() error {
+	if !utils.ContainsString(w.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
+		return nil
+	}
+	w.ObjectMeta.Finalizers = utils.RemoveString(w.ObjectMeta.Finalizers, utils.MeetingFinalizer)
+	return w.Client.Update(w.ctx, w.Web)
 }
 
 func (w *Web) Get() (*appsv1.Deployment, error) {

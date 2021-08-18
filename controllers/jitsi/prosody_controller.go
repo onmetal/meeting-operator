@@ -56,6 +56,8 @@ func (r *ProsodyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 				reqLogger.Info("deletion failed")
 				return ctrl.Result{}, delErr
 			}
+			reqLogger.Info("reconciliation finished")
+			return ctrl.Result{}, nil
 		}
 		reqLogger.Error(err, "can't create new instance of prosody")
 		return ctrl.Result{}, client.IgnoreNotFound(err)

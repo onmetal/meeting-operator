@@ -56,6 +56,8 @@ func (r *JicofoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 				reqLogger.Info("deletion failed")
 				return ctrl.Result{}, delErr
 			}
+			reqLogger.Info("reconciliation finished")
+			return ctrl.Result{}, nil
 		}
 		reqLogger.Error(err, "can't create new instance of jicofo")
 		return ctrl.Result{}, client.IgnoreNotFound(err)

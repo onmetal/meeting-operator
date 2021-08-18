@@ -18,6 +18,7 @@ package jitsi
 
 import (
 	"context"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
@@ -137,11 +138,26 @@ func (j *Jigasi) Update() error {
 func (j *Jigasi) UpdateStatus() error { return nil }
 
 func (j *Jigasi) Delete() error {
+	if err := j.removeFinalizerFromJigasi(); err != nil {
+		j.log.Info("can't remove finalizer", "error", err)
+	}
 	deployment, err := j.Get()
 	if err != nil {
 		return err
 	}
-	return j.Client.Delete(j.ctx, deployment)
+	err = j.Client.Delete(j.ctx, deployment)
+	if apierrors.IsNotFound(err) {
+		return nil
+	}
+	return err
+}
+
+func (j *Jigasi) removeFinalizerFromJigasi() error {
+	if !utils.ContainsString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
+		return nil
+	}
+	j.ObjectMeta.Finalizers = utils.RemoveString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer)
+	return j.Client.Update(j.ctx, j.Jigasi)
 }
 
 func (j *Jigasi) Get() (*appsv1.Deployment, error) {

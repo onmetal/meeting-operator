@@ -280,11 +280,8 @@ func (p *Prosody) updateTurnCM() error {
 func (p *Prosody) UpdateStatus() error { return nil }
 
 func (p *Prosody) Delete() error {
-	if utils.ContainsString(p.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
-		p.ObjectMeta.Finalizers = utils.RemoveString(p.ObjectMeta.Finalizers, utils.MeetingFinalizer)
-		if err := p.Client.Update(p.ctx, p.Prosody); err != nil {
-			p.log.Info("can't update prosody cr", "error", err)
-		}
+	if err := p.removeFinalizerFromProsody(); err != nil {
+		p.log.Info("can't remove finalizer", "error", err)
 	}
 	if err := p.service.Delete(); err != nil {
 		return err
@@ -297,6 +294,14 @@ func (p *Prosody) Delete() error {
 		return err
 	}
 	return p.Client.Delete(p.ctx, deployment)
+}
+
+func (p *Prosody) removeFinalizerFromProsody() error {
+	if !utils.ContainsString(p.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
+		return nil
+	}
+	p.ObjectMeta.Finalizers = utils.RemoveString(p.ObjectMeta.Finalizers, utils.MeetingFinalizer)
+	return p.Client.Update(p.ctx, p.Prosody)
 }
 
 func (p *Prosody) deleteCMs() error {

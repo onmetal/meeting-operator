@@ -284,11 +284,22 @@ func (j *Jibri) isSTSExist() bool {
 func (j *Jibri) UpdateStatus() error { return nil }
 
 func (j *Jibri) Delete() error {
+	if err := j.removeFinalizerFromJibri(); err != nil {
+		j.log.Info("can't remove finalizer", "error", err)
+	}
 	sts, err := j.Get()
 	if err != nil {
 		return err
 	}
 	return j.Client.Delete(j.ctx, sts)
+}
+
+func (j *Jibri) removeFinalizerFromJibri() error {
+	if !utils.ContainsString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
+		return nil
+	}
+	j.ObjectMeta.Finalizers = utils.RemoveString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer)
+	return j.Client.Update(j.ctx, j.Jibri)
 }
 
 func (j *Jibri) Get() (*appsv1.StatefulSet, error) {

@@ -263,6 +263,9 @@ func (j *Jicofo) updateCustomLoggingCM() error {
 func (j *Jicofo) UpdateStatus() error { return nil }
 
 func (j *Jicofo) Delete() error {
+	if err := j.removeFinalizerFromJicofo(); err != nil {
+		j.log.Info("can't remove finalizer", "error", err)
+	}
 	if err := j.deleteCMs(); client.IgnoreNotFound(err) != nil {
 		j.log.Info("failed to delete jicofo logging cm", "error", err, "namespace", j.namespace)
 	}
@@ -271,6 +274,14 @@ func (j *Jicofo) Delete() error {
 		return err
 	}
 	return j.Client.Delete(j.ctx, deployment)
+}
+
+func (j *Jicofo) removeFinalizerFromJicofo() error {
+	if !utils.ContainsString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
+		return nil
+	}
+	j.ObjectMeta.Finalizers = utils.RemoveString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer)
+	return j.Client.Update(j.ctx, j.Jicofo)
 }
 
 func (j *Jicofo) deleteCMs() error {
