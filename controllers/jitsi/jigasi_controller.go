@@ -43,14 +43,9 @@ func (r *JigasiReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;delete
-// +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;delete
-// +kubebuilder:rbac:groups="",resources=endpoints,verbs=get;list;watch;create;update;delete
-// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;delete
-// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
-// +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=jicofos,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=jicofos/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=jicofos/finalizers,verbs=update
+// +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=jigasis,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=jigasis/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=jigasis/finalizers,verbs=update
 
 func (r *JigasiReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	reqLogger := r.Log.WithValues("name", req.Name, "namespace", req.Namespace)

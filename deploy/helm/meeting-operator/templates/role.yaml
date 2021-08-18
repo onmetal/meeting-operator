@@ -38,6 +38,17 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
   - services
   verbs:
   - create
@@ -69,9 +80,9 @@ rules:
   - update
   - watch
 - apiGroups:
-  - configmaps
+  - jitsi.meeting.ko
   resources:
-  - configmaps
+  - jibris
   verbs:
   - create
   - delete
@@ -83,7 +94,21 @@ rules:
 - apiGroups:
   - jitsi.meeting.ko
   resources:
-  - jicofos
+  - jibris/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - jitsi.meeting.ko
+  resources:
+  - jibris/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - jitsi.meeting.ko
+  resources:
+  - jicofoes
   verbs:
   - create
   - delete
@@ -95,13 +120,39 @@ rules:
 - apiGroups:
   - jitsi.meeting.ko
   resources:
-  - jicofos/finalizers
+  - jicofoes/finalizers
   verbs:
   - update
 - apiGroups:
   - jitsi.meeting.ko
   resources:
-  - jicofos/status
+  - jicofoes/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - jitsi.meeting.ko
+  resources:
+  - jigasis
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - jitsi.meeting.ko
+  resources:
+  - jigasis/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - jitsi.meeting.ko
+  resources:
+  - jigasis/status
   verbs:
   - get
   - patch
@@ -128,6 +179,32 @@ rules:
   - jitsi.meeting.ko
   resources:
   - jvbs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - jitsi.meeting.ko
+  resources:
+  - prosodies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - jitsi.meeting.ko
+  resources:
+  - prosodies/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - jitsi.meeting.ko
+  resources:
+  - prosodies/status
   verbs:
   - get
   - patch

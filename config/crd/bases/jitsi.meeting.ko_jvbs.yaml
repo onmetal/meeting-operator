@@ -319,7 +319,6 @@ spec:
                         type: object
                     type: object
                   type:
-                    description: DeploymentSpec `json:",inline"`
                     type: string
                 type: object
               image:

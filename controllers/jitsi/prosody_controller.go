@@ -43,16 +43,9 @@ func (r *ProsodyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;delete
-// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;delete
-// +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;delete
-// +kubebuilder:rbac:groups="",resources=endpoints,verbs=get;list;watch;create;update;delete
-// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;delete
-// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
-// +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=webs,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=configmaps,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=webs/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=webs/finalizers,verbs=update
+// +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=prosodies,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=prosodies/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=prosodies/finalizers,verbs=update
 
 func (r *ProsodyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	reqLogger := r.Log.WithValues("name", req.Name, "namespace", req.Namespace)

@@ -60,11 +60,6 @@ func onUpdate(e event.UpdateEvent) bool {
 	return !reflect.DeepEqual(oldJVBObj.Spec, newJVBObj.Spec) || !newJVBObj.DeletionTimestamp.IsZero()
 }
 
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;delete
-// +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;delete
-// +kubebuilder:rbac:groups="",resources=endpoints,verbs=get;list;watch;create;update;delete
-// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;delete
-// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 // +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=jvbs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=jvbs/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=jvbs/finalizers,verbs=update

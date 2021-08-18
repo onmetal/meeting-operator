@@ -48,9 +48,9 @@ func (r *WebReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=endpoints,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;delete
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 // +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=webs,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=configmaps,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=webs/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=webs/finalizers,verbs=update
 
