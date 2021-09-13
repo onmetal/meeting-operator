@@ -206,37 +206,43 @@ const prosodyTurnConfig = `muc_mapper_domain_base = "{{ .XMPPDomain }}"
 turncredentials_secret = "{{ .TurnCredentials }}";
 
 turncredentials = {
-	{{ if .StunEnabled }}
+	{{- if .StunEnabled }}
     { type = "stun", host = "{{ .StunHost }}", port = "{{ .StunPort }}" },
 	{{ end }}
-	{{ if .TurnUDPEnabled }}
+	{{- if .TurnUDPEnabled }}
     { type = "turn", host = "{{ .TurnHost }}", port = "{{ .TurnPort }}", transport = "udp"},
 	{{ end }}
     { type = "turns", host = "{{ .TurnHost }}", port = "{{ .TurnsPort }}", transport = "tcp" }
 }
 
+external_service_secret = "{{ .TurnCredentials }}";
 external_services = {
-	{{ if .StunEnabled }}
+	{{- if .StunEnabled }}
     {
         type = "stun",
         transport = "udp",
         host = "{{ .StunHost }}",
         port = {{ .StunPort }}
     }, 
-	{{ end }}
-	{{ if .TurnUDPEnabled }}
+	{{- end }}
+	{{- if .TurnUDPEnabled }}
     {
         type = "turn",
         transport = "udp",
+		ttl = 86400, 
+		algorithm = "turn",
         host = "{{ .TurnHost }}",
-        port = {{ .TurnPort }}
+        port = {{ .TurnPort }},
+        secret = true
     }, 
-	{{ end }}
+	{{- end }}
 	{
         type = "turn",
         transport = "tcp",
+		ttl = 86400, 
+		algorithm = "turn",
         host = "{{ .TurnHost }}",
         port = {{ .TurnsPort }},
-        secret = "{{ .TurnCredentials }}"
+        secret = true
     }
 }`
