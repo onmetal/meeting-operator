@@ -18,8 +18,6 @@ package jicofo
 
 import (
 	"context"
-	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
@@ -29,6 +27,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 type Reconciler struct {
