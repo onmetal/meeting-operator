@@ -30,7 +30,7 @@ type JibriSpec struct {
 	Ports       []Port         `json:"ports,omitempty"`
 }
 
-// JibriStatus defines the observed state of JibriSpec
+// JibriStatus defines the observed state of JibriSpec.
 type JibriStatus struct {
 	Replicas int32 `json:"replicas,omitempty"`
 }
@@ -38,7 +38,7 @@ type JibriStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// Jibri is the Schema for the Jibri API
+// Jibri is the Schema for the Jibri API.
 type Jibri struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -49,7 +49,7 @@ type Jibri struct {
 
 //+kubebuilder:object:root=true
 
-// JibriList contains a list of Jibri
+// JibriList contains a list of Jibri.
 type JibriList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

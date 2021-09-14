@@ -1,4 +1,4 @@
-package jitsi
+package jvb
 
 type SIP struct {
 	Options []string
@@ -179,70 +179,3 @@ org.jitsi.videobridge.xmpp.ComponentImpl.level=FINE
 
 # All of the INFO level logs from MediaStreamImpl are unnecessary in the context of jitsi-videobridge.
 org.jitsi.impl.neomedia.MediaStreamImpl.level=WARNING`
-
-const jicofoCustomLogging = `handlers= java.util.logging.ConsoleHandler
-
-java.util.logging.ConsoleHandler.level = ALL
-java.util.logging.ConsoleHandler.formatter = net.java.sip.communicator.util.ScLogFormatter
-
-net.java.sip.communicator.util.ScLogFormatter.programname=Jicofo
-
-.level={{ . }}
-net.sf.level=SEVERE
-net.java.sip.communicator.plugin.reconnectplugin.level=FINE
-org.ice4j.level=SEVERE
-org.jitsi.impl.neomedia.level=SEVERE
-
-# Do not worry about missing strings
-net.java.sip.communicator.service.resources.AbstractResourcesService.level=SEVERE
-
-#net.java.sip.communicator.service.protocol.level=ALL
-
-# Enable debug packets logging
-#org.jitsi.impl.protocol.xmpp.level=FINE`
-
-const prosodyTurnConfig = `muc_mapper_domain_base = "{{ .XMPPDomain }}"
-
-turncredentials_secret = "{{ .TurnCredentials }}";
-
-turncredentials = {
-	{{- if .StunEnabled }}
-    { type = "stun", host = "{{ .StunHost }}", port = "{{ .StunPort }}" },
-	{{ end }}
-	{{- if .TurnUDPEnabled }}
-    { type = "turn", host = "{{ .TurnHost }}", port = "{{ .TurnPort }}", transport = "udp"},
-	{{ end }}
-    { type = "turns", host = "{{ .TurnHost }}", port = "{{ .TurnsPort }}", transport = "tcp" }
-}
-
-external_service_secret = "{{ .TurnCredentials }}";
-external_services = {
-	{{- if .StunEnabled }}
-    {
-        type = "stun",
-        transport = "udp",
-        host = "{{ .StunHost }}",
-        port = {{ .StunPort }}
-    }, 
-	{{- end }}
-	{{- if .TurnUDPEnabled }}
-    {
-        type = "turn",
-        transport = "udp",
-		ttl = 86400, 
-		algorithm = "turn",
-        host = "{{ .TurnHost }}",
-        port = {{ .TurnPort }},
-        secret = true
-    }, 
-	{{- end }}
-	{
-        type = "turn",
-        transport = "tcp",
-		ttl = 86400, 
-		algorithm = "turn",
-        host = "{{ .TurnHost }}",
-        port = {{ .TurnsPort }},
-        secret = true
-    }
-}`

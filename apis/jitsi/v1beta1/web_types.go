@@ -29,7 +29,7 @@ type WebSpec struct {
 	Ports       []Port         `json:"ports,omitempty"`
 }
 
-// WebStatus defines the observed state of Web
+// WebStatus defines the observed state of Web.
 type WebStatus struct {
 	Replicas int32 `json:"replicas,omitempty"`
 }
@@ -37,7 +37,7 @@ type WebStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// Web is the Schema for the Web API
+// Web is the Schema for the Web API.
 type Web struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -48,7 +48,7 @@ type Web struct {
 
 //+kubebuilder:object:root=true
 
-// WebList contains a list of Web
+// WebList contains a list of Web.
 type WebList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

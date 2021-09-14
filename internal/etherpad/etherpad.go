@@ -19,12 +19,11 @@ package etherpad
 import (
 	"context"
 
-	v1 "k8s.io/api/core/v1"
-
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/etherpad/v1alpha2"
 	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
 	"github.com/onmetal/meeting-operator/internal/utils"
+	v1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -56,7 +55,7 @@ type service struct {
 	ports           []v1alpha2.Port
 }
 
-func New(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) (Etherpad, error) {
+func newInstance(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) (Etherpad, error) {
 	eth := &v1alpha2.Etherpad{}
 	if err := c.Get(ctx, req.NamespacedName, eth); err != nil {
 		return nil, err
@@ -69,10 +68,10 @@ func New(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) 
 			log:      l,
 		}, meetingerr.UnderDeletion()
 	}
-	if err := addFinalizer(ctx, c, eth); err != nil {
+	if err := utils.AddFinalizer(ctx, c, eth); err != nil {
 		l.Info("can't add finalizer to etherpad", "error", err)
 	}
-	defaultLabels := utils.GetDefaultLabels(eth.Kind)
+	defaultLabels := utils.GetDefaultLabelsForApp(eth.Kind)
 	return &etherpad{
 		Client:   c,
 		Etherpad: eth,
@@ -80,14 +79,6 @@ func New(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) 
 		log:      l,
 		labels:   defaultLabels,
 	}, nil
-}
-
-func addFinalizer(ctx context.Context, c client.Client, etherpad *v1alpha2.Etherpad) error {
-	if !utils.ContainsString(etherpad.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
-		etherpad.ObjectMeta.Finalizers = append(etherpad.ObjectMeta.Finalizers, utils.MeetingFinalizer)
-		return c.Update(ctx, etherpad)
-	}
-	return nil
 }
 
 func newService(e *etherpad) Etherpad {

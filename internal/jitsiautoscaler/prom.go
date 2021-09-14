@@ -67,7 +67,7 @@ func (p *prom) countAvgValueByRequest(request string) float64 {
 }
 
 func (p *prom) scaleUp(desiredReplicas int32) error {
-	jitsi, getErr := getJitsiCR(p.ctx, p.Client, p.Spec.ScaleTargetRef.Name, p.Namespace)
+	jitsi, getErr := getJVBCR(p.ctx, p.Client, p.Spec.ScaleTargetRef.Name, p.Namespace)
 	if getErr != nil {
 		return getErr
 	}
@@ -79,7 +79,7 @@ func (p *prom) scaleUp(desiredReplicas int32) error {
 }
 
 func (p *prom) scaleDown(desiredReplicas int32) error {
-	jitsi, getErr := getJitsiCR(p.ctx, p.Client, p.Spec.ScaleTargetRef.Name, p.Namespace)
+	jitsi, getErr := getJVBCR(p.ctx, p.Client, p.Spec.ScaleTargetRef.Name, p.Namespace)
 	if getErr != nil {
 		return getErr
 	}

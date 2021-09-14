@@ -29,7 +29,7 @@ type ProsodySpec struct {
 	Ports       []Port         `json:"ports,omitempty"`
 }
 
-// ProsodyStatus defines the observed state of Prosody
+// ProsodyStatus defines the observed state of Prosody.
 type ProsodyStatus struct {
 	Replicas int32 `json:"replicas,omitempty"`
 }
@@ -37,7 +37,7 @@ type ProsodyStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// Prosody is the Schema for the Prosody API
+// Prosody is the Schema for the Prosody API.
 type Prosody struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -48,7 +48,7 @@ type Prosody struct {
 
 //+kubebuilder:object:root=true
 
-// ProsodyList contains a list of Prosody
+// ProsodyList contains a list of Prosody.
 type ProsodyList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

@@ -21,7 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// WhiteBoardSpec defines the desired state of WhiteBoard
+// WhiteBoardSpec defines the desired state of WhiteBoard.
 type WhiteBoardSpec struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
 	//+kubebuilder:default:=1
@@ -47,7 +47,7 @@ type Port struct {
 	Port     int32       `json:"port,omitempty"`
 }
 
-// WhiteBoardStatus defines the observed state of WhiteBoard
+// WhiteBoardStatus defines the observed state of WhiteBoard.
 type WhiteBoardStatus struct{}
 
 //+kubebuilder:object:root=true

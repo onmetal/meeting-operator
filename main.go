@@ -21,29 +21,30 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"os"
-
-	jitsiv1beta1 "github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
-	etherpadcontroller "github.com/onmetal/meeting-operator/controllers/etherpad"
-	jitsi "github.com/onmetal/meeting-operator/controllers/jitsi"
-	jascontroller "github.com/onmetal/meeting-operator/controllers/jitsiautoscaler"
-	boardcontroller "github.com/onmetal/meeting-operator/controllers/whiteboard"
+	"strconv"
 
 	ethv1alpha2 "github.com/onmetal/meeting-operator/apis/etherpad/v1alpha2"
+	jitsiv1beta1 "github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 	jasv1alpha1 "github.com/onmetal/meeting-operator/apis/jitsiautoscaler/v1alpha1"
-
 	boardv1alpha1 "github.com/onmetal/meeting-operator/apis/whiteboard/v1alpha2"
+	etherpadcontroller "github.com/onmetal/meeting-operator/internal/etherpad"
+	"github.com/onmetal/meeting-operator/internal/jitsi/jibri"
+	"github.com/onmetal/meeting-operator/internal/jitsi/jicofo"
+	"github.com/onmetal/meeting-operator/internal/jitsi/jigasi"
+	"github.com/onmetal/meeting-operator/internal/jitsi/jvb"
+	"github.com/onmetal/meeting-operator/internal/jitsi/prosody"
+	"github.com/onmetal/meeting-operator/internal/jitsi/web"
+	jascontroller "github.com/onmetal/meeting-operator/internal/jitsiautoscaler"
+	boardcontroller "github.com/onmetal/meeting-operator/internal/whiteboard"
+	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	//+kubebuilder:scaffold:imports
 )
 
 var (
@@ -53,6 +54,11 @@ var (
 
 func main() {
 	addToScheme()
+	webhookServerAddr, err := strconv.Atoi(os.Getenv("SERVER_PORT"))
+	if err != nil {
+		webhookServerAddr = 9443
+	}
+
 	var metricsAddr string
 	var enableLeaderElection, profiling bool
 	var probeAddr string
@@ -73,7 +79,7 @@ func main() {
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
+		Port:                   webhookServerAddr,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "4642dc8b.meeting.ko",
@@ -103,7 +109,7 @@ func addToScheme() {
 
 func createReconciles(mgr ctrl.Manager) {
 	var err error
-	if err = (&jitsi.WebReconciler{
+	if err = (&web.Reconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Web"),
 		Scheme: mgr.GetScheme(),
@@ -111,7 +117,7 @@ func createReconciles(mgr ctrl.Manager) {
 		setupLog.Error(err, "unable to create controller", "controller", "Web")
 		os.Exit(1)
 	}
-	if err = (&jitsi.ProsodyReconciler{
+	if err = (&prosody.Reconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Prosody"),
 		Scheme: mgr.GetScheme(),
@@ -119,7 +125,7 @@ func createReconciles(mgr ctrl.Manager) {
 		setupLog.Error(err, "unable to create controller", "controller", "Prosody")
 		os.Exit(1)
 	}
-	if err = (&jitsi.JicofoReconciler{
+	if err = (&jicofo.Reconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Jicofo"),
 		Scheme: mgr.GetScheme(),
@@ -127,7 +133,7 @@ func createReconciles(mgr ctrl.Manager) {
 		setupLog.Error(err, "unable to create controller", "controller", "Jicofo")
 		os.Exit(1)
 	}
-	if err = (&jitsi.JigasiReconciler{
+	if err = (&jigasi.Reconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Jigasi"),
 		Scheme: mgr.GetScheme(),
@@ -135,7 +141,7 @@ func createReconciles(mgr ctrl.Manager) {
 		setupLog.Error(err, "unable to create controller", "controller", "Jigasi")
 		os.Exit(1)
 	}
-	if err = (&jitsi.JibriReconciler{
+	if err = (&jibri.Reconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Jibri"),
 		Scheme: mgr.GetScheme(),
@@ -143,7 +149,7 @@ func createReconciles(mgr ctrl.Manager) {
 		setupLog.Error(err, "unable to create controller", "controller", "Jibri")
 		os.Exit(1)
 	}
-	if err = (&jitsi.JVBReconciler{
+	if err = (&jvb.Reconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("JVB"),
 		Scheme: mgr.GetScheme(),

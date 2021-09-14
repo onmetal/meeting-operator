@@ -14,21 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package jitsi
+package jicofo
 
 import (
 	"bytes"
-	"context"
 	"html/template"
 
-	"k8s.io/utils/pointer"
-
-	"github.com/go-logr/logr"
-	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
-	meeterr "github.com/onmetal/meeting-operator/internal/errors"
 	"github.com/onmetal/meeting-operator/internal/utils"
-	ctrl "sigs.k8s.io/controller-runtime"
-
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -36,59 +28,26 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const JicofoName = "jicofo"
+const appName = "jicofo"
 
-type Jicofo struct {
-	client.Client
-	*v1beta1.Jicofo
+const (
+	telegrafExporter      = "telegraf"
+	exporterContainerName = "exporter"
+	defaultExporterUser   = 10001
+	healthPort            = 8888
+)
 
-	ctx             context.Context
-	log             logr.Logger
-	name, namespace string
-	labels          map[string]string
-}
-
-func NewJicofo(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) (Jitsi, error) {
-	j := &v1beta1.Jicofo{}
-	if err := c.Get(ctx, req.NamespacedName, j); err != nil {
-		return nil, err
-	}
-	defaultLabels := utils.GetDefaultLabels(JicofoName)
-	if !j.DeletionTimestamp.IsZero() {
-		return &Jicofo{
-			Client:    c,
-			Jicofo:    j,
-			name:      JicofoName,
-			namespace: j.Namespace,
-			ctx:       ctx,
-			log:       l,
-			labels:    defaultLabels,
-		}, meeterr.UnderDeletion()
-	}
-	if err := addFinalizerToJicofo(ctx, c, j); err != nil {
-		l.Info("finalizer cannot be added", "error", err)
-	}
-	return &Jicofo{
-		Client:    c,
-		Jicofo:    j,
-		ctx:       ctx,
-		log:       l,
-		name:      JicofoName,
-		namespace: j.Namespace,
-		labels:    defaultLabels,
-	}, nil
-}
-
-func addFinalizerToJicofo(ctx context.Context, c client.Client, j *v1beta1.Jicofo) error {
-	if utils.ContainsString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
-		return nil
-	}
-	j.ObjectMeta.Finalizers = append(j.ObjectMeta.Finalizers, utils.MeetingFinalizer)
-	return c.Update(ctx, j)
-}
+const (
+	initialDelaySeconds = 30
+	timeoutSeconds      = 30
+	periodSeconds       = 15
+	successThreshold    = 1
+	failureThreshold    = 3
+)
 
 func (j *Jicofo) Create() error {
 	if err := j.createCustomLoggingCM(); err != nil {
@@ -113,7 +72,7 @@ func (j *Jicofo) prepareLoggingCM() *v1.ConfigMap {
 		j.log.Info("can't template logging config", "error", err)
 		return nil
 	}
-	var level = loggingLevelInfo
+	level := loggingLevelInfo
 	for k := range j.Spec.Environments {
 		if j.Spec.Environments[k].Name != loggingLevel {
 			continue
@@ -125,9 +84,13 @@ func (j *Jicofo) prepareLoggingCM() *v1.ConfigMap {
 		j.log.Info("can't template logging config", "error", err)
 		return nil
 	}
-	return &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "jicofo-custom-logging", Namespace: j.namespace,
-		Labels: map[string]string{"app": JicofoName}},
-		Data: map[string]string{"custom-logging.properties": b.String()}}
+	return &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "jicofo-custom-logging", Namespace: j.namespace,
+			Labels: map[string]string{"app": appName},
+		},
+		Data: map[string]string{"custom-logging.properties": b.String()},
+	}
 }
 
 func (j *Jicofo) prepareDeployment() *appsv1.Deployment {
@@ -173,10 +136,12 @@ func (j *Jicofo) prepareVolumesForJicofo() []v1.Volume {
 	var volume []v1.Volume
 	loggingConfig := v1.Volume{Name: "custom-logging", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
 		Items:                []v1.KeyToPath{{Key: "custom-logging.properties", Path: "logging.properties"}},
-		LocalObjectReference: v1.LocalObjectReference{Name: "jicofo-custom-logging"}}}}
+		LocalObjectReference: v1.LocalObjectReference{Name: "jicofo-custom-logging"},
+	}}}
 	if j.Spec.Exporter.Type == telegrafExporter {
 		telegrafCM := v1.Volume{Name: "telegraf", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
-			LocalObjectReference: v1.LocalObjectReference{Name: j.Spec.Exporter.ConfigMapName}}}}
+			LocalObjectReference: v1.LocalObjectReference{Name: j.Spec.Exporter.ConfigMapName},
+		}}}
 		return append(volume, telegrafCM, loggingConfig)
 	}
 	return append(volume, loggingConfig)
@@ -184,27 +149,28 @@ func (j *Jicofo) prepareVolumesForJicofo() []v1.Volume {
 
 func (j *Jicofo) prepareJicofoContainer() v1.Container {
 	return v1.Container{
-		Name:            JicofoName,
+		Name:            appName,
 		Image:           j.Spec.Image,
 		ImagePullPolicy: j.Spec.ImagePullPolicy,
 		Env:             j.Spec.Environments,
 		Resources:       j.Spec.Resources,
 		SecurityContext: &j.Spec.SecurityContext,
 		VolumeMounts: []v1.VolumeMount{
-			{Name: "custom-logging", MountPath: "/defaults/logging.properties", SubPath: "logging.properties"}},
+			{Name: "custom-logging", MountPath: "/defaults/logging.properties", SubPath: "logging.properties"},
+		},
 		LivenessProbe: &v1.Probe{
 			Handler: v1.Handler{
 				HTTPGet: &v1.HTTPGetAction{
 					Path:   "/about/health",
-					Port:   intstr.IntOrString{IntVal: 8888},
+					Port:   intstr.IntOrString{IntVal: healthPort},
 					Scheme: v1.URISchemeHTTP,
 				},
 			},
-			InitialDelaySeconds: 30,
-			TimeoutSeconds:      30,
-			PeriodSeconds:       15,
-			SuccessThreshold:    1,
-			FailureThreshold:    3,
+			InitialDelaySeconds: initialDelaySeconds,
+			TimeoutSeconds:      timeoutSeconds,
+			PeriodSeconds:       periodSeconds,
+			SuccessThreshold:    successThreshold,
+			FailureThreshold:    failureThreshold,
 		},
 	}
 }
@@ -263,7 +229,7 @@ func (j *Jicofo) updateCustomLoggingCM() error {
 func (j *Jicofo) UpdateStatus() error { return nil }
 
 func (j *Jicofo) Delete() error {
-	if err := j.removeFinalizerFromJicofo(); err != nil {
+	if err := utils.RemoveFinalizer(j.ctx, j.Client, j.Jicofo); err != nil {
 		j.log.Info("can't remove finalizer", "error", err)
 	}
 	if err := j.deleteCMs(); client.IgnoreNotFound(err) != nil {
@@ -276,18 +242,11 @@ func (j *Jicofo) Delete() error {
 	return j.Client.Delete(j.ctx, deployment)
 }
 
-func (j *Jicofo) removeFinalizerFromJicofo() error {
-	if !utils.ContainsString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
-		return nil
-	}
-	j.ObjectMeta.Finalizers = utils.RemoveString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer)
-	return j.Client.Update(j.ctx, j.Jicofo)
-}
-
 func (j *Jicofo) deleteCMs() error {
 	var cms v1.ConfigMapList
 	filter := &client.ListOptions{
-		LabelSelector: client.MatchingLabelsSelector{Selector: labels.SelectorFromSet(map[string]string{"app": JicofoName})}}
+		LabelSelector: client.MatchingLabelsSelector{Selector: labels.SelectorFromSet(map[string]string{"app": appName})},
+	}
 	if err := j.Client.List(j.ctx, &cms, filter); err != nil {
 		return err
 	}

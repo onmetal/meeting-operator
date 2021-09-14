@@ -14,45 +14,42 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package whiteboard
+package web
 
 import (
+	"github.com/onmetal/meeting-operator/internal/jitsi"
 	"github.com/onmetal/meeting-operator/internal/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
-type WhiteBoard interface {
-	Create() error
-	Update() error
-	Delete() error
-}
+const name = "web"
 
-func (w *whiteboard) Create() error {
-	s := newService(w)
-	if err := s.Create(); err != nil {
-		return err
+func (w *Web) Create() error {
+	if svcErr := w.Service.Create(); svcErr != nil {
+		return svcErr
 	}
-	preparedDeployment := w.prepareDeployment()
-	return w.Client.Create(w.ctx, preparedDeployment)
+	newDeployment := w.prepareDeployment()
+	return w.Client.Create(w.ctx, newDeployment)
 }
 
-func (w *whiteboard) prepareDeployment() *appsv1.Deployment {
+func (w *Web) prepareDeployment() *appsv1.Deployment {
 	spec := w.prepareDeploymentSpec()
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        w.Name,
-			Namespace:   w.Namespace,
+			Name:        w.name,
+			Namespace:   w.namespace,
 			Labels:      w.labels,
-			Annotations: w.Spec.Annotations,
+			Annotations: w.Annotations,
 		},
 		Spec: spec,
 	}
 }
 
-func (w *whiteboard) prepareDeploymentSpec() appsv1.DeploymentSpec {
+func (w *Web) prepareDeploymentSpec() appsv1.DeploymentSpec {
 	return appsv1.DeploymentSpec{
 		Selector: &metav1.LabelSelector{
 			MatchLabels: w.labels,
@@ -63,14 +60,16 @@ func (w *whiteboard) prepareDeploymentSpec() appsv1.DeploymentSpec {
 				Labels: w.labels,
 			},
 			Spec: v1.PodSpec{
-				ImagePullSecrets: w.Spec.ImagePullSecrets,
+				TerminationGracePeriodSeconds: &w.Spec.TerminationGracePeriodSeconds,
+				ImagePullSecrets:              w.Spec.ImagePullSecrets,
 				Containers: []v1.Container{
 					{
-						Name:            w.Name,
+						Name:            name,
 						Image:           w.Spec.Image,
 						ImagePullPolicy: w.Spec.ImagePullPolicy,
 						Env:             w.Spec.Environments,
-						Ports:           w.getContainerPorts(),
+						Ports:           jitsi.GetContainerPorts(w.Spec.Ports),
+						Resources:       w.Spec.Resources,
 						SecurityContext: &w.Spec.SecurityContext,
 					},
 				},
@@ -79,43 +78,39 @@ func (w *whiteboard) prepareDeploymentSpec() appsv1.DeploymentSpec {
 	}
 }
 
-func (w *whiteboard) getContainerPorts() []v1.ContainerPort {
-	containerPorts := make([]v1.ContainerPort, 0, len(w.Spec.Ports))
-	for p := range w.Spec.Ports {
-		containerPorts = append(containerPorts, v1.ContainerPort{
-			Name:          w.Spec.Ports[p].Name,
-			ContainerPort: w.Spec.Ports[p].Port,
-			Protocol:      w.Spec.Ports[p].Protocol,
-		})
+func (w *Web) Update(deployment *appsv1.Deployment) error {
+	if err := w.Service.Update(); err != nil {
+		return err
 	}
-	return containerPorts
+	deployment.Annotations = w.Annotations
+	deployment.Labels = w.Labels
+	deployment.Spec = w.prepareDeploymentSpec()
+	return w.Client.Update(w.ctx, deployment)
 }
 
-func (w *whiteboard) Update() error {
-	updatedDeployment := w.prepareDeployment()
-	return w.Client.Update(w.ctx, updatedDeployment)
-}
-
-func (w *whiteboard) Delete() error {
-	if err := utils.RemoveFinalizer(w.ctx, w.Client, w.WhiteBoard); err != nil {
+func (w *Web) Delete() error {
+	if err := utils.RemoveFinalizer(w.ctx, w.Client, w.Web); err != nil {
 		w.log.Info("can't remove finalizer", "error", err)
+	}
+	if err := w.Service.Delete(); err != nil {
+		return err
 	}
 	deployment, err := w.Get()
 	if err != nil {
 		return err
 	}
-	s := newService(w)
-	if svcErr := s.Delete(); svcErr != nil {
-		return svcErr
+	err = w.Client.Delete(w.ctx, deployment)
+	if apierrors.IsNotFound(err) {
+		return nil
 	}
-	return w.Client.Delete(w.ctx, deployment)
+	return err
 }
 
-func (w *whiteboard) Get() (*appsv1.Deployment, error) {
+func (w *Web) Get() (*appsv1.Deployment, error) {
 	deployment := &appsv1.Deployment{}
 	err := w.Client.Get(w.ctx, types.NamespacedName{
-		Namespace: w.Namespace,
-		Name:      w.Name,
+		Namespace: w.namespace,
+		Name:      w.name,
 	}, deployment)
 	return deployment, err
 }

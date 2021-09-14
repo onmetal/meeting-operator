@@ -30,7 +30,7 @@ type JigasiSpec struct {
 	Ports       []Port         `json:"ports,omitempty"`
 }
 
-// JigasiStatus defines the observed state of Jigasi
+// JigasiStatus defines the observed state of Jigasi.
 type JigasiStatus struct {
 	Replicas int32 `json:"replicas,omitempty"`
 }
@@ -38,7 +38,7 @@ type JigasiStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// Jigasi is the Schema for the Jigasi API
+// Jigasi is the Schema for the Jigasi API.
 type Jigasi struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -49,7 +49,7 @@ type Jigasi struct {
 
 //+kubebuilder:object:root=true
 
-// JigasiList contains a list of Jigasi
+// JigasiList contains a list of Jigasi.
 type JigasiList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

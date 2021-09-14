@@ -31,7 +31,7 @@ type JVBSpec struct {
 	Port        Port           `json:"port,omitempty"`
 }
 
-// JVBStatus defines the observed state of JVBSpec
+// JVBStatus defines the observed state of JVBSpec.
 type JVBStatus struct {
 	Replicas int32 `json:"replicas,omitempty"`
 }
@@ -40,7 +40,7 @@ type JVBStatus struct {
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Replicas",type=integer,JSONPath=".status.replicas"
 
-// JVB is the Schema for the JVB API
+// JVB is the Schema for the JVB API.
 type JVB struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -51,7 +51,7 @@ type JVB struct {
 
 //+kubebuilder:object:root=true
 
-// JVBList contains a list of JVB
+// JVBList contains a list of JVB.
 type JVBList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

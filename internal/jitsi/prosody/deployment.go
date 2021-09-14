@@ -14,19 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package jitsi
+package prosody
 
 import (
 	"bytes"
-	"context"
 	"html/template"
 
-	"github.com/go-logr/logr"
-	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
-	meeterr "github.com/onmetal/meeting-operator/internal/errors"
+	"github.com/onmetal/meeting-operator/internal/jitsi"
+	"github.com/onmetal/meeting-operator/internal/jitsi/jvb"
 	"github.com/onmetal/meeting-operator/internal/utils"
-	ctrl "sigs.k8s.io/controller-runtime"
-
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -38,70 +34,17 @@ import (
 
 const enabled = "true"
 
-const ProsodyName = "prosody"
-
-type Prosody struct {
-	client.Client
-	*v1beta1.Prosody
-	*service
-
-	ctx             context.Context
-	log             logr.Logger
-	name, namespace string
-	labels          map[string]string
-}
-
-func NewProsody(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) (Jitsi, error) {
-	p := &v1beta1.Prosody{}
-	if err := c.Get(ctx, req.NamespacedName, p); err != nil {
-		return nil, err
-	}
-	defaultLabels := utils.GetDefaultLabels(ProsodyName)
-	s := newService(ctx, c, l, ProsodyName, p.Namespace, p.Spec.ServiceAnnotations, defaultLabels, p.Spec.ServiceType, p.Spec.Ports)
-	if !p.DeletionTimestamp.IsZero() {
-		return &Prosody{
-			Client:    c,
-			Prosody:   p,
-			service:   s,
-			name:      ProsodyName,
-			namespace: p.Namespace,
-			ctx:       ctx,
-			log:       l,
-			labels:    defaultLabels,
-		}, meeterr.UnderDeletion()
-	}
-	if err := addFinalizerToProsody(ctx, c, p); err != nil {
-		l.Info("finalizer cannot be added", "error", err)
-	}
-	return &Prosody{
-		Client:    c,
-		Prosody:   p,
-		service:   s,
-		name:      ProsodyName,
-		namespace: p.Namespace,
-		ctx:       ctx,
-		log:       l,
-		labels:    defaultLabels,
-	}, nil
-}
-
-func addFinalizerToProsody(ctx context.Context, c client.Client, j *v1beta1.Prosody) error {
-	if utils.ContainsString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
-		return nil
-	}
-	j.ObjectMeta.Finalizers = append(j.ObjectMeta.Finalizers, utils.MeetingFinalizer)
-	return c.Update(ctx, j)
-}
+const appName = "prosody"
 
 func (p *Prosody) Create() error {
-	if err := p.service.Create(); err != nil {
-		return err
+	if svcErr := p.Service.Create(); svcErr != nil {
+		return svcErr
 	}
 	if err := p.createTurnCM(); err != nil {
 		p.log.Info("can't create prosody turn config map", "error", err)
 	}
-	preparedDeployment := p.prepareDeployment()
-	return p.Client.Create(p.ctx, preparedDeployment)
+	newDeployment := p.prepareDeployment()
+	return p.Client.Create(p.ctx, newDeployment)
 }
 
 func (p *Prosody) createTurnCM() error {
@@ -125,13 +68,17 @@ func (p *Prosody) prepareTurnCredentialsCM() *v1.ConfigMap {
 		p.log.Info("can't template logging config", "error", err)
 		return nil
 	}
-	return &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "prosody-turn-config", Namespace: p.namespace,
-		Labels: map[string]string{"app": ProsodyName}},
-		Data: map[string]string{"turn.cfg.lua": b.String()}}
+	return &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "prosody-turn-config", Namespace: p.namespace,
+			Labels: map[string]string{"app": appName},
+		},
+		Data: map[string]string{"turn.cfg.lua": b.String()},
+	}
 }
 
-func (p *Prosody) getTurnCredentialsConfig() TurnConfig {
-	var config TurnConfig
+func (p *Prosody) getTurnCredentialsConfig() jvb.TurnConfig {
+	var config jvb.TurnConfig
 	for env := range p.Spec.Environments {
 		switch p.Spec.Environments[env].Name {
 		case "XMPP_DOMAIN":
@@ -231,15 +178,16 @@ func (p *Prosody) prepareDeploymentSpec() appsv1.DeploymentSpec {
 				Volumes:                       volumes,
 				Containers: []v1.Container{
 					{
-						Name:            ProsodyName,
+						Name:            appName,
 						Image:           p.Spec.Image,
 						ImagePullPolicy: p.Spec.ImagePullPolicy,
 						Env:             p.Spec.Environments,
-						Ports:           getContainerPorts(p.Spec.Ports),
+						Ports:           jitsi.GetContainerPorts(p.Spec.Ports),
 						Resources:       p.Spec.Resources,
 						SecurityContext: &p.Spec.SecurityContext,
 						VolumeMounts: []v1.VolumeMount{
-							{Name: "turn", MountPath: "/defaults/conf.d/turn.cfg.lua", SubPath: "turn.cfg.lua"}},
+							{Name: "turn", MountPath: "/defaults/conf.d/turn.cfg.lua", SubPath: "turn.cfg.lua"},
+						},
 					},
 				},
 			},
@@ -251,12 +199,13 @@ func (p *Prosody) prepareVolumesForProsody() []v1.Volume {
 	var volume []v1.Volume
 	loggingConfig := v1.Volume{Name: "turn", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
 		Items:                []v1.KeyToPath{{Key: "turn.cfg.lua", Path: "turn.cfg.lua"}},
-		LocalObjectReference: v1.LocalObjectReference{Name: "prosody-turn-config"}}}}
+		LocalObjectReference: v1.LocalObjectReference{Name: "prosody-turn-config"},
+	}}}
 	return append(volume, loggingConfig)
 }
 
-func (p *Prosody) Update() error {
-	if err := p.service.Update(); err != nil {
+func (p *Prosody) Update(deployment *appsv1.Deployment) error {
+	if err := p.Service.Update(); err != nil {
 		return err
 	}
 	if err := p.updateTurnCM(); err != nil {
@@ -268,8 +217,10 @@ func (p *Prosody) Update() error {
 			p.log.Info("can't update prosody turn cm", "error", err)
 		}
 	}
-	updatedDeployment := p.prepareDeployment()
-	return p.Client.Update(p.ctx, updatedDeployment)
+	deployment.Annotations = p.Annotations
+	deployment.Labels = p.Labels
+	deployment.Spec = p.prepareDeploymentSpec()
+	return p.Client.Update(p.ctx, deployment)
 }
 
 func (p *Prosody) updateTurnCM() error {
@@ -277,13 +228,11 @@ func (p *Prosody) updateTurnCM() error {
 	return p.Client.Update(p.ctx, logging)
 }
 
-func (p *Prosody) UpdateStatus() error { return nil }
-
 func (p *Prosody) Delete() error {
-	if err := p.removeFinalizerFromProsody(); err != nil {
+	if err := utils.RemoveFinalizer(p.ctx, p.Client, p.Prosody); err != nil {
 		p.log.Info("can't remove finalizer", "error", err)
 	}
-	if err := p.service.Delete(); err != nil {
+	if err := p.Service.Delete(); err != nil {
 		return err
 	}
 	if err := p.deleteCMs(); client.IgnoreNotFound(err) != nil {
@@ -296,24 +245,17 @@ func (p *Prosody) Delete() error {
 	return p.Client.Delete(p.ctx, deployment)
 }
 
-func (p *Prosody) removeFinalizerFromProsody() error {
-	if !utils.ContainsString(p.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
-		return nil
-	}
-	p.ObjectMeta.Finalizers = utils.RemoveString(p.ObjectMeta.Finalizers, utils.MeetingFinalizer)
-	return p.Client.Update(p.ctx, p.Prosody)
-}
-
 func (p *Prosody) deleteCMs() error {
 	var cms v1.ConfigMapList
 	filter := &client.ListOptions{
-		LabelSelector: client.MatchingLabelsSelector{Selector: labels.SelectorFromSet(map[string]string{"app": ProsodyName})}}
+		LabelSelector: client.MatchingLabelsSelector{Selector: labels.SelectorFromSet(map[string]string{"app": appName})},
+	}
 	if err := p.Client.List(p.ctx, &cms, filter); err != nil {
 		return err
 	}
 	for cm := range cms.Items {
 		if err := p.Client.Delete(p.ctx, &cms.Items[cm]); err != nil {
-			p.log.Info("can't delete config map", "name", cms.Items[cm].Name, "error", err)
+			p.log.Info("can't delete config map", "appName", cms.Items[cm].Name, "error", err)
 		}
 	}
 	return nil

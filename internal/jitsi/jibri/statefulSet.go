@@ -14,76 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package jitsi
+package jibri
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/go-logr/logr"
-	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
-	meeterr "github.com/onmetal/meeting-operator/internal/errors"
+	"github.com/onmetal/meeting-operator/internal/jitsi"
 	"github.com/onmetal/meeting-operator/internal/utils"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
-const JibriName = "jibri"
-
-type Jibri struct {
-	client.Client
-	*v1beta1.Jibri
-
-	ctx             context.Context
-	log             logr.Logger
-	name, namespace string
-	labels          map[string]string
-}
-
-func NewJibri(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) (Jitsi, error) {
-	j := &v1beta1.Jibri{}
-	if err := c.Get(ctx, req.NamespacedName, j); err != nil {
-		return nil, err
-	}
-	defaultLabels := utils.GetDefaultLabels(JibriName)
-	if !j.DeletionTimestamp.IsZero() {
-		return &Jibri{
-			Client:    c,
-			Jibri:     j,
-			name:      JibriName,
-			namespace: j.Namespace,
-			ctx:       ctx,
-			log:       l,
-			labels:    defaultLabels,
-		}, meeterr.UnderDeletion()
-	}
-	if err := addFinalizerToJibri(ctx, c, j); err != nil {
-		l.Info("finalizer cannot be added", "error", err)
-	}
-	return &Jibri{
-		Client:    c,
-		Jibri:     j,
-		ctx:       ctx,
-		log:       l,
-		name:      JibriName,
-		namespace: j.Namespace,
-		labels:    defaultLabels,
-	}, nil
-}
-
-func addFinalizerToJibri(ctx context.Context, c client.Client, j *v1beta1.Jibri) error {
-	if utils.ContainsString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
-		return nil
-	}
-	j.ObjectMeta.Finalizers = append(j.ObjectMeta.Finalizers, utils.MeetingFinalizer)
-	return c.Update(ctx, j)
-}
+const appName = "jibri"
 
 func (j *Jibri) Create() error {
 	preparedSTS := j.prepareSTS()
@@ -118,11 +62,11 @@ func (j *Jibri) prepareSTSSpec() appsv1.StatefulSetSpec {
 				ImagePullSecrets:              j.Spec.ImagePullSecrets,
 				Containers: []v1.Container{
 					{
-						Name:            JibriName,
+						Name:            appName,
 						Image:           j.Spec.Image,
 						ImagePullPolicy: j.Spec.ImagePullPolicy,
 						Env:             j.Spec.Environments,
-						Ports:           getContainerPorts(j.Spec.Ports),
+						Ports:           jitsi.GetContainerPorts(j.Spec.Ports),
 						Resources:       j.Spec.Resources,
 						SecurityContext: &j.Spec.SecurityContext,
 					},
@@ -232,7 +176,7 @@ func (j *Jibri) preparePVC() v1.PersistentVolumeClaim {
 }
 
 func (j *Jibri) setVolumeMounts() []v1.VolumeMount {
-	var mountPath = "/config/recordings/"
+	mountPath := "/config/recordings/"
 	for env := range j.Spec.Environments {
 		if j.Spec.Environments[env].Name != "JIBRI_RECORDING_DIR" {
 			continue
@@ -252,39 +196,15 @@ func (j *Jibri) setVolumeMounts() []v1.VolumeMount {
 	}
 }
 
-func (j *Jibri) Update() error {
-	if !j.isSTSExist() {
-		if err := j.Create(); err != nil {
-			j.log.Info("failed to update jibri", "error", err, "namespace", j.namespace)
-		}
-	} else {
-		// We can't update pod.spec and deletion is required
-		if err := j.Delete(); err != nil {
-			j.log.Info("failed to update jibri", "error", err, "namespace", j.namespace)
-		}
-		if err := j.Create(); err != nil {
-			j.log.Info("failed to update jibri", "error", err, "namespace", j.namespace)
-		}
-	}
-	return nil
+func (j *Jibri) Update(sts *appsv1.StatefulSet) error {
+	sts.Annotations = j.Annotations
+	sts.Labels = j.labels
+	sts.Spec = j.prepareSTSSpec()
+	return j.Client.Update(j.ctx, sts)
 }
-
-func (j *Jibri) isSTSExist() bool {
-	pod := appsv1.StatefulSet{}
-	err := j.Client.Get(context.TODO(), types.NamespacedName{
-		Namespace: j.namespace,
-		Name:      j.name,
-	}, &pod)
-	if err != nil && errors.IsNotFound(err) {
-		return false
-	}
-	return true
-}
-
-func (j *Jibri) UpdateStatus() error { return nil }
 
 func (j *Jibri) Delete() error {
-	if err := j.removeFinalizerFromJibri(); err != nil {
+	if err := utils.RemoveFinalizer(j.ctx, j.Client, j.Jibri); err != nil {
 		j.log.Info("can't remove finalizer", "error", err)
 	}
 	sts, err := j.Get()
@@ -292,14 +212,6 @@ func (j *Jibri) Delete() error {
 		return err
 	}
 	return j.Client.Delete(j.ctx, sts)
-}
-
-func (j *Jibri) removeFinalizerFromJibri() error {
-	if !utils.ContainsString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
-		return nil
-	}
-	j.ObjectMeta.Finalizers = utils.RemoveString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer)
-	return j.Client.Update(j.ctx, j.Jibri)
 }
 
 func (j *Jibri) Get() (*appsv1.StatefulSet, error) {

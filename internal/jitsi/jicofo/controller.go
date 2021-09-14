@@ -14,30 +14,39 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controller
+package jicofo
 
 import (
 	"context"
 
+	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 	meeterr "github.com/onmetal/meeting-operator/internal/errors"
-	"github.com/onmetal/meeting-operator/internal/jitsi"
+	"github.com/onmetal/meeting-operator/internal/utils"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type JicofoReconciler struct {
+type Reconciler struct {
 	client.Client
 
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
 
-func (r *JicofoReconciler) SetupWithManager(mgr ctrl.Manager) error {
+type Jicofo struct {
+	client.Client
+	*v1beta1.Jicofo
+
+	ctx             context.Context
+	log             logr.Logger
+	name, namespace string
+	labels          map[string]string
+}
+
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.Jicofo{}).
 		Complete(r)
@@ -47,9 +56,9 @@ func (r *JicofoReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=jicofoes/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=jicofoes/finalizers,verbs=update
 
-func (r *JicofoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	reqLogger := r.Log.WithValues("name", req.Name, "namespace", req.Namespace)
-	jicofo, err := jitsi.NewJicofo(ctx, r.Client, reqLogger, req)
+	jicofo, err := r.newInstance(ctx, reqLogger, req)
 	if err != nil {
 		if meeterr.IsUnderDeletion(err) {
 			if delErr := jicofo.Delete(); delErr != nil {
@@ -74,4 +83,35 @@ func (r *JicofoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 	reqLogger.Info("reconciliation finished")
 	return ctrl.Result{}, nil
+}
+
+func (r *Reconciler) newInstance(ctx context.Context, l logr.Logger, req ctrl.Request) (*Jicofo, error) {
+	j := &v1beta1.Jicofo{}
+	if err := r.Get(ctx, req.NamespacedName, j); err != nil {
+		return nil, err
+	}
+	defaultLabels := utils.GetDefaultLabelsForApp(appName)
+	if !j.DeletionTimestamp.IsZero() {
+		return &Jicofo{
+			Client:    r.Client,
+			Jicofo:    j,
+			name:      appName,
+			namespace: j.Namespace,
+			ctx:       ctx,
+			log:       l,
+			labels:    defaultLabels,
+		}, meeterr.UnderDeletion()
+	}
+	if err := utils.AddFinalizer(ctx, r.Client, j); err != nil {
+		l.Info("finalizer cannot be added", "error", err)
+	}
+	return &Jicofo{
+		Client:    r.Client,
+		Jicofo:    j,
+		ctx:       ctx,
+		log:       l,
+		name:      appName,
+		namespace: j.Namespace,
+		labels:    defaultLabels,
+	}, nil
 }

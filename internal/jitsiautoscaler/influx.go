@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	influxQuery               = `from(bucket: "%s")|> range(start: -15m) |>filter(fn: (r) => r["_measurement"] == "jitsi_stats")|> filter(fn: (r) => r["_field"] == "%s")|> distinct(column: "_value")` //nolint:lll
+	influxQuery               = `from(bucket: "%s")|> range(start: -15m) |>filter(fn: (r) => r["_measurement"] == "jitsi_stats")|> filter(fn: (r) => r["_field"] == "%s")|> distinct(column: "_value")` //nolint:lll //reason: would be removed
 	influxCPUMetrics          = "cpu"
 	influxConferencesMetrics  = "conferences"
 	influxParticipantsMetrics = "participants"
@@ -73,7 +73,7 @@ func (i *influx) countAvgValueByRequest(field string) float64 {
 }
 
 func (i *influx) scaleUp(desiredReplicas int32) error {
-	jitsi, getErr := getJitsiCR(i.ctx, i.Client, i.Spec.ScaleTargetRef.Name, i.Namespace)
+	jitsi, getErr := getJVBCR(i.ctx, i.Client, i.Spec.ScaleTargetRef.Name, i.Namespace)
 	if getErr != nil {
 		return getErr
 	}
@@ -85,7 +85,7 @@ func (i *influx) scaleUp(desiredReplicas int32) error {
 }
 
 func (i *influx) scaleDown(desiredReplicas int32) error {
-	jitsi, getErr := getJitsiCR(i.ctx, i.Client, i.Spec.ScaleTargetRef.Name, i.Namespace)
+	jitsi, getErr := getJVBCR(i.ctx, i.Client, i.Spec.ScaleTargetRef.Name, i.Namespace)
 	if getErr != nil {
 		return getErr
 	}

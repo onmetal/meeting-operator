@@ -29,6 +29,18 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	WebAppName     = "web"
+	ProsodyAppName = "prosody"
+	JibriAppName   = "jibri"
+)
+
+type Servicer interface {
+	Create() error
+	Update() error
+	Delete() error
+}
+
 type service struct {
 	client.Client
 
@@ -41,41 +53,41 @@ type service struct {
 	labels          map[string]string
 }
 
-func newService(ctx context.Context, c client.Client, l logr.Logger,
+func NewService(ctx context.Context, c client.Client, l logr.Logger,
 	appName, namespace string,
 	annotations, labels map[string]string,
-	serviceType v1.ServiceType, ports []v1beta1.Port) *service {
+	serviceType v1.ServiceType, ports []v1beta1.Port) Servicer {
 	switch appName {
-	case WebName:
+	case WebAppName:
 		return &service{
 			Client:      c,
-			ports:       getPorts(WebName, ports),
+			ports:       getServicePortsForApp(appName, ports),
 			serviceType: serviceType,
-			name:        WebName,
+			name:        appName,
 			namespace:   namespace,
 			ctx:         ctx,
 			log:         l,
 			annotations: annotations,
 			labels:      labels,
 		}
-	case ProsodyName:
+	case ProsodyAppName:
 		return &service{
 			Client:      c,
-			ports:       getPorts(ProsodyName, ports),
+			ports:       getServicePortsForApp(appName, ports),
 			serviceType: serviceType,
-			name:        ProsodyName,
+			name:        appName,
 			namespace:   namespace,
 			ctx:         ctx,
 			log:         l,
 			annotations: annotations,
 			labels:      labels,
 		}
-	case JibriName:
+	case JibriAppName:
 		return &service{
 			Client:      c,
-			ports:       getPorts(JibriName, ports),
+			ports:       getServicePortsForApp(appName, ports),
 			serviceType: serviceType,
-			name:        JibriName,
+			name:        appName,
 			namespace:   namespace,
 			ctx:         ctx,
 			log:         l,
@@ -89,7 +101,11 @@ func newService(ctx context.Context, c client.Client, l logr.Logger,
 
 func (s *service) Create() error {
 	preparedService := s.prepareService()
-	return s.Client.Create(s.ctx, preparedService)
+	err := s.Client.Create(s.ctx, preparedService)
+	if apierrors.IsAlreadyExists(err) {
+		return nil
+	}
+	return err
 }
 
 func (s *service) prepareService() *v1.Service {
@@ -146,42 +162,59 @@ func (s *service) Delete() error {
 	return s.Client.Delete(s.ctx, service)
 }
 
-func getPorts(appName string, s []v1beta1.Port) []v1.ServicePort {
+const (
+	defaultHTTPPort = 80
+	xmppPort        = 5222
+)
+
+const (
+	prosodyHTTPPort     = 5280
+	prosodyC2SPort      = 5282
+	prosodyExternalPort = 5347
+)
+
+func getServicePortsForApp(appName string, s []v1beta1.Port) []v1.ServicePort {
 	switch appName {
-	case WebName:
+	case WebAppName:
 		ports := make([]v1.ServicePort, 0, 1)
 		ports = append(ports, v1.ServicePort{
 			Name: "http", Protocol: v1.ProtocolTCP,
-			Port: 80, TargetPort: intstr.IntOrString{IntVal: 80}})
+			Port: defaultHTTPPort, TargetPort: intstr.IntOrString{IntVal: defaultHTTPPort},
+		})
 		if len(s) != 0 {
 			return getAdditionalPorts(ports, s)
 		}
 		return ports
-	case ProsodyName:
+	case ProsodyAppName:
 		ports := make([]v1.ServicePort, 0, 4)
 		ports = append(ports,
 			v1.ServicePort{
 				Name: "http", Protocol: v1.ProtocolTCP,
-				Port: 5280, TargetPort: intstr.IntOrString{IntVal: 5280}},
+				Port: prosodyHTTPPort, TargetPort: intstr.IntOrString{IntVal: prosodyHTTPPort},
+			},
 			v1.ServicePort{
 				Name: "c2s", Protocol: v1.ProtocolTCP,
-				Port: 5282, TargetPort: intstr.IntOrString{IntVal: 5282}},
+				Port: prosodyC2SPort, TargetPort: intstr.IntOrString{IntVal: prosodyC2SPort},
+			},
 			v1.ServicePort{
 				Name: "xmpp", Protocol: v1.ProtocolTCP,
-				Port: 5222, TargetPort: intstr.IntOrString{IntVal: 5222}},
+				Port: xmppPort, TargetPort: intstr.IntOrString{IntVal: xmppPort},
+			},
 			v1.ServicePort{
 				Name: "external", Protocol: v1.ProtocolTCP,
-				Port: 5347, TargetPort: intstr.IntOrString{IntVal: 5347}},
+				Port: prosodyExternalPort, TargetPort: intstr.IntOrString{IntVal: prosodyExternalPort},
+			},
 		)
 		if len(s) != 0 {
 			return getAdditionalPorts(ports, s)
 		}
 		return ports
-	case JibriName:
+	case JibriAppName:
 		ports := make([]v1.ServicePort, 0, 1)
 		ports = append(ports, v1.ServicePort{
 			Name: "http", Protocol: v1.ProtocolTCP,
-			Port: 5282, TargetPort: intstr.IntOrString{IntVal: 5282}})
+			Port: xmppPort, TargetPort: intstr.IntOrString{IntVal: xmppPort},
+		})
 		if len(s) != 0 {
 			return getAdditionalPorts(ports, s)
 		}
@@ -195,16 +228,17 @@ func getAdditionalPorts(servicePorts []v1.ServicePort, ports []v1beta1.Port) []v
 	for port := range ports {
 		servicePorts = append(servicePorts, v1.ServicePort{
 			Name: ports[port].Name, TargetPort: intstr.IntOrString{IntVal: ports[port].Port},
-			Port: ports[port].Port, Protocol: ports[port].Protocol})
+			Port: ports[port].Port, Protocol: ports[port].Protocol,
+		})
 	}
 	return servicePorts
 }
 
-func getContainerPorts(ports []v1beta1.Port) []v1.ContainerPort {
-	var containerPorts []v1.ContainerPort
-	if len(ports) < 1 {
+func GetContainerPorts(ports []v1beta1.Port) []v1.ContainerPort {
+	if len(ports) == 0 {
 		return nil
 	}
+	containerPorts := make([]v1.ContainerPort, 0, len(ports))
 	for svc := range ports {
 		containerPorts = append(containerPorts, v1.ContainerPort{
 			Name:          ports[svc].Name,

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package jitsi
+package jvb
 
 import (
 	"bytes"
@@ -23,32 +23,31 @@ import (
 	"html/template"
 	"time"
 
-	"k8s.io/utils/pointer"
-
-	ctrl "sigs.k8s.io/controller-runtime"
-
-	"github.com/onmetal/meeting-operator/internal/utils"
-
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
-
-	meeterr "github.com/onmetal/meeting-operator/internal/errors"
-	"k8s.io/apimachinery/pkg/labels"
-
-	"github.com/go-logr/logr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
+	"github.com/onmetal/meeting-operator/internal/utils"
 	appsv1 "k8s.io/api/apps/v1"
-
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
 	JvbName         = "jvb"
 	externalPortUDP = 10000
+	colibriHTTPPort = 8080
+)
+
+const (
+	initialDelaySeconds = 30
+	timeoutSeconds      = 30
+	periodSeconds       = 15
+	successThreshold    = 1
+	failureThreshold    = 3
 )
 
 const (
@@ -61,50 +60,6 @@ const (
 	exporterContainerName = "exporter"
 	defaultExporterUser   = 10001
 )
-
-type JVB struct {
-	client.Client
-	*v1beta1.JVB
-
-	ctx         context.Context
-	log         logr.Logger
-	envs        []v1.EnvVar
-	replicaName string
-	replica     int32
-}
-
-func NewJVB(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) (Jitsi, error) {
-	j := &v1beta1.JVB{}
-	if err := c.Get(ctx, req.NamespacedName, j); err != nil {
-		return nil, err
-	}
-	if !j.DeletionTimestamp.IsZero() {
-		return &JVB{
-			Client: c,
-			JVB:    j,
-			ctx:    ctx,
-			log:    l,
-		}, meeterr.UnderDeletion()
-	}
-	if err := addFinalizerToJVB(ctx, c, j); err != nil {
-		l.Info("finalizer cannot be added", "error", err)
-	}
-	return &JVB{
-		Client: c,
-		JVB:    j,
-		envs:   j.Spec.Environments,
-		ctx:    ctx,
-		log:    l,
-	}, nil
-}
-
-func addFinalizerToJVB(ctx context.Context, c client.Client, j *v1beta1.JVB) error {
-	if utils.ContainsString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
-		return nil
-	}
-	j.ObjectMeta.Finalizers = append(j.ObjectMeta.Finalizers, utils.MeetingFinalizer)
-	return c.Update(ctx, j)
-}
 
 func (j *JVB) Create() error {
 	j.createConfigMaps()
@@ -163,9 +118,13 @@ func (j *JVB) createCustomLoggingCM() error {
 }
 
 func (j *JVB) prepareShutdownCM() *v1.ConfigMap {
-	return &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "jvb-graceful-shutdown", Namespace: j.Namespace,
-		Labels: map[string]string{"app": "jvb"}},
-		Data: map[string]string{"graceful_shutdown.sh": jvbGracefulShutdown}}
+	return &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "jvb-graceful-shutdown", Namespace: j.Namespace,
+			Labels: map[string]string{"app": "jvb"},
+		},
+		Data: map[string]string{"graceful_shutdown.sh": jvbGracefulShutdown},
+	}
 }
 
 func (j *JVB) prepareSIPCM() *v1.ConfigMap {
@@ -180,10 +139,13 @@ func (j *JVB) prepareSIPCM() *v1.ConfigMap {
 		j.log.Info("can't template sip config", "error", err)
 		return nil
 	}
-	return &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{
-		Name: fmt.Sprintf("%s-custom-sip", j.replicaName), Namespace: j.Namespace,
-		Labels: map[string]string{"app": "jvb"}},
-		Data: map[string]string{"custom-sip-communicator.properties": b.String()}}
+	return &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: fmt.Sprintf("%s-custom-sip", j.replicaName), Namespace: j.Namespace,
+			Labels: map[string]string{"app": "jvb"},
+		},
+		Data: map[string]string{"custom-sip-communicator.properties": b.String()},
+	}
 }
 
 func (j *JVB) prepareLoggingCM() *v1.ConfigMap {
@@ -192,7 +154,7 @@ func (j *JVB) prepareLoggingCM() *v1.ConfigMap {
 		j.log.Info("can't template logging config", "error", err)
 		return nil
 	}
-	var level = loggingLevelInfo
+	level := loggingLevelInfo
 	for k := range j.envs {
 		if j.envs[k].Name != loggingLevel {
 			continue
@@ -204,9 +166,13 @@ func (j *JVB) prepareLoggingCM() *v1.ConfigMap {
 		j.log.Info("can't template logging config", "error", err)
 		return nil
 	}
-	return &v1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "jvb-custom-logging", Namespace: j.Namespace,
-		Labels: map[string]string{"app": "jvb"}},
-		Data: map[string]string{"custom-logging.properties": b.String()}}
+	return &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "jvb-custom-logging", Namespace: j.Namespace,
+			Labels: map[string]string{"app": "jvb"},
+		},
+		Data: map[string]string{"custom-logging.properties": b.String()},
+	}
 }
 
 func (j *JVB) servicePerInstance() error {
@@ -251,11 +217,15 @@ func (j *JVB) serviceForExporter() *v1.Service {
 			Namespace: j.Namespace,
 			Labels: map[string]string{
 				"app":                   "jvb",
-				"kubernetes.io/part-of": "jitsi"}},
+				"kubernetes.io/part-of": "jitsi",
+			},
+		},
 		Spec: v1.ServiceSpec{
 			Type: v1.ServiceTypeClusterIP,
-			Ports: []v1.ServicePort{{Name: "exporter", Protocol: v1.ProtocolTCP,
-				Port: j.Spec.Exporter.Port, TargetPort: intstr.IntOrString{IntVal: j.Spec.Exporter.Port}}},
+			Ports: []v1.ServicePort{{
+				Name: "exporter", Protocol: v1.ProtocolTCP,
+				Port: j.Spec.Exporter.Port, TargetPort: intstr.IntOrString{IntVal: j.Spec.Exporter.Port},
+			}},
 			Selector: map[string]string{"jitsi-jvb": j.replicaName},
 		},
 	}
@@ -317,7 +287,8 @@ func (j *JVB) prepareJVBContainer() v1.Container {
 		VolumeMounts: []v1.VolumeMount{
 			{Name: "shutdown", MountPath: "/shutdown"},
 			{Name: "custom-sip", MountPath: "/defaults/sip-communicator.properties", SubPath: "sip-communicator.properties"},
-			{Name: "custom-logging", MountPath: "/defaults/logging.properties", SubPath: "logging.properties"}},
+			{Name: "custom-logging", MountPath: "/defaults/logging.properties", SubPath: "logging.properties"},
+		},
 		Lifecycle: &v1.Lifecycle{
 			PreStop: &v1.Handler{
 				Exec: &v1.ExecAction{
@@ -329,15 +300,15 @@ func (j *JVB) prepareJVBContainer() v1.Container {
 			Handler: v1.Handler{
 				HTTPGet: &v1.HTTPGetAction{
 					Path:   "/about/health",
-					Port:   intstr.IntOrString{IntVal: 8080},
+					Port:   intstr.IntOrString{IntVal: colibriHTTPPort},
 					Scheme: v1.URISchemeHTTP,
 				},
 			},
-			InitialDelaySeconds: 30,
-			TimeoutSeconds:      30,
-			PeriodSeconds:       15,
-			SuccessThreshold:    1,
-			FailureThreshold:    3,
+			InitialDelaySeconds: initialDelaySeconds,
+			TimeoutSeconds:      timeoutSeconds,
+			PeriodSeconds:       periodSeconds,
+			SuccessThreshold:    successThreshold,
+			FailureThreshold:    failureThreshold,
 		},
 		Ports: []v1.ContainerPort{
 			{
@@ -348,7 +319,7 @@ func (j *JVB) prepareJVBContainer() v1.Container {
 			{
 				Name:          "colibri",
 				Protocol:      v1.ProtocolTCP,
-				ContainerPort: 8080,
+				ContainerPort: colibriHTTPPort,
 			},
 		},
 	}
@@ -356,18 +327,22 @@ func (j *JVB) prepareJVBContainer() v1.Container {
 
 func (j *JVB) prepareVolumesForJVB() []v1.Volume {
 	var volume []v1.Volume
-	var permissions int32 = 0744
+	var permissions int32 = 0o744
 	shutdown := v1.Volume{Name: "shutdown", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
-		DefaultMode: &permissions, LocalObjectReference: v1.LocalObjectReference{Name: "jvb-graceful-shutdown"}}}}
+		DefaultMode: &permissions, LocalObjectReference: v1.LocalObjectReference{Name: "jvb-graceful-shutdown"},
+	}}}
 	sipConfig := v1.Volume{Name: "custom-sip", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
 		Items:                []v1.KeyToPath{{Key: "custom-sip-communicator.properties", Path: "sip-communicator.properties"}},
-		LocalObjectReference: v1.LocalObjectReference{Name: fmt.Sprintf("%s-custom-sip", j.replicaName)}}}}
+		LocalObjectReference: v1.LocalObjectReference{Name: fmt.Sprintf("%s-custom-sip", j.replicaName)},
+	}}}
 	loggingConfig := v1.Volume{Name: "custom-logging", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
 		Items:                []v1.KeyToPath{{Key: "custom-logging.properties", Path: "logging.properties"}},
-		LocalObjectReference: v1.LocalObjectReference{Name: "jvb-custom-logging"}}}}
+		LocalObjectReference: v1.LocalObjectReference{Name: "jvb-custom-logging"},
+	}}}
 	if j.Spec.Exporter.Type == telegrafExporter {
 		telegrafCM := v1.Volume{Name: "telegraf", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
-			LocalObjectReference: v1.LocalObjectReference{Name: j.Spec.Exporter.ConfigMapName}}}}
+			LocalObjectReference: v1.LocalObjectReference{Name: j.Spec.Exporter.ConfigMapName},
+		}}}
 		return append(volume, shutdown, sipConfig, telegrafCM, loggingConfig)
 	}
 	return append(volume, shutdown, sipConfig, loggingConfig)
@@ -380,7 +355,7 @@ func (j *JVB) additionalEnvironments() []v1.EnvVar {
 		if isEnvAlreadyExist(j.envs) {
 			return j.envs
 		}
-		additionalEnvs := make([]v1.EnvVar, 0, 6)
+		additionalEnvs := make([]v1.EnvVar, 0, 6) //nolint:gomnd //reason: just minimal value
 		if !isHostAddressExist(j.envs) {
 			additionalEnvs = append(additionalEnvs, j.getDockerHostAddr())
 		}
@@ -593,7 +568,7 @@ func (j *JVB) UpdateStatus() error {
 }
 
 func (j *JVB) Delete() error {
-	if err := j.removeFinalizerFromJVB(); err != nil {
+	if err := utils.RemoveFinalizer(j.ctx, j.Client, j.JVB); err != nil {
 		j.log.Info("can't remove finalizer", "error", err)
 	}
 	for replica := int32(1); replica <= j.Spec.Replicas; replica++ {
@@ -608,16 +583,7 @@ func (j *JVB) Delete() error {
 	if err := j.deleteCMs(); client.IgnoreNotFound(err) != nil {
 		j.log.Info("failed to delete jvb cm", "error", err)
 	}
-
 	return nil
-}
-
-func (j *JVB) removeFinalizerFromJVB() error {
-	if !utils.ContainsString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
-		return nil
-	}
-	j.ObjectMeta.Finalizers = utils.RemoveString(j.ObjectMeta.Finalizers, utils.MeetingFinalizer)
-	return j.Client.Update(j.ctx, j.JVB)
 }
 
 func (j *JVB) deleteInstance() error {
@@ -670,7 +636,8 @@ func (j *JVB) getExporterService() (*v1.Service, error) {
 func (j *JVB) deleteCMs() error {
 	var cms v1.ConfigMapList
 	filter := &client.ListOptions{
-		LabelSelector: client.MatchingLabelsSelector{Selector: labels.SelectorFromSet(map[string]string{"app": "jvb"})}}
+		LabelSelector: client.MatchingLabelsSelector{Selector: labels.SelectorFromSet(map[string]string{"app": "jvb"})},
+	}
 
 	if err := j.Client.List(j.ctx, &cms, filter); err != nil {
 		return err

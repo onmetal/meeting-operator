@@ -25,7 +25,7 @@ type JicofoSpec struct {
 	Exporter       Exporter `json:"exporter,omitempty"`
 }
 
-// JicofoStatus defines the observed state of JicofoSpec
+// JicofoStatus defines the observed state of JicofoSpec.
 type JicofoStatus struct {
 	Replicas int32 `json:"replicas,omitempty"`
 }
@@ -33,7 +33,7 @@ type JicofoStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// Jicofo is the Schema for the jicodo API
+// Jicofo is the Schema for the jicodo API.
 type Jicofo struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -44,7 +44,7 @@ type Jicofo struct {
 
 //+kubebuilder:object:root=true
 
-// JicofoList contains a list of Jicofo
+// JicofoList contains a list of Jicofo.
 type JicofoList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

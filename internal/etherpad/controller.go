@@ -14,19 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controller
+package etherpad
 
 import (
 	"context"
 
-	"github.com/onmetal/meeting-operator/internal/etherpad"
-
-	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
-
-	"github.com/onmetal/meeting-operator/apis/etherpad/v1alpha2"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-
 	"github.com/go-logr/logr"
+	"github.com/onmetal/meeting-operator/apis/etherpad/v1alpha2"
+	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -52,19 +48,19 @@ func (r *Reconcile) SetupWithManager(mgr ctrl.Manager) error {
 func (r *Reconcile) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	reqLogger := r.Log.WithValues("etherpad", req.NamespacedName)
 
-	newEtherpad, err := etherpad.New(ctx, r.Client, reqLogger, req)
+	etherpad, err := newInstance(ctx, r.Client, reqLogger, req)
 	if err != nil {
 		if meetingerr.IsUnderDeletion(err) {
-			if delErr := newEtherpad.Delete(); client.IgnoreNotFound(delErr) != nil {
+			if delErr := etherpad.Delete(); client.IgnoreNotFound(delErr) != nil {
 				return ctrl.Result{}, delErr
 			}
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	if updErr := newEtherpad.Update(); updErr != nil {
+	if updErr := etherpad.Update(); updErr != nil {
 		if apierrors.IsNotFound(updErr) {
-			if createErr := newEtherpad.Create(); createErr != nil {
+			if createErr := etherpad.Create(); createErr != nil {
 				return ctrl.Result{}, createErr
 			}
 		} else {

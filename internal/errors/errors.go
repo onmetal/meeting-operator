@@ -21,7 +21,7 @@ import (
 	"fmt"
 )
 
-type ErrorStatus struct {
+type StatusError struct {
 	Reason
 }
 
@@ -44,9 +44,9 @@ const (
 	StatusReasonUnknown       StatusReason = "unknown"
 )
 
-func (e *ErrorStatus) Error() string { return e.Reason.Message }
+func (e *StatusError) Error() string { return e.Reason.Message }
 
-func (e *ErrorStatus) Status() Reason { return e.Reason }
+func (e *StatusError) Status() Reason { return e.Reason }
 
 func IsNotExist(err error) bool {
 	return ReasonForError(err) == StatusReasonNotExist
@@ -71,8 +71,8 @@ func ReasonForError(err error) StatusReason {
 	return StatusReasonUnknown
 }
 
-func AlreadyExist(s string) *ErrorStatus {
-	return &ErrorStatus{
+func AlreadyExist(s string) *StatusError {
+	return &StatusError{
 		Reason: Reason{
 			Message:      fmt.Sprintf("resource with name: %s, already exist ", s),
 			StatusReason: StatusReasonAlreadyExist,
@@ -80,8 +80,8 @@ func AlreadyExist(s string) *ErrorStatus {
 	}
 }
 
-func NotExist(s string) *ErrorStatus {
-	return &ErrorStatus{
+func NotExist(s string) *StatusError {
+	return &StatusError{
 		Reason: Reason{
 			Message:      fmt.Sprintf("resource with name: %s, not exist", s),
 			StatusReason: StatusReasonNotExist,
@@ -89,8 +89,8 @@ func NotExist(s string) *ErrorStatus {
 	}
 }
 
-func UnderDeletion() *ErrorStatus {
-	return &ErrorStatus{
+func UnderDeletion() *StatusError {
+	return &StatusError{
 		Reason: Reason{
 			Message:      "component is under deletion",
 			StatusReason: StatusReasonUnderDeletion,
@@ -98,8 +98,8 @@ func UnderDeletion() *ErrorStatus {
 	}
 }
 
-func NotRequired() *ErrorStatus {
-	return &ErrorStatus{
+func NotRequired() *StatusError {
+	return &StatusError{
 		Reason: Reason{
 			Message:      "not required",
 			StatusReason: StatusReasonNotRequired,

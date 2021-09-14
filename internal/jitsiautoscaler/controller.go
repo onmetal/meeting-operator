@@ -14,17 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package whiteboard
+package jitsiautoscaler
 
 import (
 	"context"
 
-	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-
 	"github.com/go-logr/logr"
-	"github.com/onmetal/meeting-operator/apis/whiteboard/v1alpha2"
-	"github.com/onmetal/meeting-operator/internal/whiteboard"
+	"github.com/onmetal/meeting-operator/apis/jitsiautoscaler/v1alpha1"
+	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -39,34 +36,22 @@ type Reconciler struct {
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha2.WhiteBoard{}).
+		For(&v1alpha1.AutoScaler{}).
 		Complete(r)
 }
 
-//+kubebuilder:rbac:groups=meeting.ko,resources=whiteboards,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=meeting.ko,resources=whiteboards/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=meeting.ko,resources=whiteboards/finalizers,verbs=update
+// +kubebuilder:rbac:groups=meeting.ko,resources=autoscalers,verbs=get;list;watch;update
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	reqLogger := r.Log.WithValues("whiteboard", req.NamespacedName)
-
-	wb, err := whiteboard.New(ctx, r.Client, reqLogger, req)
+	reqLogger := r.Log.WithValues("jitsi autoscaler", req.NamespacedName)
+	jas, err := newInstance(ctx, r.Client, reqLogger, req)
 	if err != nil {
-		if meetingerr.IsUnderDeletion(err) {
-			if delErr := wb.Delete(); delErr != nil {
-				return ctrl.Result{}, delErr
-			}
+		if meetingerr.IsNotExist(err) {
 			return ctrl.Result{}, nil
 		}
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+		return ctrl.Result{}, err
 	}
-	if updErr := wb.Update(); updErr != nil {
-		if apierrors.IsNotFound(updErr) {
-			if createErr := wb.Create(); createErr != nil {
-				return ctrl.Result{}, createErr
-			}
-		}
-	}
+	jas.Scale()
 	reqLogger.Info("reconciliation finished")
-	return ctrl.Result{}, nil
+	return ctrl.Result{RequeueAfter: jas.Repeat()}, nil
 }
