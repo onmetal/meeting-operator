@@ -23,7 +23,6 @@ import (
 	"html/template"
 	"time"
 
-	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 	"github.com/onmetal/meeting-operator/internal/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -559,12 +558,8 @@ func (j *JVB) getInstance() (*appsv1.Deployment, error) {
 }
 
 func (j *JVB) UpdateStatus() error {
-	jvb := &v1beta1.JVB{}
-	if err := j.Client.Get(j.ctx, types.NamespacedName{Name: j.Name, Namespace: j.Namespace}, jvb); err != nil {
-		return err
-	}
-	jvb.Status.Replicas = j.Spec.Replicas
-	return j.Client.Status().Update(j.ctx, jvb)
+	j.JVB.Status.Replicas = j.Spec.Replicas
+	return j.Client.Status().Update(j.ctx, j.JVB)
 }
 
 func (j *JVB) Delete() error {

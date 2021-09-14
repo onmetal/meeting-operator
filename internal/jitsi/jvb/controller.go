@@ -78,7 +78,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		}
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-
 	if createErr := jvb.Create(); createErr != nil {
 		return ctrl.Result{}, createErr
 	}
