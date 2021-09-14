@@ -128,8 +128,8 @@ func (r *Reconciler) newInstance(ctx context.Context, l logr.Logger, req ctrl.Re
 }
 
 func isUpdated(e event.UpdateEvent) bool {
-	oldObj, oldOk := e.ObjectOld.(*v1beta1.Prosody)
-	newObj, newOk := e.ObjectNew.(*v1beta1.Prosody)
+	oldObj, oldOk := e.ObjectOld.(*v1beta1.Jigasi)
+	newObj, newOk := e.ObjectNew.(*v1beta1.Jigasi)
 	if !oldOk || !newOk {
 		return false
 	}

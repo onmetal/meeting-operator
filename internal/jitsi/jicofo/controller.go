@@ -18,6 +18,8 @@ package jicofo
 
 import (
 	"context"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
@@ -49,7 +51,15 @@ type Jicofo struct {
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.Jicofo{}).
+		WithEventFilter(r.constructPredicates()).
 		Complete(r)
+}
+
+func (r *Reconciler) constructPredicates() predicate.Predicate {
+	return predicate.Funcs{
+		UpdateFunc: isUpdated,
+		DeleteFunc: func(event.DeleteEvent) bool { return false },
+	}
 }
 
 // +kubebuilder:rbac:groups=jitsi.meeting.ko,resources=jicofoes,verbs=get;list;watch;create;update;patch;delete
@@ -114,4 +124,16 @@ func (r *Reconciler) newInstance(ctx context.Context, l logr.Logger, req ctrl.Re
 		namespace: j.Namespace,
 		labels:    defaultLabels,
 	}, nil
+}
+
+func isUpdated(e event.UpdateEvent) bool {
+	oldObj, oldOk := e.ObjectOld.(*v1beta1.Jicofo)
+	newObj, newOk := e.ObjectNew.(*v1beta1.Jicofo)
+	if !oldOk || !newOk {
+		return false
+	}
+	if len(oldObj.Finalizers) < 1 && len(newObj.Finalizers) >= 1 {
+		return false
+	}
+	return true
 }
