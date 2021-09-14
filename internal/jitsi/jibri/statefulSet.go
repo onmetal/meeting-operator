@@ -22,7 +22,7 @@ import (
 	"github.com/onmetal/meeting-operator/internal/jitsi"
 	"github.com/onmetal/meeting-operator/internal/utils"
 	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -53,14 +53,14 @@ func (j *Jibri) prepareSTSSpec() appsv1.StatefulSetSpec {
 			MatchLabels: j.labels,
 		},
 		Replicas: &j.Spec.Replicas,
-		Template: v1.PodTemplateSpec{
+		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: j.labels,
 			},
-			Spec: v1.PodSpec{
+			Spec: corev1.PodSpec{
 				TerminationGracePeriodSeconds: &j.Spec.TerminationGracePeriodSeconds,
 				ImagePullSecrets:              j.Spec.ImagePullSecrets,
-				Containers: []v1.Container{
+				Containers: []corev1.Container{
 					{
 						Name:            appName,
 						Image:           j.Spec.Image,
@@ -82,15 +82,15 @@ func (j *Jibri) setPV(sts *appsv1.StatefulSetSpec) {
 	switch {
 	case j.Spec.Storage == nil:
 		sts.VolumeClaimTemplates = nil
-		sts.Template.Spec.Volumes = append(sts.Template.Spec.Volumes, v1.Volume{
+		sts.Template.Spec.Volumes = append(sts.Template.Spec.Volumes, corev1.Volume{
 			Name: "snd",
-			VolumeSource: v1.VolumeSource{
-				HostPath: &v1.HostPathVolumeSource{
+			VolumeSource: corev1.VolumeSource{
+				HostPath: &corev1.HostPathVolumeSource{
 					Path: "/dev/snd",
 				},
 			},
 		})
-		sts.Template.Spec.Containers[0].VolumeMounts = []v1.VolumeMount{
+		sts.Template.Spec.Containers[0].VolumeMounts = []corev1.VolumeMount{
 			{
 				Name:      "snd",
 				MountPath: "/dev/snd",
@@ -98,11 +98,11 @@ func (j *Jibri) setPV(sts *appsv1.StatefulSetSpec) {
 		}
 	case j.Spec.Storage.PVC.Spec.Resources.Requests != nil:
 		pvc := j.preparePVC()
-		sts.VolumeClaimTemplates = []v1.PersistentVolumeClaim{pvc}
-		sts.Template.Spec.Volumes = append(sts.Template.Spec.Volumes, v1.Volume{
+		sts.VolumeClaimTemplates = []corev1.PersistentVolumeClaim{pvc}
+		sts.Template.Spec.Volumes = append(sts.Template.Spec.Volumes, corev1.Volume{
 			Name: "snd",
-			VolumeSource: v1.VolumeSource{
-				HostPath: &v1.HostPathVolumeSource{
+			VolumeSource: corev1.VolumeSource{
+				HostPath: &corev1.HostPathVolumeSource{
 					Path: "/dev/snd",
 				},
 			},
@@ -110,16 +110,16 @@ func (j *Jibri) setPV(sts *appsv1.StatefulSetSpec) {
 		sts.Template.Spec.Containers[0].VolumeMounts = j.setVolumeMounts()
 	case j.Spec.Storage.EmptyDir.SizeLimit != nil && j.Spec.Storage != nil:
 		sts.Template.Spec.Volumes = append(sts.Template.Spec.Volumes,
-			v1.Volume{
+			corev1.Volume{
 				Name: volumeName(j.name),
-				VolumeSource: v1.VolumeSource{
+				VolumeSource: corev1.VolumeSource{
 					EmptyDir: j.Spec.Storage.EmptyDir,
 				},
 			},
-			v1.Volume{
+			corev1.Volume{
 				Name: "snd",
-				VolumeSource: v1.VolumeSource{
-					HostPath: &v1.HostPathVolumeSource{
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
 						Path: "/dev/snd",
 					},
 				},
@@ -127,15 +127,15 @@ func (j *Jibri) setPV(sts *appsv1.StatefulSetSpec) {
 		sts.Template.Spec.Containers[0].VolumeMounts = j.setVolumeMounts()
 	default:
 		sts.VolumeClaimTemplates = nil
-		sts.Template.Spec.Volumes = append(sts.Template.Spec.Volumes, v1.Volume{
+		sts.Template.Spec.Volumes = append(sts.Template.Spec.Volumes, corev1.Volume{
 			Name: "snd",
-			VolumeSource: v1.VolumeSource{
-				HostPath: &v1.HostPathVolumeSource{
+			VolumeSource: corev1.VolumeSource{
+				HostPath: &corev1.HostPathVolumeSource{
 					Path: "/dev/snd",
 				},
 			},
 		})
-		sts.Template.Spec.Containers[0].VolumeMounts = []v1.VolumeMount{
+		sts.Template.Spec.Containers[0].VolumeMounts = []corev1.VolumeMount{
 			{
 				Name:      "snd",
 				MountPath: "/dev/snd",
@@ -144,29 +144,19 @@ func (j *Jibri) setPV(sts *appsv1.StatefulSetSpec) {
 	}
 }
 
-func (j *Jibri) preparePVC() v1.PersistentVolumeClaim {
-	if j.Spec.Storage.PVC.Kind == "" {
-		j.Spec.Storage.PVC.Kind = "PersistentVolumeClaim"
-	}
-	if j.Spec.Storage.PVC.APIVersion == "" {
-		j.Spec.Storage.PVC.APIVersion = "v1"
-	}
+func (j *Jibri) preparePVC() corev1.PersistentVolumeClaim {
 	if j.Spec.Storage.PVC.Name == "" {
 		j.Spec.Storage.PVC.Name = volumeName(j.name)
 	}
 	if j.Spec.Storage.PVC.Spec.AccessModes == nil {
-		j.Spec.Storage.PVC.Spec.AccessModes = []v1.PersistentVolumeAccessMode{v1.ReadWriteOnce}
+		j.Spec.Storage.PVC.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
 	}
-	return v1.PersistentVolumeClaim{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       j.Spec.Storage.PVC.Kind,
-			APIVersion: j.Spec.Storage.PVC.APIVersion,
-		},
+	return corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      j.Spec.Storage.PVC.Name,
 			Namespace: j.namespace,
 		},
-		Spec: v1.PersistentVolumeClaimSpec{
+		Spec: corev1.PersistentVolumeClaimSpec{
 			AccessModes:      j.Spec.Storage.PVC.Spec.AccessModes,
 			Resources:        j.Spec.Storage.PVC.Spec.Resources,
 			VolumeName:       j.Spec.Storage.PVC.Name,
@@ -175,7 +165,7 @@ func (j *Jibri) preparePVC() v1.PersistentVolumeClaim {
 	}
 }
 
-func (j *Jibri) setVolumeMounts() []v1.VolumeMount {
+func (j *Jibri) setVolumeMounts() []corev1.VolumeMount {
 	mountPath := "/config/recordings/"
 	for env := range j.Spec.Environments {
 		if j.Spec.Environments[env].Name != "JIBRI_RECORDING_DIR" {
@@ -183,7 +173,7 @@ func (j *Jibri) setVolumeMounts() []v1.VolumeMount {
 		}
 		mountPath = j.Spec.Environments[env].Value
 	}
-	return []v1.VolumeMount{
+	return []corev1.VolumeMount{
 		{
 			Name:      volumeName(j.name),
 			ReadOnly:  false,

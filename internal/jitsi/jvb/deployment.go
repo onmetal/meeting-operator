@@ -497,7 +497,7 @@ func (j *JVB) Update() error {
 			j.log.Info("can't update jvb instance", "error", err)
 		}
 	}
-	return nil
+	return j.UpdateStatus()
 }
 
 func (j *JVB) updateReplicaCount() {

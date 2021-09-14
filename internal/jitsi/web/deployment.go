@@ -20,7 +20,7 @@ import (
 	"github.com/onmetal/meeting-operator/internal/jitsi"
 	"github.com/onmetal/meeting-operator/internal/utils"
 	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -55,14 +55,14 @@ func (w *Web) prepareDeploymentSpec() appsv1.DeploymentSpec {
 			MatchLabels: w.labels,
 		},
 		Replicas: &w.Spec.Replicas,
-		Template: v1.PodTemplateSpec{
+		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: w.labels,
 			},
-			Spec: v1.PodSpec{
+			Spec: corev1.PodSpec{
 				TerminationGracePeriodSeconds: &w.Spec.TerminationGracePeriodSeconds,
 				ImagePullSecrets:              w.Spec.ImagePullSecrets,
-				Containers: []v1.Container{
+				Containers: []corev1.Container{
 					{
 						Name:            name,
 						Image:           w.Spec.Image,

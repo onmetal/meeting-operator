@@ -22,7 +22,7 @@ import (
 
 	"github.com/onmetal/meeting-operator/internal/utils"
 	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -66,7 +66,7 @@ func (j *Jicofo) createCustomLoggingCM() error {
 	return err
 }
 
-func (j *Jicofo) prepareLoggingCM() *v1.ConfigMap {
+func (j *Jicofo) prepareLoggingCM() *corev1.ConfigMap {
 	tpl, err := template.New("log").Parse(jicofoCustomLogging)
 	if err != nil {
 		j.log.Info("can't template logging config", "error", err)
@@ -84,7 +84,7 @@ func (j *Jicofo) prepareLoggingCM() *v1.ConfigMap {
 		j.log.Info("can't template logging config", "error", err)
 		return nil
 	}
-	return &v1.ConfigMap{
+	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "jicofo-custom-logging", Namespace: j.namespace,
 			Labels: map[string]string{"app": appName},
@@ -115,15 +115,15 @@ func (j *Jicofo) prepareDeploymentSpec() appsv1.DeploymentSpec {
 			MatchLabels: j.labels,
 		},
 		Replicas: &j.Spec.Replicas,
-		Template: v1.PodTemplateSpec{
+		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: j.labels,
 			},
-			Spec: v1.PodSpec{
+			Spec: corev1.PodSpec{
 				TerminationGracePeriodSeconds: &j.Spec.TerminationGracePeriodSeconds,
 				ImagePullSecrets:              j.Spec.ImagePullSecrets,
 				Volumes:                       volumes,
-				Containers: []v1.Container{
+				Containers: []corev1.Container{
 					jicofo,
 					exporter,
 				},
@@ -132,38 +132,38 @@ func (j *Jicofo) prepareDeploymentSpec() appsv1.DeploymentSpec {
 	}
 }
 
-func (j *Jicofo) prepareVolumesForJicofo() []v1.Volume {
-	var volume []v1.Volume
-	loggingConfig := v1.Volume{Name: "custom-logging", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
-		Items:                []v1.KeyToPath{{Key: "custom-logging.properties", Path: "logging.properties"}},
-		LocalObjectReference: v1.LocalObjectReference{Name: "jicofo-custom-logging"},
+func (j *Jicofo) prepareVolumesForJicofo() []corev1.Volume {
+	var volume []corev1.Volume
+	loggingConfig := corev1.Volume{Name: "custom-logging", VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+		Items:                []corev1.KeyToPath{{Key: "custom-logging.properties", Path: "logging.properties"}},
+		LocalObjectReference: corev1.LocalObjectReference{Name: "jicofo-custom-logging"},
 	}}}
 	if j.Spec.Exporter.Type == telegrafExporter {
-		telegrafCM := v1.Volume{Name: "telegraf", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
-			LocalObjectReference: v1.LocalObjectReference{Name: j.Spec.Exporter.ConfigMapName},
+		telegrafCM := corev1.Volume{Name: "telegraf", VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+			LocalObjectReference: corev1.LocalObjectReference{Name: j.Spec.Exporter.ConfigMapName},
 		}}}
 		return append(volume, telegrafCM, loggingConfig)
 	}
 	return append(volume, loggingConfig)
 }
 
-func (j *Jicofo) prepareJicofoContainer() v1.Container {
-	return v1.Container{
+func (j *Jicofo) prepareJicofoContainer() corev1.Container {
+	return corev1.Container{
 		Name:            appName,
 		Image:           j.Spec.Image,
 		ImagePullPolicy: j.Spec.ImagePullPolicy,
 		Env:             j.Spec.Environments,
 		Resources:       j.Spec.Resources,
 		SecurityContext: &j.Spec.SecurityContext,
-		VolumeMounts: []v1.VolumeMount{
+		VolumeMounts: []corev1.VolumeMount{
 			{Name: "custom-logging", MountPath: "/defaults/logging.properties", SubPath: "logging.properties"},
 		},
-		LivenessProbe: &v1.Probe{
-			Handler: v1.Handler{
-				HTTPGet: &v1.HTTPGetAction{
+		LivenessProbe: &corev1.Probe{
+			Handler: corev1.Handler{
+				HTTPGet: &corev1.HTTPGetAction{
 					Path:   "/about/health",
 					Port:   intstr.IntOrString{IntVal: healthPort},
-					Scheme: v1.URISchemeHTTP,
+					Scheme: corev1.URISchemeHTTP,
 				},
 			},
 			InitialDelaySeconds: initialDelaySeconds,
@@ -175,28 +175,28 @@ func (j *Jicofo) prepareJicofoContainer() v1.Container {
 	}
 }
 
-func (j *Jicofo) prepareExporterContainer() v1.Container {
+func (j *Jicofo) prepareExporterContainer() corev1.Container {
 	switch j.Spec.Exporter.Type {
 	case telegrafExporter:
-		return v1.Container{
+		return corev1.Container{
 			Name:            exporterContainerName,
 			Image:           j.Spec.Exporter.Image,
 			Env:             j.Spec.Exporter.Environments,
-			VolumeMounts:    []v1.VolumeMount{{Name: "telegraf", MountPath: "/etc/telegraf/"}},
+			VolumeMounts:    []corev1.VolumeMount{{Name: "telegraf", MountPath: "/etc/telegraf/"}},
 			Resources:       j.Spec.Exporter.Resources,
 			ImagePullPolicy: j.Spec.ImagePullPolicy,
 			SecurityContext: &j.Spec.Exporter.SecurityContext,
 		}
 	default:
-		return v1.Container{
+		return corev1.Container{
 			Name:            exporterContainerName,
 			Image:           j.Spec.Exporter.Image,
 			Args:            []string{"-videobridge-url", "http://localhost:8080/colibri/stats"},
-			Ports:           []v1.ContainerPort{{Name: "http", ContainerPort: j.Spec.Exporter.Port, Protocol: v1.ProtocolTCP}},
+			Ports:           []corev1.ContainerPort{{Name: "http", ContainerPort: j.Spec.Exporter.Port, Protocol: corev1.ProtocolTCP}},
 			Env:             j.Spec.Exporter.Environments,
 			Resources:       j.Spec.Exporter.Resources,
 			ImagePullPolicy: j.Spec.ImagePullPolicy,
-			SecurityContext: &v1.SecurityContext{
+			SecurityContext: &corev1.SecurityContext{
 				RunAsUser:                pointer.Int64Ptr(defaultExporterUser),
 				Privileged:               pointer.BoolPtr(false),
 				RunAsNonRoot:             pointer.BoolPtr(true),
@@ -243,7 +243,7 @@ func (j *Jicofo) Delete() error {
 }
 
 func (j *Jicofo) deleteCMs() error {
-	var cms v1.ConfigMapList
+	var cms corev1.ConfigMapList
 	filter := &client.ListOptions{
 		LabelSelector: client.MatchingLabelsSelector{Selector: labels.SelectorFromSet(map[string]string{"app": appName})},
 	}

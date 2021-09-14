@@ -18,12 +18,13 @@ package jvb
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/go-logr/logr"
 	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 	meeterr "github.com/onmetal/meeting-operator/internal/errors"
 	"github.com/onmetal/meeting-operator/internal/utils"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -44,7 +45,7 @@ type JVB struct {
 
 	ctx         context.Context
 	log         logr.Logger
-	envs        []v1.EnvVar
+	envs        []corev1.EnvVar
 	replicaName string
 	replica     int32
 }
@@ -58,7 +59,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (r *Reconciler) constructPredicates() predicate.Predicate {
 	return predicate.Funcs{
-		UpdateFunc: isUpdated,
+		UpdateFunc: isSpecUpdated,
 	}
 }
 
@@ -72,22 +73,16 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	jvb, err := r.newInstance(ctx, reqLogger, req)
 	if err != nil {
 		if meeterr.IsUnderDeletion(err) {
-			if delErr := jvb.Delete(); delErr != nil {
-				reqLogger.Info("deletion failed", "error", delErr)
-				return ctrl.Result{}, delErr
-			}
 			reqLogger.Info("reconciliation finished")
-			return ctrl.Result{}, nil
+			return ctrl.Result{}, jvb.Delete()
 		}
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
 	if createErr := jvb.Create(); createErr != nil {
 		return ctrl.Result{}, createErr
 	}
 	if updErr := jvb.Update(); updErr != nil {
-		return ctrl.Result{}, updErr
-	}
-	if updErr := jvb.UpdateStatus(); updErr != nil {
 		return ctrl.Result{}, updErr
 	}
 	reqLogger.Info("reconciliation finished")
@@ -119,13 +114,16 @@ func (r *Reconciler) newInstance(ctx context.Context, l logr.Logger, req ctrl.Re
 	}, nil
 }
 
-func isUpdated(e event.UpdateEvent) bool {
+func isSpecUpdated(e event.UpdateEvent) bool {
 	oldObj, oldOk := e.ObjectOld.(*v1beta1.JVB)
 	newObj, newOk := e.ObjectNew.(*v1beta1.JVB)
 	if !oldOk || !newOk {
 		return false
 	}
 	if len(oldObj.Finalizers) < 1 && len(newObj.Finalizers) >= 1 {
+		return false
+	}
+	if !reflect.DeepEqual(oldObj.Status, newObj.Status) {
 		return false
 	}
 	return true

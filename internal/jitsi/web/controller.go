@@ -43,7 +43,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (r *Reconciler) constructPredicates() predicate.Predicate {
 	return predicate.Funcs{
-		UpdateFunc: isUpdatedOrDeleted,
+		UpdateFunc: isSpecUpdated,
 		DeleteFunc: func(event.DeleteEvent) bool { return false },
 	}
 }
@@ -123,7 +123,7 @@ func (r *Reconciler) newInstance(ctx context.Context, l logr.Logger, req ctrl.Re
 	}, nil
 }
 
-func isUpdatedOrDeleted(e event.UpdateEvent) bool {
+func isSpecUpdated(e event.UpdateEvent) bool {
 	oldObj, oldOk := e.ObjectOld.(*v1beta1.Web)
 	newObj, newOk := e.ObjectNew.(*v1beta1.Web)
 	if !oldOk || !newOk {

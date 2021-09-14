@@ -57,7 +57,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (r *Reconciler) constructPredicates() predicate.Predicate {
 	return predicate.Funcs{
-		UpdateFunc: isUpdated,
+		UpdateFunc: isSpecUpdated,
 		DeleteFunc: func(event.DeleteEvent) bool { return false },
 	}
 }
@@ -127,7 +127,7 @@ func (r *Reconciler) newInstance(ctx context.Context, l logr.Logger, req ctrl.Re
 	}, nil
 }
 
-func isUpdated(e event.UpdateEvent) bool {
+func isSpecUpdated(e event.UpdateEvent) bool {
 	oldObj, oldOk := e.ObjectOld.(*v1beta1.Jigasi)
 	newObj, newOk := e.ObjectNew.(*v1beta1.Jigasi)
 	if !oldOk || !newOk {

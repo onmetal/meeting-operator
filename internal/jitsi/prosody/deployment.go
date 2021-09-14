@@ -24,7 +24,7 @@ import (
 	"github.com/onmetal/meeting-operator/internal/jitsi/jvb"
 	"github.com/onmetal/meeting-operator/internal/utils"
 	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -56,7 +56,7 @@ func (p *Prosody) createTurnCM() error {
 	return err
 }
 
-func (p *Prosody) prepareTurnCredentialsCM() *v1.ConfigMap {
+func (p *Prosody) prepareTurnCredentialsCM() *corev1.ConfigMap {
 	tpl, err := template.New("log").Parse(prosodyTurnConfig)
 	if err != nil {
 		p.log.Info("can't template turn config", "error", err)
@@ -68,7 +68,7 @@ func (p *Prosody) prepareTurnCredentialsCM() *v1.ConfigMap {
 		p.log.Info("can't template logging config", "error", err)
 		return nil
 	}
-	return &v1.ConfigMap{
+	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "prosody-turn-config", Namespace: p.namespace,
 			Labels: map[string]string{"app": appName},
@@ -116,10 +116,10 @@ func (p *Prosody) getTurnCredentialsConfig() jvb.TurnConfig {
 	return config
 }
 
-func (p *Prosody) getTurnCredential(env v1.EnvVar) string {
+func (p *Prosody) getTurnCredential(env corev1.EnvVar) string {
 	switch {
 	case env.ValueFrom.SecretKeyRef != nil:
-		sec := &v1.Secret{}
+		sec := &corev1.Secret{}
 		if err := p.Client.Get(p.ctx, types.NamespacedName{
 			Namespace: p.namespace,
 			Name:      env.ValueFrom.SecretKeyRef.Name,
@@ -134,7 +134,7 @@ func (p *Prosody) getTurnCredential(env v1.EnvVar) string {
 		}
 		return string(cred)
 	case env.ValueFrom.ConfigMapKeyRef != nil:
-		cm := &v1.ConfigMap{}
+		cm := &corev1.ConfigMap{}
 		if err := p.Client.Get(p.ctx, types.NamespacedName{
 			Namespace: p.namespace,
 			Name:      env.ValueFrom.SecretKeyRef.Name,
@@ -168,15 +168,15 @@ func (p *Prosody) prepareDeploymentSpec() appsv1.DeploymentSpec {
 			MatchLabels: p.labels,
 		},
 		Replicas: &p.Spec.Replicas,
-		Template: v1.PodTemplateSpec{
+		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: p.labels,
 			},
-			Spec: v1.PodSpec{
+			Spec: corev1.PodSpec{
 				TerminationGracePeriodSeconds: &p.Spec.TerminationGracePeriodSeconds,
 				ImagePullSecrets:              p.Spec.ImagePullSecrets,
 				Volumes:                       volumes,
-				Containers: []v1.Container{
+				Containers: []corev1.Container{
 					{
 						Name:            appName,
 						Image:           p.Spec.Image,
@@ -185,7 +185,7 @@ func (p *Prosody) prepareDeploymentSpec() appsv1.DeploymentSpec {
 						Ports:           jitsi.GetContainerPorts(p.Spec.Ports),
 						Resources:       p.Spec.Resources,
 						SecurityContext: &p.Spec.SecurityContext,
-						VolumeMounts: []v1.VolumeMount{
+						VolumeMounts: []corev1.VolumeMount{
 							{Name: "turn", MountPath: "/defaults/conf.d/turn.cfg.lua", SubPath: "turn.cfg.lua"},
 						},
 					},
@@ -195,11 +195,11 @@ func (p *Prosody) prepareDeploymentSpec() appsv1.DeploymentSpec {
 	}
 }
 
-func (p *Prosody) prepareVolumesForProsody() []v1.Volume {
-	var volume []v1.Volume
-	loggingConfig := v1.Volume{Name: "turn", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
-		Items:                []v1.KeyToPath{{Key: "turn.cfg.lua", Path: "turn.cfg.lua"}},
-		LocalObjectReference: v1.LocalObjectReference{Name: "prosody-turn-config"},
+func (p *Prosody) prepareVolumesForProsody() []corev1.Volume {
+	var volume []corev1.Volume
+	loggingConfig := corev1.Volume{Name: "turn", VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+		Items:                []corev1.KeyToPath{{Key: "turn.cfg.lua", Path: "turn.cfg.lua"}},
+		LocalObjectReference: corev1.LocalObjectReference{Name: "prosody-turn-config"},
 	}}}
 	return append(volume, loggingConfig)
 }
@@ -246,7 +246,7 @@ func (p *Prosody) Delete() error {
 }
 
 func (p *Prosody) deleteCMs() error {
-	var cms v1.ConfigMapList
+	var cms corev1.ConfigMapList
 	filter := &client.ListOptions{
 		LabelSelector: client.MatchingLabelsSelector{Selector: labels.SelectorFromSet(map[string]string{"app": appName})},
 	}
