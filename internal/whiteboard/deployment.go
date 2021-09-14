@@ -80,15 +80,15 @@ func (w *whiteboard) prepareDeploymentSpec() appsv1.DeploymentSpec {
 }
 
 func (w *whiteboard) getContainerPorts() []v1.ContainerPort {
-	var ports []v1.ContainerPort
+	containerPorts := make([]v1.ContainerPort, 0, len(w.Spec.Ports))
 	for p := range w.Spec.Ports {
-		ports = append(ports, v1.ContainerPort{
+		containerPorts = append(containerPorts, v1.ContainerPort{
 			Name:          w.Spec.Ports[p].Name,
 			ContainerPort: w.Spec.Ports[p].Port,
 			Protocol:      w.Spec.Ports[p].Protocol,
 		})
 	}
-	return ports
+	return containerPorts
 }
 
 func (w *whiteboard) Update() error {
@@ -97,11 +97,8 @@ func (w *whiteboard) Update() error {
 }
 
 func (w *whiteboard) Delete() error {
-	if utils.ContainsString(w.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
-		w.ObjectMeta.Finalizers = utils.RemoveString(w.ObjectMeta.Finalizers, utils.MeetingFinalizer)
-		if err := w.Client.Update(w.ctx, w.WhiteBoard); err != nil {
-			w.log.Info("can't update whiteboard cr", "error", err)
-		}
+	if err := utils.RemoveFinalizer(w.ctx, w.Client, w.WhiteBoard); err != nil {
+		w.log.Info("can't remove finalizer", "error", err)
 	}
 	deployment, err := w.Get()
 	if err != nil {

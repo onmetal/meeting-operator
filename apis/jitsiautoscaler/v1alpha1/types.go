@@ -28,7 +28,7 @@ const (
 	ResourceParticipants MetricName = "jitsi_participants"
 )
 
-// AutoScalerSpec defines the desired state of AutoScaler
+// AutoScalerSpec defines the desired state of AutoScaler.
 type AutoScalerSpec struct {
 	Labels         map[string]string `json:"labels,omitempty"`
 	MonitoringType string            `json:"monitoringType,omitempty"`
@@ -57,14 +57,13 @@ type Auth struct {
 	Token    string `json:"token,omitempty"`
 }
 
-// AutoScalerStatus defines the observed state of AutoScaler
-type AutoScalerStatus struct {
-}
+// AutoScalerStatus defines the observed state of AutoScaler.
+type AutoScalerStatus struct{}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// AutoScaler is the Schema for the autoScalers API
+// AutoScaler is the Schema for the autoScalers API.
 type AutoScaler struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -75,7 +74,7 @@ type AutoScaler struct {
 
 //+kubebuilder:object:root=true
 
-// AutoScalerList contains a list of AutoScaler
+// AutoScalerList contains a list of AutoScaler.
 type AutoScalerList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

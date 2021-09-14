@@ -79,15 +79,15 @@ func (e *etherpad) prepareDeploymentSpec() appsv1.DeploymentSpec {
 }
 
 func (e *etherpad) getContainerPorts() []v1.ContainerPort {
-	var ports []v1.ContainerPort
+	containerPorts := make([]v1.ContainerPort, 0, len(e.Spec.Ports))
 	for port := range e.Spec.Ports {
-		ports = append(ports, v1.ContainerPort{
+		containerPorts = append(containerPorts, v1.ContainerPort{
 			Name:          e.Spec.Ports[port].Name,
 			ContainerPort: e.Spec.Ports[port].Port,
 			Protocol:      e.Spec.Ports[port].Protocol,
 		})
 	}
-	return ports
+	return containerPorts
 }
 
 func (e *etherpad) Update() error {
@@ -100,11 +100,8 @@ func (e *etherpad) Update() error {
 }
 
 func (e *etherpad) Delete() error {
-	if utils.ContainsString(e.ObjectMeta.Finalizers, utils.MeetingFinalizer) {
-		e.ObjectMeta.Finalizers = utils.RemoveString(e.ObjectMeta.Finalizers, utils.MeetingFinalizer)
-		if err := e.Client.Update(e.ctx, e.Etherpad); err != nil {
-			e.log.Info("can't update etherpad cr", "error", err)
-		}
+	if err := utils.RemoveFinalizer(e.ctx, e.Client, e.Etherpad); err != nil {
+		e.log.Info("can't remove finalizer", "error", err)
 	}
 	deployment, err := e.Get()
 	if err != nil {

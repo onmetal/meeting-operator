@@ -18,17 +18,7 @@ package utils
 
 const (
 	AppKubernetesPartOf = "jitsi-meet"
-	MeetingFinalizer    = "onmetal.de/meeting-operator"
 )
-
-func ContainsString(slice []string, s string) bool {
-	for _, item := range slice {
-		if item == s {
-			return true
-		}
-	}
-	return false
-}
 
 func RemoveString(slice []string, s string) (result []string) {
 	for _, item := range slice {
@@ -40,8 +30,8 @@ func RemoveString(slice []string, s string) (result []string) {
 	return
 }
 
-func GetDefaultLabels(appName string) map[string]string {
-	var defaultLabels = make(map[string]string)
+func GetDefaultLabelsForApp(appName string) map[string]string {
+	defaultLabels := make(map[string]string)
 	defaultLabels["app.kubernetes.io/appName"] = appName
 	defaultLabels["app.kubernetes.io/part-of"] = AppKubernetesPartOf
 	return defaultLabels

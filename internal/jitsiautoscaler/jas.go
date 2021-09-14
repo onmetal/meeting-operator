@@ -21,23 +21,22 @@ import (
 	"errors"
 	"time"
 
-	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-
-	jitsiv1alpha "github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1"
-	"k8s.io/apimachinery/pkg/types"
-
-	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
-	ctrl "sigs.k8s.io/controller-runtime"
-
 	"github.com/go-logr/logr"
+	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
 	"github.com/onmetal/meeting-operator/apis/jitsiautoscaler/v1alpha1"
+	meetingerr "github.com/onmetal/meeting-operator/internal/errors"
 	promapi "github.com/prometheus/client_golang/api"
 	promv1api "github.com/prometheus/client_golang/api/prometheus/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const defaultRepeatIntervalSecond = 600 * time.Second
+
+var errTokenNotExist = errors.New("token not exist")
 
 type AutoScaler interface {
 	Scale()
@@ -64,7 +63,7 @@ type influx struct {
 	org, bucket string
 }
 
-func New(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) (AutoScaler, error) {
+func newInstance(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) (AutoScaler, error) {
 	var p *prom
 	var influxdb *influx
 	jas := &v1alpha1.AutoScaler{}
@@ -112,7 +111,7 @@ func New(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) 
 		}
 		token, ok := jas.Annotations["jas.influxdb/token"]
 		if !ok {
-			return nil, errors.New("token not exist")
+			return nil, errTokenNotExist
 		}
 		influxClient := influxdb2.NewClient(jas.Spec.Host, token)
 		influxdb = &influx{
@@ -130,8 +129,8 @@ func New(ctx context.Context, c client.Client, l logr.Logger, req ctrl.Request) 
 	}
 }
 
-func getJitsiCR(ctx context.Context, c client.Client, name, namespace string) (*jitsiv1alpha.Jitsi, error) {
-	jitsi := &jitsiv1alpha.Jitsi{}
+func getJVBCR(ctx context.Context, c client.Client, name, namespace string) (*v1beta1.JVB, error) {
+	jitsi := &v1beta1.JVB{}
 	keyObj := ctrl.Request{NamespacedName: types.NamespacedName{
 		Namespace: namespace,
 		Name:      name,

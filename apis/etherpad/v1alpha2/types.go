@@ -21,7 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EtherpadSpec defines the desired state of Etherpad
+// EtherpadSpec defines the desired state of Etherpad.
 type EtherpadSpec struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
 	//+kubebuilder:default:=1
@@ -47,14 +47,13 @@ type Port struct {
 	Port     int32       `json:"port,omitempty"`
 }
 
-// EtherpadStatus defines the observed state of Etherpad
-type EtherpadStatus struct {
-}
+// EtherpadStatus defines the observed state of Etherpad.
+type EtherpadStatus struct{}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// Etherpad is the Schema for the etherpads API
+// Etherpad is the Schema for the etherpads API.
 type Etherpad struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -65,7 +64,7 @@ type Etherpad struct {
 
 //+kubebuilder:object:root=true
 
-// EtherpadList contains a list of Etherpad
+// EtherpadList contains a list of Etherpad.
 type EtherpadList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

@@ -13,18 +13,6 @@ resources:
   controller: true
   domain: meeting.ko
   kind: Etherpad
-  path: github.com/onmetal/meeting-operator/apis/ehterpad/v1alpha1
-  version: v1alpha1
-  webhooks:
-    defaulting: false
-    validation: false
-    webhookVersion: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: meeting.ko
-  kind: Etherpad
   path: github.com/onmetal/meeting-operator/apis/ehterpad/v1alpha2
   version: v1alpha2
   webhooks:
@@ -34,10 +22,17 @@ resources:
 - api:
     crdVersion: v1
     namespaced: true
-  domain: meeting.ko
-  kind: Jitsi
-  path: github.com/onmetal/meeting-operator/apis/jitsi/v1alpha1
-  version: v1alpha1
+  domain: jitsi.meeting.ko
+  kind: Web
+  path: github.com/onmetal/meeting-operator/apis/jitsi/web/v1beta1
+  version: v1beta1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: jitsi.meeting.ko
+  kind: JVB
+  path: github.com/onmetal/meeting-operator/apis/jitsi/jvb/v1beta1
+  version: v1beta1
 - api:
     crdVersion: v1
     namespaced: true

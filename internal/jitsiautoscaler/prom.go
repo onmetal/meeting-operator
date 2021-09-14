@@ -67,25 +67,25 @@ func (p *prom) countAvgValueByRequest(request string) float64 {
 }
 
 func (p *prom) scaleUp(desiredReplicas int32) error {
-	jitsi, getErr := getJitsiCR(p.ctx, p.Client, p.Spec.ScaleTargetRef.Name, p.Namespace)
+	jitsi, getErr := getJVBCR(p.ctx, p.Client, p.Spec.ScaleTargetRef.Name, p.Namespace)
 	if getErr != nil {
 		return getErr
 	}
-	jitsi.Spec.JVB.Replicas *= desiredReplicas
-	if jitsi.Spec.JVB.Replicas > p.Spec.MaxReplicas {
-		jitsi.Spec.JVB.Replicas = p.Spec.MaxReplicas
+	jitsi.Spec.Replicas *= desiredReplicas
+	if jitsi.Spec.Replicas > p.Spec.MaxReplicas {
+		jitsi.Spec.Replicas = p.Spec.MaxReplicas
 	}
 	return p.Update(p.ctx, jitsi)
 }
 
 func (p *prom) scaleDown(desiredReplicas int32) error {
-	jitsi, getErr := getJitsiCR(p.ctx, p.Client, p.Spec.ScaleTargetRef.Name, p.Namespace)
+	jitsi, getErr := getJVBCR(p.ctx, p.Client, p.Spec.ScaleTargetRef.Name, p.Namespace)
 	if getErr != nil {
 		return getErr
 	}
-	jitsi.Spec.JVB.Replicas = desiredReplicas
-	if jitsi.Spec.JVB.Replicas < p.Spec.MinReplicas {
-		jitsi.Spec.JVB.Replicas = p.Spec.MinReplicas
+	jitsi.Spec.Replicas = desiredReplicas
+	if jitsi.Spec.Replicas < p.Spec.MinReplicas {
+		jitsi.Spec.Replicas = p.Spec.MinReplicas
 	}
 	return p.Update(p.ctx, jitsi)
 }
