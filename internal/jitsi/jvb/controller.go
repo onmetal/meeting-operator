@@ -47,7 +47,7 @@ type JVB struct {
 	log         logr.Logger
 	envs        []corev1.EnvVar
 	replicaName string
-	replica     int32
+	replica, port     int32
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -93,12 +93,15 @@ func (r *Reconciler) newInstance(ctx context.Context, l logr.Logger, req ctrl.Re
 	if err := r.Get(ctx, req.NamespacedName, j); err != nil {
 		return nil, err
 	}
+	var jvbExternalPort int32 = 10000
+	if j.Spec.Port.Port != 0 { jvbExternalPort = j.Spec.Port.Port }
 	if !j.DeletionTimestamp.IsZero() {
 		return &JVB{
 			Client: r.Client,
 			JVB:    j,
 			ctx:    ctx,
 			log:    l,
+			port:   jvbExternalPort,
 		}, meeterr.UnderDeletion()
 	}
 	if err := utils.AddFinalizer(ctx, r.Client, j); err != nil {
@@ -110,6 +113,7 @@ func (r *Reconciler) newInstance(ctx context.Context, l logr.Logger, req ctrl.Re
 		envs:   j.Spec.Environments,
 		ctx:    ctx,
 		log:    l,
+		port:   jvbExternalPort,
 	}, nil
 }
 

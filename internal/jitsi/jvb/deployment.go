@@ -36,8 +36,7 @@ import (
 )
 
 const (
-	JvbName         = "jvb"
-	externalPortUDP = 10000
+	appName         = "jvb"
 	colibriHTTPPort = 8080
 )
 
@@ -63,7 +62,8 @@ const (
 func (j *JVB) Create() error {
 	j.createConfigMaps()
 	for replica := int32(1); replica <= j.Spec.Replicas; replica++ {
-		j.replicaName = fmt.Sprintf("%s-%d", JvbName, replica)
+		j.replicaName = fmt.Sprintf("%s-%d", appName, replica)
+		j.replica = replica
 		if j.isExist() {
 			continue
 		}
@@ -194,7 +194,7 @@ func (j *JVB) servicePerInstance() error {
 }
 
 func (j *JVB) prepareServiceForInstance() *v1.Service {
-	port := externalPortUDP + j.replica
+	port := j.port + j.replica
 	return &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        j.replicaName,
@@ -203,7 +203,7 @@ func (j *JVB) prepareServiceForInstance() *v1.Service {
 		},
 		Spec: v1.ServiceSpec{
 			Type:     j.Spec.ServiceType,
-			Ports:    []v1.ServicePort{{Name: JvbName, Protocol: j.Spec.Port.Protocol, Port: port, TargetPort: intstr.IntOrString{IntVal: port}}},
+			Ports:    []v1.ServicePort{{Name: appName, Protocol: j.Spec.Port.Protocol, Port: port, TargetPort: intstr.IntOrString{IntVal: port}}},
 			Selector: map[string]string{"jitsi-jvb": j.replicaName},
 		},
 	}
@@ -275,9 +275,9 @@ func (j *JVB) prepareDeploymentSpecWithLabels(l map[string]string) appsv1.Deploy
 }
 
 func (j *JVB) prepareJVBContainer() v1.Container {
-	port := externalPortUDP + j.replica
+	port := j.port + j.replica
 	return v1.Container{
-		Name:            JvbName,
+		Name:            appName,
 		Image:           j.Spec.Image,
 		ImagePullPolicy: j.Spec.ImagePullPolicy,
 		Env:             j.additionalEnvironments(),
@@ -311,7 +311,7 @@ func (j *JVB) prepareJVBContainer() v1.Container {
 		},
 		Ports: []v1.ContainerPort{
 			{
-				Name:          JvbName,
+				Name:          appName,
 				Protocol:      j.Spec.Port.Protocol,
 				ContainerPort: port,
 			},
@@ -348,7 +348,7 @@ func (j *JVB) prepareVolumesForJVB() []v1.Volume {
 }
 
 func (j *JVB) additionalEnvironments() []v1.EnvVar {
-	port := fmt.Sprint(externalPortUDP + j.replica)
+	port := fmt.Sprint(j.port + j.replica)
 	switch {
 	case j.Spec.Port.Protocol == v1.ProtocolTCP:
 		if isEnvAlreadyExist(j.envs) {
@@ -472,7 +472,8 @@ func (j *JVB) Update() error {
 	j.updateReplicaCount()
 	j.updateOrRecreateConfigMaps()
 	for replica := int32(1); replica <= j.Spec.Replicas; replica++ {
-		j.replicaName = fmt.Sprintf("%s-%d", JvbName, replica)
+		j.replicaName = fmt.Sprintf("%s-%d", appName, replica)
+		j.replica = replica
 		if err := j.updateCustomSIPCM(); err != nil {
 			if apierrors.IsNotFound(err) {
 				if createErr := j.createCustomSIPCM(); createErr != nil && !apierrors.IsAlreadyExists(createErr) {
@@ -503,7 +504,7 @@ func (j *JVB) updateReplicaCount() {
 	if j.JVB.Status.Replicas > j.Spec.Replicas {
 		currentReplicaCount := j.JVB.Status.Replicas
 		for currentReplicaCount != j.Spec.Replicas && currentReplicaCount != 1 {
-			j.replicaName = fmt.Sprintf("%s-%d", JvbName, currentReplicaCount)
+			j.replicaName = fmt.Sprintf("%s-%d", appName, currentReplicaCount)
 			if err := j.deleteService(); client.IgnoreNotFound(err) != nil {
 				j.log.Info("failed to delete service", "error", err)
 			}
@@ -567,7 +568,7 @@ func (j *JVB) Delete() error {
 		j.log.Info("can't remove finalizer", "error", err)
 	}
 	for replica := int32(1); replica <= j.Spec.Replicas; replica++ {
-		j.replicaName = fmt.Sprintf("%s-%d", JvbName, replica)
+		j.replicaName = fmt.Sprintf("%s-%d", appName, replica)
 		if err := j.deleteService(); client.IgnoreNotFound(err) != nil {
 			j.log.Info("failed to delete service", "error", err)
 		}
