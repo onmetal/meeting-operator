@@ -1,0 +1,5 @@
+## Tests
+
+```shell
+make tests
+```
