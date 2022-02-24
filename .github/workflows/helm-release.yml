@@ -33,7 +33,7 @@ jobs:
           CR_RELEASE_NAME_TEMPLATE: 'v{{ .Version }}'
           CR_SKIP_EXISTING: true
 
-      - uses: jfrog/setup-jfrog-cli@v1
+      - uses: jfrog/setup-jfrog-cli@v2.1.0
         env:
           JF_ARTIFACTORY_1: ${{ secrets.JF_ARTIFACTORY_SECRET }}
       - name: Deploy to Artifactory 
