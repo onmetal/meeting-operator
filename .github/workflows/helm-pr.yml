@@ -3,6 +3,7 @@ name: PR - Helm
 on:
   pull_request:
     branches: [ master ]
+  workflow_dispatch:
 
 jobs:
 
