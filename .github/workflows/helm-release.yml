@@ -32,11 +32,3 @@ jobs:
           CR_TOKEN: '${{ secrets.CUSTOM_GITHUB_TOKEN }}'
           CR_RELEASE_NAME_TEMPLATE: 'v{{ .Version }}'
           CR_SKIP_EXISTING: true
-
-      - uses: jfrog/setup-jfrog-cli@v2.1.0
-        env:
-          JF_ARTIFACTORY_1: ${{ secrets.JF_ARTIFACTORY_SECRET }}
-      - name: Deploy to Artifactory 
-        run: | 
-          helm package deploy/helm/meeting-operator/
-          jfrog rt u "*.tgz" jitsi-helm
