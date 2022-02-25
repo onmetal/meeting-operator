@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/go-logr/logr v1.2.2
-	github.com/influxdata/influxdb-client-go/v2 v2.4.0
+	github.com/influxdata/influxdb-client-go/v2 v2.8.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/prometheus/common v0.32.1
 	k8s.io/api v0.19.2
