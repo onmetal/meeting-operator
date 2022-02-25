@@ -159,7 +159,7 @@ func (j *Jicofo) prepareJicofoContainer() corev1.Container {
 			{Name: "custom-logging", MountPath: "/defaults/logging.properties", SubPath: "logging.properties"},
 		},
 		LivenessProbe: &corev1.Probe{
-			Handler: corev1.Handler{
+			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
 					Path:   "/about/health",
 					Port:   intstr.IntOrString{IntVal: healthPort},

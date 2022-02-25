@@ -289,14 +289,14 @@ func (j *JVB) prepareJVBContainer() v1.Container {
 			{Name: "custom-logging", MountPath: "/defaults/logging.properties", SubPath: "logging.properties"},
 		},
 		Lifecycle: &v1.Lifecycle{
-			PreStop: &v1.Handler{
+			PreStop: &v1.LifecycleHandler{
 				Exec: &v1.ExecAction{
 					Command: []string{"bash", "/shutdown/graceful_shutdown.sh", "-t 3"},
 				},
 			},
 		},
 		LivenessProbe: &v1.Probe{
-			Handler: v1.Handler{
+			ProbeHandler: v1.ProbeHandler{
 				HTTPGet: &v1.HTTPGetAction{
 					Path:   "/about/health",
 					Port:   intstr.IntOrString{IntVal: colibriHTTPPort},
