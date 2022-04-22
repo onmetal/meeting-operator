@@ -2,13 +2,13 @@ name: PR - Helm
 
 on:
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted, Linux, X64 ]
     steps:
     - uses: actions/checkout@v3
     - name: Install Helm

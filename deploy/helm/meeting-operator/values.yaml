@@ -17,7 +17,7 @@
 replicaCount: 1
 
 image:
-  repository: 'yotsyni/meeting-operator'
+  repository: 'ghcr.io/onmetal/meeting-operator'
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
