@@ -4,3 +4,4 @@ chart-dirs:
 charts:
   - deploy/helm/meeting-operator
 helm-extra-args: --timeout 600s
+target-branch: main
