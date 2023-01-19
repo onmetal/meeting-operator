@@ -2,6 +2,21 @@ apiVersion: v1
 entries:
   meeting-operator:
   - apiVersion: v2
+    appVersion: 0.13.8
+    created: "2023-01-19T13:44:01.015796779Z"
+    description: A Helm chart for deploy and manage Jitsi inside Kubernetes
+    digest: 62c2716031603d4068dfef12db6ac85ff47fef40bee098ff6dbb020cce471494
+    icon: https://make-linter-happy.com
+    maintainers:
+    - email: none@none.com
+      name: LanDeleih
+      url: https://onmetal.github.io/meeting-operator/
+    name: meeting-operator
+    type: application
+    urls:
+    - https://github.com/onmetal/meeting-operator/releases/download/v0.13.8/meeting-operator-0.13.8.tgz
+    version: 0.13.8
+  - apiVersion: v2
     appVersion: 0.13.7
     created: "2022-12-20T13:50:10.038392432Z"
     description: A Helm chart for deploy and manage Jitsi inside Kubernetes
@@ -136,4 +151,4 @@ entries:
     urls:
     - https://github.com/onmetal/meeting-operator/releases/download/v0.12.0/meeting-operator-0.12.0.tgz
     version: 0.12.0
-generated: "2022-12-20T13:50:10.038452833Z"
+generated: "2023-01-19T13:44:01.015914879Z"
