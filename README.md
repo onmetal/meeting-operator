@@ -5,8 +5,8 @@
 
 **Project status: *beta*** Not all planned features are completed.
 ## Background/Overview
-Meeting-operator provides deployment and management of [Jitsi](https://jitsi.org/) 
-and related components: 
+Meeting-operator provides deployment and management of [Jitsi](https://jitsi.org/)
+and related components:
 * [Etherpad](https://etherpad.org/) - Etherpad is a real-time collaborative editor scalable to thousands of simultaneous real time users. It provides full data export capabilities, and runs on your server, under your control.
 * [Excalidraw](https://excalidraw.com/) - Virtual whiteboard for sketching hand-drawn like diagrams.
 
