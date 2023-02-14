@@ -1,34 +1,34 @@
 # Contributors Guide
 
-## Contributing 
+## Contributing
 
 The Gardener on Metal project uses Github to manage reviews of pull requests.
 
 * If you are looking to make your first contribution, follow [Steps to Contribute](#steps-to-contribute)
 
 * If you have a trivial fix or improvement, go ahead and create a pull request and
-address (with @...) a suitable maintainer of this repository 
-(see [CODEOWNERS](https://raw.githubusercontent.com/onmetal/meeting-operator/master/CODEOWNERS) 
+address (with @...) a suitable maintainer of this repository
+(see [CODEOWNERS](https://raw.githubusercontent.com/onmetal/meeting-operator/master/CODEOWNERS)
 of this repository) in the description of the pull request.
 
-* If you plan to do something more involved, first discuss your ideas by creating an 
-[issue](https://github.com/onmetal/meeting-operator/issues) for this repository. This will avoid unnecessary work and surely give you 
+* If you plan to do something more involved, first discuss your ideas by creating an
+[issue](https://github.com/onmetal/meeting-operator/issues) for this repository. This will avoid unnecessary work and surely give you
 and us a good deal of inspiration.
 
-!!! note 
+!!! note
     Please follow these style guidelines to have your contribution considered by the maintainers:
     Coding style guidelines [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments),
     Formatting and style section of Peter Bourgon’s [Go: Best Practices for Production Environments](http://peter.bourgon.org/go-in-production/#formatting-and-style).
 
 ## Steps to Contribute
 
-Do you want to work on an issue?  You are welcome to claim an existing one by commenting on it in GitHub. 
+Do you want to work on an issue?  You are welcome to claim an existing one by commenting on it in GitHub.
 
 !!! note
-    Perform a cursory search to see if the issue has already been taken by someone else. 
+    Perform a cursory search to see if the issue has already been taken by someone else.
     This will prevent misunderstanding and duplication of  effort from contributors on the same issue.
 
-If you have questions about one of the issues please comment on them and one of the 
+If you have questions about one of the issues please comment on them and one of the
 maintainers will clarify it.
 
 We kindly ask you to follow the [Pull Request Checklist](#pull-request-checklist) to ensure reviews can happen accordingly.
@@ -53,8 +53,8 @@ The following rules govern documentation contributions:
 
 ## Developer Certificate of Origin
 
-Due to legal reasons, contributors will be asked to accept a Developer Certificate of Origin (DCO) before they submit 
-the first pull request to the Gardener on Metal project, this happens in an automated fashion during the submission 
+Due to legal reasons, contributors will be asked to accept a Developer Certificate of Origin (DCO) before they submit
+the first pull request to the Gardener on Metal project, this happens in an automated fashion during the submission
 process. We use [the standard DCO text of the Linux Foundation](https://developercertificate.org/).
 
 ## Pull Request Checklist
@@ -66,8 +66,8 @@ git clone git@github.com:YOUR_GITHUB_USER/meeting-operator.git
 cd meeting-operator
 ```
 
-* Create a branch from the `master`  using 'git checkout' command. 
-!!! note 
+* Create a branch from the `master`  using 'git checkout' command.
+!!! note
     If needed, rebase to the current `master` branch before submitting  your pull request. If it doesn't merge properly
     with `master` you may be asked to rebase your changes.
 
@@ -78,10 +78,10 @@ cd meeting-operator
     git rebase upstream/main
     ```
 
-* Commits should be as small as possible, while ensuring that each commit is correct independently 
+* Commits should be as small as possible, while ensuring that each commit is correct independently
 (i.e. each commit should compile and pass tests).
 
-*  Create your patch and test your changes  before you commit them. Automated test by unit / integration tests are preferred. 
+*  Create your patch and test your changes  before you commit them. Automated test by unit / integration tests are preferred.
 If tested manually, provide information about the test scope in the PR description. Now you can commit
 your changes to your feature branch and push it to your fork.
 
@@ -94,10 +94,10 @@ git push origin my_feature
 !!! note
     Alternatively you can amend your commit before pushing if you forgot something by using `git commit --amend`
 
-* Create _Work In Progress [WIP]_ pull requests only if you need a clarification or an explicit review before you can 
+* Create _Work In Progress [WIP]_ pull requests only if you need a clarification or an explicit review before you can
 continue your work item.
 
-* If your patch is not getting reviewed, or you need a specific person to review it, you can @-reply a reviewer asking 
+* If your patch is not getting reviewed, or you need a specific person to review it, you can @-reply a reviewer asking
 for a review in the pull request or a comment.
 
 * Post review:
@@ -108,7 +108,7 @@ for a review in the pull request or a comment.
 
 ## Issues and Planning
 
-We use GitHub issues to track bugs and enhancement requests. Please provide as much context as possible when you open  an issue. The information you provide must be comprehensive enough to understand, reproduce the behavior and find related reports of  that issue for the assignee. 
+We use GitHub issues to track bugs and enhancement requests. Please provide as much context as possible when you open  an issue. The information you provide must be comprehensive enough to understand, reproduce the behavior and find related reports of  that issue for the assignee.
 Therefore, contributors may use but aren't restricted to the issue template provided by the Gardener on Metal maintainers.
 
 Issues and pull requests are tracked in the [backlog](https://github.com/onmetal/meeting-operator/projects/1) for this project.

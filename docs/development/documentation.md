@@ -1,6 +1,6 @@
 # Documentation Setup
 
-The documentation of the [machine-operator](https://github.com/onmetal/machine-operator) project is written primarily using Markdown.
+The documentation of the [meeting-operator](https://github.com/onmetal/meeting-operator) project is written primarily using Markdown.
 All documentation related content can be found in the `/docs` folder. New content also should be added there.
 [MkDocs](https://www.mkdocs.org/) and [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) are then used to render the contents of the `/docs` folder to have a more user-friendly experience when browsing the projects' documentation.
 
@@ -15,11 +15,11 @@ Instead, in order to introduce breaking changes to the API, a new API version sh
 First, move the existing controller to the different file, as generator will try to put a new controller
 into the same location, e.g.
 
-    mv controllers/machine/controller.go controllers/machine/v1alpha1_controller.go
+    mv internal/jitsi/web/controller.go internal/jitsi/web/v1beta1_controller.go
 
 After that, add a new API version:
 
-    operator-sdk create api --version v1alpha2 --kind Machine --resource --controller
+    operator-sdk create api --version v1beta1 --kind Web --resource --controller
 
 Do modifications in a new CR, add a new controller to `main.go`.
 
@@ -51,7 +51,7 @@ patchesJson6902:
       version: v1
       group: apiextensions.k8s.io
       kind: CustomResourceDefinition
-      name: machines.machine.onmetal.de
+      name: webs.jitsi.meeting.ko
     path: crd_patch.yaml
 ```
 
@@ -65,5 +65,6 @@ This includes:
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [link to tags on this repository](https://github.com/onmetal/machine-operator/tags).
+For the operator we use [SemVer](http://semver.org/) for versioning. For the versions available, see the [link to tags on this repository](https://github.com/onmetal/meeting-operator/tags).
 
+The helm chart versioning follows its own name and numbering scheme, e.g. `meeting-chart-v0.20.1`.

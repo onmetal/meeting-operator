@@ -12,7 +12,7 @@ Following tools are required to work on that package.
 - [operator framework](https://operatorframework.io/) - framework to maintain project structure
 - [helm](https://helm.sh/) - to work with helm charts
 
-If you have to build Docker images on your host, 
+If you have to build Docker images on your host,
 you also need to have [Docker](https://www.docker.com/) or its alternative installed.
 
 ### Prepare environment
@@ -45,20 +45,20 @@ kubectl create -f config/samples/jitsi-config.yaml
 ## Install
 You can use helm for deploy meeting-operator in the cluster.
 ```
-helm install meeting-operator ./deploy/helm/meeting-operator
+helm install meeting-operator ./deploy/helm/meeting-chart
 ```
 or
 ```
 helm repo add onmetal https://onmetal.github.io/meeting-operator/
-helm install meeting-operator onmetal/meeting-operator
+helm install meeting-operator onmetal/meeting-chart
 ```
 ### Use the published chart
 
 Add this to your `Chart.yaml`
 ```yaml
 dependencies:
-  - name: meeting-operator
-    version: '0.11.1'
+  - name: meeting-chart
+    version: '0.20.1'
     repository: 'https://onmetal.github.io/meeting-operator'
 ```
 
@@ -77,19 +77,19 @@ kubectl apply -f config/crd/bases/*
 kubectl apply -f config/samples/_v1alpha2_etherpad.yaml
 kubectl apply -f config/samples/_v1alpha2_whiteboard.yaml
 
-### Install jitsi components. 
-kubectl apply -f config/samples/_v1beta1_jitsi_jibri.yaml 
-kubectl apply -f config/samples/_v1beta1_jitsi_jicofo.yaml 
-kubectl apply -fconfig/samples/_v1beta1_jitsi_jigasi.yaml 
-kubectl apply -f config/samples/_v1beta1_jitsi_jvb.yaml 
-kubectl apply -fconfig/samples/_v1beta1_jitsi_prosody.yaml 
+### Install jitsi components.
+kubectl apply -f config/samples/_v1beta1_jitsi_jibri.yaml
+kubectl apply -f config/samples/_v1beta1_jitsi_jicofo.yaml
+kubectl apply -fconfig/samples/_v1beta1_jitsi_jigasi.yaml
+kubectl apply -f config/samples/_v1beta1_jitsi_jvb.yaml
+kubectl apply -fconfig/samples/_v1beta1_jitsi_prosody.yaml
 kubectl apply -fconfig/samples/_v1beta1_jitsi_web.yaml
 ```
 
 If you need to change default values, you should check values.yml
 
 ### Examples
-Folder ``` config/samples``` contain crds, ingress, config examples. It's enough to 
+Folder ``` config/samples``` contain crds, ingress, config examples. It's enough to
 start up with jitsi.
 ```
  ll config/samples
@@ -110,8 +110,16 @@ telegraf-cm.yaml
 
 ### Release Guide
 
-1. Make you Changes
-2. Edit the [`Chart.yml`](/deploy/helm/meeting-operator/Chart.yaml) and update the `version` and `appVersion` accordingly. 
-3. Commit and push (to master, e.g. by merging the PR)
-4. The automated Helm release will create a tag with the specified version
-5. After the Tag is pushed the Docker Release will create the Images specified by the tag. 
+- meeting operator
+1. Make your changes to the operator in a feature branch
+2. Create, review, test and merge the PR
+3. Review the automatically created draft release, release notes are generated automatically from the PRs summary
+4. Publish the draft release
+5. A repository tag (e.g. `meeting-operator-v0.50.0`) will be created
+6. Based on the tag above, a docker image will be built, tagged and pushed. The tag will drop the `meeting-operator-v`-prefix, so the docker image will be called `meeting-operator:0.50.0`
+
+- helm chart
+1. Make your changes to the chart
+2. Edit the [`Chart.yml`](/deploy/helm/meeting-chart/Chart.yaml). The `version` must always be incremented, the `appVersion` must match a valid meeting operator version
+3. Commit and push to default branch, e.g. by merging a PR
+4. The automated helm release will create a tag with the specified helm chart version, e.g. `meeting-chart-v0.20.1`
