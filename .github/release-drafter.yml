@@ -1,5 +1,6 @@
 name-template: 'meeting-operator-v$RESOLVED_VERSION'
 tag-template: 'v$RESOLVED_VERSION'
+tag-prefix: v
 categories:
   - title: 'Features'
     labels:
