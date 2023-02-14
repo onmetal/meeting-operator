@@ -9,10 +9,12 @@ on:
       - v*
     paths-ignore:
       - '**.md'
+      - 'deploy/**'
   pull_request:
     branches:
       - main
     paths-ignore:
+      - 'deploy/**'
       - 'docs/**'
       - '**/*.md'
 
