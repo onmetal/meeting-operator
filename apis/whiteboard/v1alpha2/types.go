@@ -50,8 +50,8 @@ type Port struct {
 // WhiteBoardStatus defines the observed state of WhiteBoard.
 type WhiteBoardStatus struct{}
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 type WhiteBoard struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -60,7 +60,7 @@ type WhiteBoard struct {
 	Status WhiteBoardStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 type WhiteBoardList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

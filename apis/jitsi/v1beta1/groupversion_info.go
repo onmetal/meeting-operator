@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 // Package v1beta1 contains API Schema definitions for the JVB v1beta1 API group
-//+kubebuilder:object:generate=true
-//+groupName=jitsi.meeting.ko
+// +kubebuilder:object:generate=true
+// +groupName=jitsi.meeting.ko
 package v1beta1
 
 import (
