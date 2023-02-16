@@ -56,7 +56,8 @@ type service struct {
 func NewService(ctx context.Context, c client.Client, l logr.Logger,
 	appName, namespace string,
 	annotations, labels map[string]string,
-	serviceType v1.ServiceType, ports []v1beta1.Port) Servicer {
+	serviceType v1.ServiceType, ports []v1beta1.Port,
+) Servicer {
 	switch appName {
 	case WebAppName:
 		return &service{

@@ -50,7 +50,8 @@ type Service struct {
 }
 
 func newInstance(ctx context.Context, c client.Client,
-	l logr.Logger, req ctrl.Request) (WhiteBoard, error) {
+	l logr.Logger, req ctrl.Request,
+) (WhiteBoard, error) {
 	w := &v1alpha2.WhiteBoard{}
 	if err := c.Get(ctx, req.NamespacedName, w); err != nil {
 		return nil, err

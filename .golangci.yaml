@@ -208,6 +208,11 @@ issues:
         - revive
       text: "exported:"
 
+    # Exclude mandatory comment on packages
+    - linters:
+        - revive
+      text: "package-comments:"
+
     # Exclude structure fields alignment check. Reason: premature optimization.
     - linters:
         - govet

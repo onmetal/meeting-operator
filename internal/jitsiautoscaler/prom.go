@@ -26,9 +26,9 @@ import (
 )
 
 const (
-	promRangeStepMinute  = 15 * time.Minute
-	promRangeStartMinute = 15 * time.Minute
-	promRequestTimeout   = 30 * time.Second
+	promRangeStep      = 15 * time.Minute
+	promRangeStart     = 15 * time.Minute
+	promRequestTimeout = 30 * time.Second
 )
 
 const (
@@ -76,10 +76,14 @@ func (p *prom) countAvgValueByRequest(request string) float64 {
 		return 1
 	}
 	var sum model.SampleValue
-	for res := range result.(model.Matrix) {
-		sum = +result.(model.Matrix)[res].Values[1].Value
+	results, ok := result.(model.Matrix)
+	if !ok {
+		return 0
 	}
-	return float64(sum / model.SampleValue(len(result.(model.Matrix))))
+	for res := range results {
+		sum = +results[res].Values[1].Value
+	}
+	return float64(sum / model.SampleValue(len(results)))
 }
 
 func (p *prom) scaleUp(desiredReplicas int32) error {
@@ -108,12 +112,12 @@ func (p *prom) scaleDown(desiredReplicas int32) error {
 
 func (p *prom) Repeat() time.Duration {
 	if p.Spec.Interval == "" {
-		return defaultRepeatIntervalSecond
+		return defaultRepeatInterval
 	}
 	interval, err := time.ParseDuration(p.Spec.Interval)
 	if err != nil {
 		p.log.Info("can't parse duration", "error", err)
-		return defaultRepeatIntervalSecond
+		return defaultRepeatInterval
 	}
 	return interval
 }
