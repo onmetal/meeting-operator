@@ -49,8 +49,8 @@ const (
 )
 
 const (
-	timeOutSecond   = 300 * time.Second
-	tickTimerSecond = 15 * time.Second
+	timeOut   = 300 * time.Second
+	tickTimer = 15 * time.Second
 )
 
 const (
@@ -90,8 +90,7 @@ func (j *JVB) createConfigMaps() {
 }
 
 func (j *JVB) isExist() bool {
-	_, err := j.getInstance()
-	if err != nil && apierrors.IsNotFound(err) {
+	if _, err := j.getInstance(); err != nil && apierrors.IsNotFound(err) {
 		return false
 	}
 	return true
@@ -364,9 +363,7 @@ func (j *JVB) additionalEnvironments() []v1.EnvVar {
 			v1.EnvVar{Name: "JVB_TCP_MAPPED_PORT", Value: port},
 			v1.EnvVar{Name: "TCP_HARVESTER_PORT", Value: port},
 			v1.EnvVar{Name: "TCP_HARVESTER_MAPPED_PORT", Value: port})
-		for env := range additionalEnvs {
-			j.envs = append(j.envs, additionalEnvs[env])
-		}
+		j.envs = append(j.envs, additionalEnvs...)
 		return j.envs
 	case j.Spec.Port.Protocol == v1.ProtocolUDP:
 		if isEnvAlreadyExist(j.envs) {
@@ -378,9 +375,7 @@ func (j *JVB) additionalEnvironments() []v1.EnvVar {
 		}
 		additionalEnvs = append(additionalEnvs,
 			v1.EnvVar{Name: "JVB_PORT", Value: port})
-		for env := range additionalEnvs {
-			j.envs = append(j.envs, additionalEnvs[env])
-		}
+		j.envs = append(j.envs, additionalEnvs...)
 		return j.envs
 	default:
 		return j.envs
@@ -401,8 +396,8 @@ func (j *JVB) getDockerHostAddr() v1.EnvVar {
 }
 
 func (j *JVB) getExternalIP() string {
-	timeout := time.After(timeOutSecond)
-	tick := time.NewTicker(tickTimerSecond)
+	timeout := time.After(timeOut)
+	tick := time.NewTicker(tickTimer)
 	for {
 		select {
 		case <-timeout:
@@ -458,11 +453,11 @@ func (j *JVB) prepareExporterContainer() v1.Container {
 			Resources:       j.Spec.Exporter.Resources,
 			ImagePullPolicy: j.Spec.ImagePullPolicy,
 			SecurityContext: &v1.SecurityContext{
-				RunAsUser:                pointer.Int64Ptr(defaultExporterUser),
-				Privileged:               pointer.BoolPtr(false),
-				RunAsNonRoot:             pointer.BoolPtr(true),
-				ReadOnlyRootFilesystem:   pointer.BoolPtr(true),
-				AllowPrivilegeEscalation: pointer.BoolPtr(false),
+				RunAsUser:                pointer.Int64(defaultExporterUser),
+				Privileged:               pointer.Bool(false),
+				RunAsNonRoot:             pointer.Bool(true),
+				ReadOnlyRootFilesystem:   pointer.Bool(true),
+				AllowPrivilegeEscalation: pointer.Bool(false),
 			},
 		}
 	}

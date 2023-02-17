@@ -197,11 +197,11 @@ func (j *Jicofo) prepareExporterContainer() corev1.Container {
 			Resources:       j.Spec.Exporter.Resources,
 			ImagePullPolicy: j.Spec.ImagePullPolicy,
 			SecurityContext: &corev1.SecurityContext{
-				RunAsUser:                pointer.Int64Ptr(defaultExporterUser),
-				Privileged:               pointer.BoolPtr(false),
-				RunAsNonRoot:             pointer.BoolPtr(true),
-				ReadOnlyRootFilesystem:   pointer.BoolPtr(true),
-				AllowPrivilegeEscalation: pointer.BoolPtr(false),
+				RunAsUser:                pointer.Int64(defaultExporterUser),
+				Privileged:               pointer.Bool(false),
+				RunAsNonRoot:             pointer.Bool(true),
+				ReadOnlyRootFilesystem:   pointer.Bool(true),
+				AllowPrivilegeEscalation: pointer.Bool(false),
 			},
 		}
 	}

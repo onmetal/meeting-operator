@@ -34,7 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const defaultRepeatIntervalSecond = 600 * time.Second
+const defaultRepeatInterval = 600 * time.Second
 
 var errTokenNotExist = errors.New("token not exist")
 
@@ -82,9 +82,9 @@ func newInstance(ctx context.Context, c client.Client, l logr.Logger, req ctrl.R
 			return nil, err
 		}
 		timeRange := promv1api.Range{
-			Start: time.Now().Add(-promRangeStartMinute),
+			Start: time.Now().Add(-promRangeStart),
 			End:   time.Now(),
-			Step:  promRangeStepMinute,
+			Step:  promRangeStep,
 		}
 		v1api := promv1api.NewAPI(promClient)
 		p = &prom{

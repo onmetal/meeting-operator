@@ -114,12 +114,12 @@ func (i *influx) scaleDown(desiredReplicas int32) error {
 
 func (i *influx) Repeat() time.Duration {
 	if i.Spec.Interval == "" {
-		return defaultRepeatIntervalSecond
+		return defaultRepeatInterval
 	}
 	interval, err := time.ParseDuration(i.Spec.Interval)
 	if err != nil {
 		i.log.Info("can't parse duration", "error", err)
-		return defaultRepeatIntervalSecond
+		return defaultRepeatInterval
 	}
 	return interval
 }
