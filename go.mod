@@ -7,7 +7,7 @@ require (
 	github.com/google/addlicense v1.1.1
 	github.com/influxdata/influxdb-client-go/v2 v2.12.2
 	github.com/prometheus/client_golang v1.14.0
-	github.com/prometheus/common v0.39.0
+	github.com/prometheus/common v0.40.0
 	k8s.io/api v0.26.1
 	k8s.io/apimachinery v0.26.1
 	k8s.io/client-go v0.26.1
