@@ -21,7 +21,6 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"os"
-	"strconv"
 
 	ethv1alpha2 "github.com/onmetal/meeting-operator/apis/etherpad/v1alpha2"
 	jitsiv1beta1 "github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
@@ -39,6 +38,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -53,10 +54,6 @@ var (
 
 func main() {
 	addToScheme()
-	webhookServerAddr, err := strconv.Atoi(os.Getenv("SERVER_PORT"))
-	if err != nil {
-		webhookServerAddr = 9443
-	}
 
 	var metricsAddr string
 	var enableLeaderElection, profiling bool
@@ -76,9 +73,10 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   webhookServerAddr,
+		Scheme: scheme,
+		Metrics: metricsserver.Options{
+			BindAddress: metricsAddr,
+		},
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "4642dc8b.meeting.ko",
