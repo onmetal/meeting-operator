@@ -21,7 +21,6 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"os"
-	"strconv"
 
 	ethv1alpha2 "github.com/onmetal/meeting-operator/apis/etherpad/v1alpha2"
 	jitsiv1beta1 "github.com/onmetal/meeting-operator/apis/jitsi/v1beta1"
@@ -39,6 +38,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -53,10 +54,6 @@ var (
 
 func main() {
 	addToScheme()
-	webhookServerAddr, err := strconv.Atoi(os.Getenv("SERVER_PORT"))
-	if err != nil {
-		webhookServerAddr = 9443
-	}
 
 	var metricsAddr string
 	var enableLeaderElection, profiling bool
@@ -75,10 +72,19 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
+	profHandlers := make(map[string]http.Handler)
+	if profiling {
+		profHandlers["debug/pprof"] = http.HandlerFunc(pprof.Index)
+		profHandlers["debug/pprof/profile"] = http.HandlerFunc(pprof.Profile)
+		setupLog.Info("profiling activated")
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   webhookServerAddr,
+		Scheme: scheme,
+		Metrics: metricsserver.Options{
+			BindAddress:   metricsAddr,
+			ExtraHandlers: profHandlers,
+		},
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "4642dc8b.meeting.ko",
@@ -88,7 +94,7 @@ func main() {
 		os.Exit(1)
 	}
 	createReconciles(mgr)
-	addHandlers(mgr, profiling)
+	addHandlers(mgr)
 
 	setupLog.Info("starting manager")
 	if err = mgr.Start(ctrl.SetupSignalHandler()); err != nil {
@@ -183,7 +189,7 @@ func createReconciles(mgr ctrl.Manager) {
 	//+kubebuilder:scaffold:builder
 }
 
-func addHandlers(mgr ctrl.Manager, profiling bool) {
+func addHandlers(mgr ctrl.Manager) {
 	if healthErr := mgr.AddHealthzCheck("healthz", healthz.Ping); healthErr != nil {
 		setupLog.Error(healthErr, "unable to set up health check")
 		os.Exit(1)
@@ -191,18 +197,5 @@ func addHandlers(mgr ctrl.Manager, profiling bool) {
 	if readyErr := mgr.AddReadyzCheck("readyz", healthz.Ping); readyErr != nil {
 		setupLog.Error(readyErr, "unable to set up ready check")
 		os.Exit(1)
-	}
-	if profiling {
-		err := mgr.AddMetricsExtraHandler("/debug/pprof/", http.HandlerFunc(pprof.Index))
-		if err != nil {
-			setupLog.Error(err, "unable to attach pprof to webserver")
-			os.Exit(1)
-		}
-		err = mgr.AddMetricsExtraHandler("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
-		if err != nil {
-			setupLog.Error(err, "unable to attach cpu pprof to webserver")
-			os.Exit(1)
-		}
-		setupLog.Info("profiling activated")
 	}
 }
