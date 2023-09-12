@@ -72,10 +72,18 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
+	profHandlers := make(map[string]http.Handler)
+	if profiling {
+		profHandlers["debug/pprof"] = http.HandlerFunc(pprof.Index)
+		profHandlers["debug/pprof/profile"] = http.HandlerFunc(pprof.Profile)
+		setupLog.Info("profiling activated")
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme: scheme,
 		Metrics: metricsserver.Options{
-			BindAddress: metricsAddr,
+			BindAddress:   metricsAddr,
+			ExtraHandlers: profHandlers,
 		},
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
@@ -86,7 +94,7 @@ func main() {
 		os.Exit(1)
 	}
 	createReconciles(mgr)
-	addHandlers(mgr, profiling)
+	addHandlers(mgr)
 
 	setupLog.Info("starting manager")
 	if err = mgr.Start(ctrl.SetupSignalHandler()); err != nil {
@@ -181,7 +189,7 @@ func createReconciles(mgr ctrl.Manager) {
 	//+kubebuilder:scaffold:builder
 }
 
-func addHandlers(mgr ctrl.Manager, profiling bool) {
+func addHandlers(mgr ctrl.Manager) {
 	if healthErr := mgr.AddHealthzCheck("healthz", healthz.Ping); healthErr != nil {
 		setupLog.Error(healthErr, "unable to set up health check")
 		os.Exit(1)
@@ -189,18 +197,5 @@ func addHandlers(mgr ctrl.Manager, profiling bool) {
 	if readyErr := mgr.AddReadyzCheck("readyz", healthz.Ping); readyErr != nil {
 		setupLog.Error(readyErr, "unable to set up ready check")
 		os.Exit(1)
-	}
-	if profiling {
-		err := mgr.AddMetricsExtraHandler("/debug/pprof/", http.HandlerFunc(pprof.Index))
-		if err != nil {
-			setupLog.Error(err, "unable to attach pprof to webserver")
-			os.Exit(1)
-		}
-		err = mgr.AddMetricsExtraHandler("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
-		if err != nil {
-			setupLog.Error(err, "unable to attach cpu pprof to webserver")
-			os.Exit(1)
-		}
-		setupLog.Info("profiling activated")
 	}
 }
