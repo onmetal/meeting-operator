@@ -73,7 +73,7 @@ jobs:
           endpoint: builders
 
       - name: Build and push
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         timeout-minutes: 60
         with:
           context: .
