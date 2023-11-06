@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/go-logr/logr v1.3.0
 	github.com/google/addlicense v1.1.1
-	github.com/influxdata/influxdb-client-go/v2 v2.12.3
+	github.com/influxdata/influxdb-client-go/v2 v2.12.4
 	github.com/prometheus/client_golang v1.17.0
 	github.com/prometheus/common v0.45.0
 	k8s.io/api v0.28.3
@@ -16,11 +16,12 @@ require (
 )
 
 require (
+	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bmatcuk/doublestar/v4 v4.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/deepmap/oapi-codegen v1.8.2 // indirect
+	github.com/deepmap/oapi-codegen v1.12.4 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
