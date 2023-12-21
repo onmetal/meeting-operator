@@ -3,7 +3,7 @@ module github.com/onmetal/meeting-operator
 go 1.21
 
 require (
-	github.com/go-logr/logr v1.3.0
+	github.com/go-logr/logr v1.4.0
 	github.com/google/addlicense v1.1.1
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
 	github.com/prometheus/client_golang v1.17.0
