@@ -118,6 +118,7 @@ linters-settings:
     disabled-checks:
       - rangeValCopy # Reason: premature optimisation - saves memory but hurts readability.
       - unnamedResult # Reason: named return params may be less readable but it is discussible.
+      - uncheckedInlineErr # Reason: false positives with client.IgnoreNotFound(err)
 
     enabled-tags:
       - diagnostic
