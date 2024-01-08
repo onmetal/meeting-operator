@@ -1,6 +1,12 @@
 name: Lint Golang Codebase
 
 on:
+  push:
+    branches:
+      - "main"
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
   pull_request_target:
     paths-ignore:
       - 'docs/**'
