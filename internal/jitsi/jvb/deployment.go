@@ -31,7 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -54,9 +54,9 @@ const (
 )
 
 const (
-	telegrafExporter      = "telegraf"
-	exporterContainerName = "exporter"
-	defaultExporterUser   = 10001
+	telegrafExporter            = "telegraf"
+	exporterContainerName       = "exporter"
+	defaultExporterUser   int64 = 10001
 )
 
 func (j *JVB) Create() error {
@@ -453,11 +453,11 @@ func (j *JVB) prepareExporterContainer() v1.Container {
 			Resources:       j.Spec.Exporter.Resources,
 			ImagePullPolicy: j.Spec.ImagePullPolicy,
 			SecurityContext: &v1.SecurityContext{
-				RunAsUser:                pointer.Int64(defaultExporterUser),
-				Privileged:               pointer.Bool(false),
-				RunAsNonRoot:             pointer.Bool(true),
-				ReadOnlyRootFilesystem:   pointer.Bool(true),
-				AllowPrivilegeEscalation: pointer.Bool(false),
+				RunAsUser:                ptr.To(defaultExporterUser),
+				Privileged:               ptr.To(false),
+				RunAsNonRoot:             ptr.To(true),
+				ReadOnlyRootFilesystem:   ptr.To(true),
+				AllowPrivilegeEscalation: ptr.To(false),
 			},
 		}
 	}
