@@ -10,7 +10,7 @@ require (
 	github.com/prometheus/common v0.50.0
 	k8s.io/api v0.29.3
 	k8s.io/apimachinery v0.29.3
-	k8s.io/client-go v0.29.2
+	k8s.io/client-go v0.29.3
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
 	sigs.k8s.io/controller-runtime v0.17.2
 )
