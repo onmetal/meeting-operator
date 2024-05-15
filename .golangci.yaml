@@ -4,7 +4,6 @@ run:
 linters:
   enable-all: false
   enable:
-    - megacheck
     - govet
     - cyclop
     - dupl
@@ -21,12 +20,11 @@ linters:
     - gofmt
     - gofumpt
     - goimports
-    - gomnd
+    - mnd
     - gomoddirectives
     - gosec
     - gosimple
     - govet
-    - ifshort
     - ineffassign
     - durationcheck
     - errname
@@ -45,7 +43,7 @@ linters:
     - exportloopref
     - forcetypeassert
     - godot
-    - goerr113
+    - err113
     - goprintffuncname
     - importas
     - nakedret
@@ -134,16 +132,10 @@ linters-settings:
   gofumpt:
     extra-rules: true
 
-  gomnd:
-    settings:
-      mnd:
-        ignored-numbers: [10,1,2,3,4,5]
-
   gosimple:
     checks: [ "all" ]
 
   govet:
-    check-shadowing: true
     enable-all: true
 
   ifshort:

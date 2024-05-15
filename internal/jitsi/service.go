@@ -164,7 +164,7 @@ const (
 func getServicePortsForApp(appName string, s []v1beta1.Port) []v1.ServicePort {
 	switch appName {
 	case WebAppName:
-		ports := make([]v1.ServicePort, 0, 1)
+		ports := make([]v1.ServicePort, 0, 1) //nolint:mnd //reason: just minimal value
 		ports = append(ports, v1.ServicePort{
 			Name: "http", Protocol: v1.ProtocolTCP,
 			Port: defaultHTTPPort, TargetPort: intstr.IntOrString{IntVal: defaultHTTPPort},
@@ -174,7 +174,7 @@ func getServicePortsForApp(appName string, s []v1beta1.Port) []v1.ServicePort {
 		}
 		return ports
 	case ProsodyAppName:
-		ports := make([]v1.ServicePort, 0, 4)
+		ports := make([]v1.ServicePort, 0, 4) //nolint:mnd //reason: just minimal value
 		ports = append(ports,
 			v1.ServicePort{
 				Name: "http", Protocol: v1.ProtocolTCP,
@@ -198,7 +198,7 @@ func getServicePortsForApp(appName string, s []v1beta1.Port) []v1.ServicePort {
 		}
 		return ports
 	case JibriAppName:
-		ports := make([]v1.ServicePort, 0, 1)
+		ports := make([]v1.ServicePort, 0, 1) //nolint:mnd //reason: just minimal value
 		ports = append(ports, v1.ServicePort{
 			Name: "http", Protocol: v1.ProtocolTCP,
 			Port: xmppPort, TargetPort: intstr.IntOrString{IntVal: xmppPort},
@@ -226,7 +226,7 @@ func GetContainerPorts(ports []v1beta1.Port) []v1.ContainerPort {
 	if len(ports) == 0 {
 		return nil
 	}
-	containerPorts := make([]v1.ContainerPort, 0, len(ports))
+	containerPorts := make([]v1.ContainerPort, 0, len(ports)) //nolint:mnd //reason: just minimal value
 	for svc := range ports {
 		containerPorts = append(containerPorts, v1.ContainerPort{
 			Name:          ports[svc].Name,
