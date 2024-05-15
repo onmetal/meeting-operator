@@ -340,7 +340,7 @@ func (j *JVB) additionalEnvironments() []v1.EnvVar {
 		if isEnvAlreadyExist(j.envs) {
 			return j.envs
 		}
-		additionalEnvs := make([]v1.EnvVar, 0, 6) //nolint:gomnd //reason: just minimal value
+		additionalEnvs := make([]v1.EnvVar, 0, 6) //nolint:mnd //reason: just minimal value
 		if !isHostAddressExist(j.envs) {
 			additionalEnvs = append(additionalEnvs, j.getDockerHostAddr())
 		}
@@ -356,7 +356,7 @@ func (j *JVB) additionalEnvironments() []v1.EnvVar {
 		if isEnvAlreadyExist(j.envs) {
 			return j.envs
 		}
-		additionalEnvs := make([]v1.EnvVar, 0, 2)
+		additionalEnvs := make([]v1.EnvVar, 0, 2) //nolint:mnd //reason: just minimal value
 		if !isHostAddressExist(j.envs) {
 			additionalEnvs = append(additionalEnvs, j.getDockerHostAddr())
 		}
