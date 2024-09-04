@@ -17,5 +17,6 @@ jobs:
         with:
           disable-releaser: github.ref != 'refs/heads/main'
           config-name: release-drafter.yml
+          commitish: main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
