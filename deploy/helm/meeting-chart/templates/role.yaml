@@ -8,17 +8,9 @@ rules:
   - ""
   resources:
   - configmaps
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
   - endpoints
+  - secrets
+  - services
   verbs:
   - create
   - delete
@@ -34,41 +26,9 @@ rules:
   - create
   - patch
 - apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - services
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
   - apps
   resources:
   - deployments
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
-  - apps
-  resources:
   - statefulsets
   verbs:
   - create
@@ -81,135 +41,10 @@ rules:
   - jitsi.meeting.ko
   resources:
   - jibris
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - jitsi.meeting.ko
-  resources:
-  - jibris/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - jitsi.meeting.ko
-  resources:
-  - jibris/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - jitsi.meeting.ko
-  resources:
   - jicofoes
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - jitsi.meeting.ko
-  resources:
-  - jicofoes/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - jitsi.meeting.ko
-  resources:
-  - jicofoes/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - jitsi.meeting.ko
-  resources:
   - jigasis
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - jitsi.meeting.ko
-  resources:
-  - jigasis/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - jitsi.meeting.ko
-  resources:
-  - jigasis/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - jitsi.meeting.ko
-  resources:
   - jvbs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - jitsi.meeting.ko
-  resources:
-  - jvbs/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - jitsi.meeting.ko
-  resources:
-  - jvbs/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - jitsi.meeting.ko
-  resources:
   - prosodies
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - jitsi.meeting.ko
-  resources:
-  - prosodies/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - jitsi.meeting.ko
-  resources:
-  - prosodies/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - jitsi.meeting.ko
-  resources:
   - webs
   verbs:
   - create
@@ -222,12 +57,22 @@ rules:
 - apiGroups:
   - jitsi.meeting.ko
   resources:
+  - jibris/finalizers
+  - jicofoes/finalizers
+  - jigasis/finalizers
+  - jvbs/finalizers
+  - prosodies/finalizers
   - webs/finalizers
   verbs:
   - update
 - apiGroups:
   - jitsi.meeting.ko
   resources:
+  - jibris/status
+  - jicofoes/status
+  - jigasis/status
+  - jvbs/status
+  - prosodies/status
   - webs/status
   verbs:
   - get
@@ -246,31 +91,6 @@ rules:
   - meeting.ko
   resources:
   - etherpads
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - meeting.ko
-  resources:
-  - etherpads/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - meeting.ko
-  resources:
-  - etherpads/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - meeting.ko
-  resources:
   - whiteboards
   verbs:
   - create
@@ -283,12 +103,14 @@ rules:
 - apiGroups:
   - meeting.ko
   resources:
+  - etherpads/finalizers
   - whiteboards/finalizers
   verbs:
   - update
 - apiGroups:
   - meeting.ko
   resources:
+  - etherpads/status
   - whiteboards/status
   verbs:
   - get
