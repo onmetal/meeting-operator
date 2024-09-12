@@ -10,7 +10,7 @@ require (
 	github.com/influxdata/influxdb-client-go/v2 v2.14.0
 	github.com/prometheus/client_golang v1.20.3
 	github.com/prometheus/common v0.59.1
-	k8s.io/api v0.31.0
+	k8s.io/api v0.31.1
 	k8s.io/apimachinery v0.31.1
 	k8s.io/client-go v0.31.0
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8
